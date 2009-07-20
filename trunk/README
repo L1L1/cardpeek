@@ -1,0 +1,14 @@
+
+Cardpeek is a Linux tool to read the contents of ISO7816 smartcards. It features a GTK GUI to represent card data is a tree view, and is extendable with a scripting language (LUA). 
+
+The goal of this project is to allow smartcard owners to be better informed about what type of personnal information is stored in these devices. 
+
+The tool currently reads the contents of : 
+* EMV cards 
+* Navigo public transport cards 
+* Moneo ePurse cards 
+
+** This file should soon contain a translation of the french file LISEZMOI. **
+
+L1L1@gmx.com
+

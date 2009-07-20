@@ -1,0 +1,19 @@
+This program was tested under Linux debian version 5 only.
+
+Compile and install instructions:
+
+1) Make sure you have the following dev. packages :
+  - libgtk 2.0 (http://www.gtk.org)
+  - liblua 5.1 (http://www.lua.org)
+  - libpcsclite (http://pcsclite.alioth.debian.org/)
+
+2) change dir. to the source directory
+
+2) type "make"
+
+3) the binary executable is 'cardtree', use it directly or copy to the
+proper path.
+
+4) When first running 'cardpeek', the program will attempt to create the
+'.cardpeek' directory in your home directory. This is normal.
+

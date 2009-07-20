@@ -1,0 +1,163 @@
+Ceci est le fichier LISEZMOI de 'cardpeek', l'outil de lecture de carte à puce
+sous GNU Linux.
+
+Copyright 2009, par 'L1L1'
+
+Pour plus d'info contacter L1L1@gmx.com
+
+Ce fichier comporte les sections suivantes:
+
+A - Présentation
+B - Installation
+C - Descriptif de L'interface utilisateur
+D - Descriptif du langage de script
+E - Projets de développement futur
+F - Licence
+
+[-----------------------------------------------------------------]
+
+A - Présentation
+----------------
+Cardpeek est un outil de lecture de carte à puce avec une interface graphique basée sur GTK 2.0, fonctionnant sous GNU Linux et extensible par le langage de programmation LUA. Ce logiciel nécessite un lecteur PCSC pour fonctionner.
+
+Les cartes à puce sont devenues banales dans notre quotidien. Nous les utilisons pour le paiement, le transport, le téléphone et beaucoup d'autres applications. Ces cartes contiennent bien souvent beaucoup d'informations, comme par exemple les traces de nos dernières transactions bancaires ou encore la trace de nos derniers déplacements dans les transports publics. 
+
+Cardpeek est un outil qui a pour objectif de vous permettre d'accéder à ces informations personnelles. Vous pouvez ainsi être mieux informé des données qui sont collectées sur vous.
+
+Cardpeek explore le contenu d'une carte à puce respectant les normes ISO 7816 et la représente sous la forme d'une arborescence en respectant grossièrement la structure qu'elles ont sur la carte.
+
+Dans cette version, l'application est capable de lire le contenu des cartes suivantes :
+- Les cartes bancaires EMV
+- Les cartes de transport parisien Navigo et certaines autres cartes similaires utilisées en France.
+- Les cartes Monéo
+
+La lecture des cartes de transport est encore en version " béta ", et il manque d'autres types de cartes comme les cartes SIM des téléphones mobiles. Heureusement, l'application peut être modifiée et entendue simplement grâce au langage de script LUA. Pour plus d'informations sur le projet LUA, voir http://www.lua.org/.
+
+B - Installation
+----------------
+Utiliser le 'Makefile'. 
+Ce logiciel nécessite les librairies GTK, LUA et PCSCLITE.
+Pour plus de détails, lire le fichier INSTALL.
+
+C - Descriptif de l'interface utilisateur
+-----------------------------------------
+
+L'interface utilisateur est partagée en trois parties : le menu, l'arborescence et la console de messages.
+
+Le menu contient deux parties : 
+- un menu 'fichier' permettant de chargé ou de sauvegarder le contenu de l'arborescence.
+- un menu 'outil' permettant d'exécuter des scripts de lecture de carte à puce.
+
+L'arborescence représente la structure de la carte à puce, telle qu'elle est lue par le script qui est exécuté. Cette arborescence est entièrement construite par le script (voir les fonctions de l'unité 'ui' ci-après).
+
+La console de message affiche des messages informatifs ou d'alerte créés par l'application ou le script en cours d'exécution. (voir la commande log.print ci-après).
+
+D - Descriptif du langage de script
+-----------------------------------
+
+Les outils permettant de lire les différents formats de carte à puce sont stockés dans votre répertoire $HOME/.cardpeek/scripts/. Ces outils sont écris en LUA. La librairie standard de LUA a donc été étendue.
+
+-- Les commandes suivantes ont été ajoutées au langage LUA :
+
+bit_and(A,B)
+Opération binaire (A AND B)
+
+bit_or(A,B)
+  	Opération binaire (A OR B)
+
+bit_xor(A,B)
+Opération binaire (A XOR B)
+
+bit_shl(A,B)
+Multiplier A par 2^B
+
+bit_shr(A,B)
+	Diviser A par 2^B
+
+usleep(S)
+	Exécuter une pause d'au moins S usec.	
+
+-- Le module 'card' a été ajouté au langage LUA, avec les fonctions suivantes :
+
+card.connect()
+	Se connecte au lecteur de carte à puce.
+
+card.disconnect()
+	Se déconnecte du lecteur de carte à puce.
+
+card.warm_reset()
+	Réalise un 'reset' à chaud de la carte.
+
+card.last_atr()
+	Renvoie une chaîne de caractère hexadécimale représentant le dernier ATR (Answer To Reset) renvoyé par la carte.
+
+card.status()
+	Non implémenté pour le moment.
+
+card.send(APDU)
+Envoie la commande APDU au lecteur. La fonction renvoie deux valeurs : un mot de statut (ex. 0x9000) et la réponse éventuelle de la carte. La commande et la réponse sont représentées comme une chaîne de caractère hexadécimale.
+
+card.bytes_pack(BA)
+Prend le tableau BA composé d'une série d'octets (entiers) et le convertit en une chaîne hexadécimale compatible avec card.send().
+
+card.bytes_unpack(BS)
+Prend une chaîne texte hexadécimale et la convertit en un tableau de valeur représentant chaque octet de la chaîne.
+	
+card.bytes_substr(BS,pos [,len])
+Renvoie la sous chaîne hexadécimale de BS commençant à 'pos' (position d'un octet de la chaîne) et de longueur 'len'. Si 'len' n'est pas précisé, utilise toute la chaîne jusqu'à la fin de celle-ci.
+
+card.bytes_size(BS)
+Renvoie la taille en octet de la chaîne hexadécimale BS. Si BS ne contient pas d'espaces, alors la valeur renvoyée correspondra à la taille de la chaîne de texte BS divisée par 2, puisque chaque octet s'exprime sur deux caractères hexadécimaux.
+
+card.tlv_make(tag,val)
+Créé une chaîne hexadécimale correspondant à l'encodage ASN1 DER de l'objet ayant le tag 'tag' et la valeur 'val'.
+
+card.tlv_split(tlv)
+Renvoie un tableau contenant des paires (tag,val) pour chaque élément de 'tlv' correctement décodé selon la méthode ASN1 BER.	
+
+card.tlv_enable_single_byte_length(enable)
+Modifie le comportement de card.tlv_split() de manière à forcer le décodage de la longueur ASN1 BER sur un octet, c'est à dire que les valeurs de longueur supérieure à 0x80 sont interprétées comme une longueur et non pas comme prévu dans la norme ASN1 BER. Ne pas utiliser cette fonction en temps normal.
+
+-- le module 'ui' a été ajouté au langage LUA pour permettre au script de manipuler l'interface utilisateur. 
+
+Ces commandes utilisent la notion de 'chemin' dans l'arborescence de la carte qui est représentée à l'écran. Un chemin est représenté comme une chaîne de caractère formée de nombres séparés par ':'. Chaque nombre représente la position relative d'un noeud de l'arbre par rapport à son parent. Ainsi la chaîne " 1:2 " représente le deuxième noeud descendant du premier noeud situé à la racine. La racine de l'arbre est représentée par 'nil'. La valeur des chemins est généralement sans importance pour le programmeur, qui les manipule avec les fonctions suivantes :
+
+ui.tree_append(chemin,feuille,noeud, [id, [longeur, [commentaire]]])
+Ajoute un noeud ayant pour parent 'chemin' dans l'arbre représentant la structure de la carte à l'écran. 'feuille' est un booléen indiquant si le noeud est une feuille ou un noeud intermédiaire. 'noeud' précise le nom du noeud. 'id' lui attribue une valeur qui devrait être unique dans l'arborescence ou au moins dans le contexte local. 'longueur' est une information précisant la taille en octet de l'objet représenté par le noeud (à titre informatif). 'commentaire' est un commentaire associé au noeud.
+
+ui.tree_delete(chemin)
+	Supprime le noeud définit par 'chemin' et tous ses descendants.
+
+ui.tree_get(chemin)
+Renvoie un tableau de 5 valeurs correspondant aux données associées au noeud pointé par 'chemin' (voir ui.tree_append).
+
+ui.tree_to_xml(chemin)
+	Renvoie une représentation XML du sous arbre défini par chemin.
+
+ui.tree_find(chemin, noeud, id)
+Recherche dans le sous arbre défini par chemin, le premier descendant vérifiant l'égalité avec noeud et/ou id. Si noeud ou id valent 'nil' leur valeur est ignorée dans la recherche.
+
+ui.tree_save(nom_de_fichier)
+Sauvegarde l'arbre complet au format XML dans le fichier 'nom_de_fichier'.
+
+ui.tree_load(nom_de_fichier)
+Charge un arbre à partir de sa représentation XML stockée dans 'nom de fichier'.
+
+log.print(niveau,texte)
+Affiche un message d'alerte ou d'information à l'écran. Niveau peut valoir au choix : log.INFO, log.DEBUG, log.WARNING, ou log.ERROR.
+
+
+E - Projets de développement futur
+----------------------------------
+
+A compléter.
+
+F - Licence
+-----------
+Cardpeek est un logiciel libre ; vous pouvez le redistribuer ou le modifier suivant les termes de la "GNU General Public License" telle que publiée par la Free Software Foundation : soit la version 3 de cette licence, soit (à votre gré) toute version ultérieure.
+  
+Cardpeek est distribué dans l'espoir qu'il vous sera utile, mais SANS AUCUNE GARANTIE : sans même la garantie implicite de COMMERCIALISABILITÉ ni d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez la Licence Générale Publique GNU pour plus de détails.
+  
+Vous devriez avoir reçu une copie de la Licence Générale Publique GNU avec ce programme ; si ce n'est pas le cas, consultez :
+<http://www.gnu.org/licenses/>.
+

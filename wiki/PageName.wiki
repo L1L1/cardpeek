@@ -1,6 +1,0 @@
-#summary One-sentence summary of this page.
-
-= Cardpeek screenshot =
-
-http://cardpeek.googlecode.com/files/Carpeek-screenshot.png
-

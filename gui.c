@@ -234,10 +234,11 @@ GtkWidget *create_view(cardtree_t *cardtree)
 
   gtk_container_add (GTK_CONTAINER (scrolled_window), view);
 
-  /* --- Column #1 --- */
+  /* --- Column #0 --- */
 
   column = gtk_tree_view_column_new();
   gtk_tree_view_column_set_title(column,"Items");
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
   renderer = gtk_cell_renderer_pixbuf_new();
   gtk_tree_view_column_pack_start(column, renderer, FALSE);
@@ -252,7 +253,7 @@ GtkWidget *create_view(cardtree_t *cardtree)
 				      NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
-  /* --- Column #2 --- */
+  /* --- Column #1 --- */
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (view),
@@ -261,8 +262,10 @@ GtkWidget *create_view(cardtree_t *cardtree)
                                                renderer,
                                                "markup", C_MARKUP_VALUE,
                                                NULL);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW (view),1);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  /* --- Column #3 --- */
+  /* --- Column #2 --- */
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (view),
@@ -272,7 +275,10 @@ GtkWidget *create_view(cardtree_t *cardtree)
                                                "text", C_LENGTH,
                                                NULL);
 
-   /* --- Column #4 --- */
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW (view),2);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+
+   /* --- Column #3 --- */
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (view),
@@ -281,6 +287,9 @@ GtkWidget *create_view(cardtree_t *cardtree)
                                                renderer,
                                                "text", C_COMMENT,
                                                NULL);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW (view),3);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+
   g_object_set(renderer,
                "style-set", TRUE,
                "style", PANGO_STYLE_ITALIC,

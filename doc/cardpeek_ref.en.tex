@@ -1,0 +1,784 @@
+\documentclass[11pt]{article}
+\usepackage{url}
+\title{\texttt{Cardpeek} Reference Manual - 0.2}
+\author{Copyright 2009, L1L1@gmx.com}
+\addtolength{\textwidth}{2cm}
+\addtolength{\hoffset}{-1cm}
+\begin{document}
+\maketitle
+
+\texttt{Cardpeek} is a program that reads the contents of smartcards. 
+This GNU/Linux tool has a GTK GUI and can be extended with the LUA programming language. 
+It requires a PCSC card-reader to communicate with a smartcard.
+
+\section{Presentation}
+
+Smartcards are becoming ubiquitous in our everyday life. 
+We use them for payment, transport, in mobile telephones and many other applications.
+These cards often contain a lot of personal information such as, for example, our last purchases or our last journeys in public transport.
+
+\texttt{Cardpeek}'s goal is to allow you to access all this personal information. As such, you can be better informed about the data that is collected about you.
+
+\texttt{Cardpeek} explores ISO 7816 compliant smartcards and represents their content in an organized tree format that roughly follows the structure it has inside the card, which is also similar to a classical file-system structure.
+
+In this version, this tool is capable of reading the contents of the following types of cards:
+\begin{itemize}
+\item{EMV "chip and PIN" bank cards used in many countries throughout the world}
+\item{Navigo transport cards used in Paris and other \textit{Calypso} cards used in France and other countries.}
+\item{Moneo, the French electronic purse.}
+\end{itemize}
+
+Note that \textit{Calypso} card processing is still in `beta' state, 
+and that some important card types are missing such as the SIM card used in mobile phones.
+However, this application can be modified and extended easily to your needs with the embedded LUA scripting language.
+For more information on the LUA project see \url{http://www.lua.org/}.
+
+\section{Installation}
+
+\texttt{Cardpeek} can be compiled from source using the provided \texttt{Makefile}.
+It has currently only been tested under Linux Debian version 5.
+
+\subsection{Compiling and installing}
+Instructions:
+\begin{enumerate}
+
+\item{Make sure you have the following development packages installed:
+  \begin{itemize}
+  \item{libgtk 2.0 (\url{http://www.gtk.org)}}
+  \item{liblua 5.1 (\url{http://www.lua.org)}}
+  \item{libpcsclite (\url{http://pcsclite.alioth.debian.org/)}}
+  \end{itemize}
+(Note: On a Debian system, these packages are all available through \texttt{apt}/\texttt{aptitude}.)
+}
+
+\item{Unpack the source if needed and change directory to the source directory.}
+
+\item{Type `\texttt{make}'}
+
+\item{The binary executable is `\texttt{cardtree}', use it directly or copy it to the desired location.}
+
+\end{enumerate}
+
+\subsection{Related files and initial setup}
+When first running \texttt{cardpeek} the program will attempt to create the
+\texttt{.cardpeek/} directory in your home directory. This is normal.
+
+The \texttt{.cardpeek/} directory will contain two elements: \texttt{config.lua} and the \texttt{script/} directory.
+The \texttt{config.lua} allows you to run commands automatically when the program starts 
+(it is currently only used for debugging purposes but should become a full fledged `config file' in the future).
+The \texttt{script/} directory contains all the scripts that allow to explore smartcards. 
+Currently it contains four LUA files: \texttt{emv.lua}, \texttt{navigo.lua}, \texttt{moneo.lua} and \texttt{atr.lua}.
+These files all show up in the `analyzer' menu of the \texttt{cardpeek} (without their extension `.lua').
+If you add any LUA file to this directory, it will thus also appear in the menu.
+The \texttt{script/} contains a subdirectory \texttt{lib/} which holds a few LUA files that represent frequently used commands that are shared among the card processing scripts.
+
+Each time the program runs, it creates a file \texttt{.cardpeek.log} in your home directory.
+This file contains a copy of the messages displayed in the ``log'' tab of the application (see next section). 
+
+\section{User interface description}
+
+\subsection{Quick start}
+
+To experiment with \texttt{cardpeek}, your may start with your EMV ``PIN and chip'' smartcard for example, by follow these steps:
+\begin{enumerate}
+\item{Start \texttt{cardpeek}.}
+\item{Select your PCSC card reader in the first dialog box.}
+\item{Select \emph{emv} in the \emph{analyzer} menu. This will run the default \emph{emv} script.}
+\item{View the results in the ``card data'' tab.}
+\end{enumerate}
+
+\subsection{Details}
+
+The user interface is divided in four parts: the top menu bar, the ``card data'' tab, the ``log'' tab and a one-line command input form.
+
+The top menu bar holds 3 menus:
+\begin{itemize}
+\item{A \emph{data} menu that allows to clear, load or save data in the card tree browser.}  
+\item{A \emph{analyzer} menu that allows to load a script or to run one of the predefined scripts.}
+\item{A \emph{reader} menu that allows to connect, reset or disconnect a smartcard inserted in a card reader.}
+\end{itemize}
+
+The ``card data'' tab represents the data extracted from a card in a structured \emph{tree} from.
+This tree structure is initially blank and is entirely constructed by the LUA scripts that are executed (see next section).
+This tree can be saved and loaded in XML format using the commands in the \emph{data} menu.
+
+The ``log'' tab keeps track of \emph{messages} emitted by the application or the script being run.
+These messages are useful for monitoring and for debugging purposes. 
+The last message also appears at the bottom of the screen in the status bar.
+
+The one-line input form allows to type single LUA commands that will be directly executed by the application.
+This is useful for testing some ideas quickly or debugging purposes.
+
+When the program starts, you'll be asked to choose a card-reader.
+This allows you to select which card-reader to use if you have several of them attached to your computer.
+You may also select `\texttt{none}' if you do not wish to run any script on a card. This option is useful if you
+only want to load and examine card data that was previously saved in XML format.
+
+\section{Script language description}
+
+The individual scripts that allow to process different types of smartcards are located in your \texttt{\$HOME/.cardpeek/scripts/} directory.
+These scripts are written in LUA, a programming language which shares some similarities with Pascal and Javascript.
+To allow LUA scripts to communicate with smartcards and to manipulate card data, the LUA language was extended with custom libraries.
+This section first starts with a brief example of the script language and then describes the library extensions.
+
+\subsection{Example}
+
+Here's a short LUA script that demonstrates how to get and print the ATR (Answer To Reset) of a card to the console.
+\begin{verbatim}
+     card.connect()
+     print(card.last_atr())
+     card.disconnect()
+\end{verbatim}
+
+Next, here's (a slightly longer) script that performs a similar task, while presenting the results using \texttt{Cardpeek}'s user interface instead of the console. 
+
+\begin{verbatim}
+     card.connect()
+
+     atr = card.last_atr()
+
+     if atr then
+        mycard = ui.tree_add_node(nil,"card")
+        ref = ui.tree_add_node(mycard,"ATR","cold")
+        ui.tree_set_value(ref,tostring(atr))
+     end
+
+     card.diconnect()
+\end{verbatim}
+
+The fist command \texttt{card.connect()} powers-up the card in the card reader and prepares the card for communication. 
+Next \texttt{card.last\_atr()} returns the ATR of the card. 
+If the value of the ATR is non-nil, the script creates a node called ``card'' (with \texttt{ui.tree\_add\_node()}). 
+This node will appear at the root of the card data tree-view.
+A child node called ``ATR'' is added to the root ``card'' node. 
+The hexadecimal value of the ATR ---obtained by converting the \texttt{atr} variable to a string---  is associated with the child node.
+Finaly, the card is powered down with the \texttt{card.disconnect()} function.
+
+The final output of the script should have roughly the following structure:
+\begin{verbatim}
+   +-card
+     |
+     +-ATR cold     3B6900004A434F503331563232
+\end{verbatim}
+
+The example above is equivalent to the ``atr'' script provided with \texttt{Cardpeek}.
+The LUA language is easy to learn and we refer the reader to \url{http://www.lua.org/} for more information.
+
+\subsection{the \texttt{bit} library}
+
+Since LUA does not have native bit manipulation functions, the following functions have been added.
+
+\begin{description}
+
+\item[\texttt{bit.and(A,B)}]
+{Compute the binary operation \texttt{A} \textit{and} \texttt{B}.}
+
+\item[\texttt{bit.or(A,B)}]
+{Compute the binary operation \texttt{A} \textit{or} \texttt{B}.}
+
+\item[\texttt{bit.xor(A,B)}]
+{Compute the binary operation \texttt{A} \textit{xor} \texttt{B}.}
+
+\item[\texttt{bit.shl(A,B)}]
+{Compute $\texttt{A}{\times}2^{\texttt{B}}$.}
+
+\item[\texttt{bit.shr(A,B)}]
+{Compute $\texttt{A}/2^{\texttt{B}}$}
+
+\end{description}
+
+\subsection{The \texttt{bytes} library}
+
+The \texttt{bytes} provides a new opaque type to LUA: a \textit{bytestring}, 
+which is used to represent an array of binary elements. 
+
+Bytestrings are mainly used to represent binary data exchanged with
+the card reader in the application.
+
+The elements in the array are most commonly (8 bit) bytes, but
+it is also possible to construct arrays of (4 bit) half-bytes or
+arrays of individual bits. The size of each element is specified 
+when the array is created with the function \texttt{bytes.new()}
+described in this section. A function to convert between different 
+types of arrays is also provided.
+
+Individual elements in a bytestring array can be accessed the same 
+way traditional arrays are accessed in LUA. Thus, if \texttt{BS} is
+a bytestring the following expressions are valid:
+\begin{verbatim}
+   BS[0]=1
+   print(BS[0])
+\end{verbatim} 
+Contrary to the LUA tradition, the first index in a bytestring is 0
+(instead of 1). The number of elements in a bytestring is indicated 
+by prefixing the bytestring with the ``\texttt{\#}'' operator, just as 
+with an array (e.g. \texttt{\#BS}).
+
+Bytestrings cannot be copied like arrays with a simple assignment 
+using the ``\texttt{=}'' operator, the \texttt{bytes.assign()} function
+or the \texttt{bytes.clone()} must be used instead.  
+
+The functions of the \texttt{bytes} library are:
+
+\begin{description}
+
+\item[\texttt{bytes.append(BS, $value_0$ [, $value_1$, ..., $value_n$])}]
+{
+  Append a value to $BS$.
+
+  The appended value is composed of $value_0$, optionally concatenated with
+  any additional value $value_1$, ..., $value_n$ (from left to right).
+
+  This function is equivalent to 
+  \texttt{bytes.assign(BS, BS, $value_0$ [, $value_1$, ..., $value_n$])}.
+  See \texttt{bytes.assign()} for further details.
+
+  This function modifies its main argument $BS$.
+
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.assign(BS, $value_0$ [, $value_1$, ..., $value_n$])}]
+{
+  Assigns a value to $BS$. 
+
+  The assigned value is composed of $value_0$, optionally concatenated with 
+  any additional value $value_1$, ..., $value_n$ (from left to right).
+
+  Each $value_i$ can be either a bytestring, a string or a number.
+  If $value_i$ is a bytestring, each element of $value_i$ is appended to $BS$, 
+  without any conversion.
+
+  If $value_i$ is a string, it is interpreted as a text representation of
+  a bytestring (as returned by the \texttt{tostring()} operator). This string
+  representation is interpreted by taking into consideration the element width 
+  of $BS$ and is appended to $BS$.
+
+  If $value_i$ is a number, it converted into a single bytestring element and 
+  appended to $BS$.
+
+  This function modifies its main argument $BS$.
+
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+} 
+
+\item[\texttt{bytes.clone(BS)}]
+{
+  Creates and returns a copy of $BS$.
+  This function returns \texttt{nil} if it fails.
+}
+
+\item[\texttt{bytes.concat($value_0$, $value_1$ [,$value_2$ , ..., $value_n$])}]
+{
+  Returns the concatenation of $value_0$, ..., $value_n$ (from left to right).
+
+  For the rules governing the processing of $value_0 ... value_n$, see
+  the \texttt{bytes.assign()} function above.
+
+  This function returns a bytestring upon success and \texttt{nil} otherwise.
+}
+
+\item[\texttt{bytes.convert(w,BS)}]
+{
+  Converts $BS$ to a new bytestring where each element has a width $w$.
+
+  Depending on $w$, the elements in the converted bytestring are obtained by either 
+  splitting elements of $BS$ into severall smaller elements in the new bytestring or 
+  by grouping several elements of $BS$ into a single element in the new bytestring.
+
+  If the conversion requires splitting elements of $BS$, then the original elements will
+  be split with the most significant bit(s) first (the most significant bits of each 
+  original element of $BS$ will have a lower index than the least significant bits). 
+
+  If the conversion requires grouping elements together, $BS$ is will first be 
+  right-padded with zeros to a size that is a multiple of $w$. Next, new 
+  elements are formed by considering elements of $BS$ with a lower index as more 
+  significant than elements with a higher index.
+
+  This function returns a new bytestring upon success and \texttt{nil} otherwise.
+}
+
+\item[\texttt{bytes.insert(BS, pos, $value_0$ [, $value_1$, ..., $value_n$])}]
+{
+  Inserts a value in $BS$ at index $pos$.
+
+  The elements in $BS$ of index 0 to $pos-1$ will remain untouched.
+  The elements in $BS$ of index $pos$ to \texttt{\#BS} are pushed to the right
+  to make room for the inserted value.
+
+  The inserted value is composed of $value_0$, optionally concatenated with
+  any additional value $value_1$, ..., $value_n$ (from left to right).
+
+  For the rules governing the processing of $value_0 ... value_n$, see
+  the \texttt{bytes.assign()} function above.
+
+  This function modifies its main argument $BS$.
+  
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.invert(BS)}]
+{
+  Reverses the order of elements in $BS$.
+
+  If $BS$ has $N$ elements then $BS[0]$ is swapped with $BS[N-1]$,
+  $BS[1]$ is swapped with $BS[N-2]$ and so forth until all elements are
+  in reverse order in $BS$.
+
+  This function modifies its main argument.
+
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.is\_printable(BS)}]
+{
+  Returns \texttt{true} if all elements in $BS$ can be converted to 
+  printable ascii characters, and \texttt{false} otherwise.
+
+  This function always returns \texttt{false} if the width of $BS$ is 
+  not 8 (elements of width 4 or 1 are not printable ascii values).  
+}
+
+\item[\texttt{bytes.maxn(BS)}]
+{
+  Returns the last index in $BS$ (equivalent to $\#BS-1$).
+
+  This function returns \texttt{nil} if $BS$ is empty.
+}
+
+\item[\texttt{bytes.new(width [,$value_0$, $value_1$, ..., $value_n$])}]
+{
+  Creates a new bytestring, where each element is $width$ bits in size.
+  $width$ can be either 8, 4 or 1.
+
+  A value can optionally be assigned to the bytestring by specifying one or 
+  several values $value_0$, $value_1$, ..., $value_n$ that will be concatenated
+  together to form the content of the bytestring. See the function 
+  \texttt{bytes.assign()} for more details.
+
+  This function returns a bytestring upon success and \texttt{nil} otherwise. 
+}
+
+\item[Operators on bytestrings: ``\texttt{..}'', ``\texttt{==}'', ``\texttt{$\sim$=}'' and ``\texttt{\#}'']
+{
+  The ``..'' operator creates a new bytestring by concatenating two bytestrings together.
+  The concatenation operator also works if one of the operands is a string or a number, 
+  by converting it to a bytestring first, following the rules described in the 
+  \texttt{bytes.assign()} function. 
+  \texttt{A..B} is equivalent to \texttt{bytes.concat(A,B)}.
+  
+  The ``=='' and ``$\sim$='' operators allow to compare two bytestrings for equality or
+  non-equality respectively. To be equal, two bytestrings must have the same width
+  and the same elements in the same order.
+ 
+  Finally the ``\#'' operator returns the number of elements in a bytestring.
+}
+
+\item[\texttt{bytes.pad\_left(BS, length, value)}]
+{
+  Pads $BS$ on the left with the element $value$ until the number of elements 
+  of $BS$ reaches a multiple of $length$.
+
+  If the size of $BS$ is already a multiple of $length$, $BS$ is left untouched.
+
+  This function modifies its main argument $BS$.
+  
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.pad\_right(BS, length, value)}]
+{
+  Pads $BS$ on the right with the element $value$ until the number of elements 
+  of $BS$ reaches a multiple of $length$.
+
+  If the size of $BS$ is already a multiple of $length$, $BS$ is left untouched.
+
+  This function modifies its main argument $BS$.
+  
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.remove(BS, start [,end])}]
+{
+  Deletes a part of $BS$.
+
+  Removes all elements of $BS$ that have an index that verifies 
+  $index \geq start$ and $index \leq end$.
+
+  The elements in $BS$ are re-indexed: $BS[end+1]$ becomes $BS[start]$,
+  $BS[end+2]$ becomes $BS[start+1]$, and so forth.
+
+  If $end$ is not specified it will default to the last index of $BS$.
+  $start$ and $end$ may be negative as described in \texttt{bytes.sub()}.
+
+  This function modifies its main argument.
+  
+  This function returns \texttt{true} upon success and \texttt{false} otherwise.
+}
+
+\item[\texttt{bytes.sub(BS, start [,end])}]
+{
+  Returns a copy of a substring from $BS$.
+
+  The returned value represents a bytestring containing a copy of all the 
+  elements of $BS$ that have an index that verifies $index \geq start$ and 
+  $index \leq end$.
+  If $end$ is not specified it will default to the last index of $BS$.
+  If $start$ (or $end$) is negative, it will be replaced by $\#BS+start$
+  (or $\#BS+end$ resp.).
+
+  This function returns a bytestring upon success and \texttt{nil} otherwise.
+}
+
+\item[\texttt{bytes.to\_number(BS)}]
+{
+  Converts the bytestring \texttt{BS} to a string representing the unsigned 
+  decimal value of $BS$.
+
+  This conversion considers $BS[0]$ as the most significant element of $BS$, 
+  and $BS[\#BS-1]$ as the least significant. 
+  
+  If needed LUA will automatically convert the resulting string to a number.
+}
+
+\item[\texttt{bytes.to\_printable(BS)}]
+{
+  Converts each element in $BS$ into an ascii character and returns the
+  resulting string.
+
+  If an element in $BS$ cannot be converted to a printable character it
+  is replaced by the character ``?''. 
+
+  If $BS$ is empty, the resulting string is also empty.
+}
+
+\item[\texttt{bytes.width(BS)}]
+{
+  Return the width of the elements in $BS$.
+
+  This function may return 1, 4 or 8.
+}
+
+\end{description}
+
+\subsection{The \texttt{asn1} library}
+
+The ASN1 library allows to manipulate ASN1 TLV bytestrings following the DER 
+encoding (Distinguished Encoding Rules).
+These bytestrings must be 8 bit wide.
+
+The library provides the following functions:
+
+\begin{description}
+
+\item[\texttt{asn1.enable\_single\_byte\_length(enable)}]
+{
+  This function is only used in rare cases with erroneous card implementation.
+  
+  If $\texttt{enable}=true$ the behavior of TLV decoding functions 
+  (such as \texttt{bytes.tlv\_split()}) are modified by forcing the ASN1 
+  length to be 1 byte long. 
+  
+  This means that even if the first byte of the encoded length is greater 
+  than $0x80$ it will be interpreted as the length of the TLV value.
+}
+
+\item[\texttt{asn1.join(tag, val [,extra])}]
+{
+  Performs the opposite of \texttt{bytes.tlv\_split}: creates a bytestring 
+  representing the ASN1 DER encoding of the TLV $\{tag,len,val\}$ where $len=\#val$ 
+  and appends \texttt{extra} to the result.
+
+  \texttt{tag} is positive integer number, \texttt{val} is a bytestring and 
+  \texttt{extra} is a bytestring or \texttt{nil}.
+}
+
+\item[\texttt{asn1.split(str)}]
+{
+  Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
+  TLV encoding rules, and extracts a tag $T$ and a bytestring value $V$.
+
+  The function then returns 3 elements $(T, V, extra)$, 
+  where $extra$ is an optional bytestring representing the remaining part of 
+  \texttt{str} that was not parsed or \texttt{nil} if no data remains.
+
+  If this function fails it returns a triplet of \texttt{nil} values.
+}	
+
+\item[\texttt{asn1.split\_length(str)}]
+{
+  Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
+  and extracts a length $L$. 
+
+  The function then returns $(L, extra)$, where $extra$ is an optional bytestring 
+  representing the remaining part of \texttt{str} that was not parsed or \texttt{nil} 
+  if no data remains.
+
+  If this function fails it returns a pair of \texttt{nil} values.
+}
+
+\item[\texttt{asn1.split\_tag(str)}]
+{
+  Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
+  and extracts a tag $T$. 
+
+  The function then returns $(T, extra)$, where $extra$ is an optional bytestring 
+  representing the remaining part of \texttt{str} that was not parsed or 
+  \texttt{nil} if no data remains.
+
+  If this function fails it returns a pair of \texttt{nil} values.
+}
+
+\end{description}
+
+\subsection{The \texttt{card} library}
+
+The \texttt{card} library is used to communicate with a smartcard in a card-reader.
+
+This library contains the following functions:
+
+\begin{description}
+
+\item[\texttt{card.connect()}]
+{
+  Connect to the card currently inserted in the selected smartcard reader. 
+
+  This command is used at the start of most smartcard scripts.
+
+  This function returns \texttt{true} on success, and \texttt{false} otherwise.
+}
+
+\item[\texttt{card.disconnect()}]
+{
+  Disconnect the card currently inserted in the selected smartcard reader.
+	  
+  This command concludes most smartcard scripts.
+
+  This function returns \texttt{true} on success, and \texttt{false} otherwise.
+}
+
+\item[\texttt{card.last\_atr()}]
+{
+  Returns a bytestring representing the last ATR (Answer To Reset) returned by the card.
+}
+
+\item[\texttt{card.send(APDU)}]
+{
+  Sends the command \texttt{APDU} to the card. 
+
+  The function returns a pair of values: a number representing the status word 
+  returned by the card (ex. 0x9000) and the response data returned by the card.
+  
+  Both the command \texttt{APDU} and the response data are bytestrings 
+  (see the \texttt{bytes} library).
+}
+
+\item[\texttt{card.status()}]
+{
+  \textit{Not implemented yet - will return detailed information about the state of the card reader.}
+}
+
+\item[\texttt{card.warm\_reset()}]
+{
+  Performs a warm reset of the card 
+  (reconnects the card currently inserted in the selected smartcard reader).
+}
+
+\end{description}
+
+
+\subsection{The \texttt{ui} library}
+
+The \texttt{ui} library allows to control some elements of the user interface of 
+\texttt{Cardpeek}, and in particular the tree structure representing the data 
+extracted from the card.
+
+The functions in this library rely on a value called a `\emph{path}' to identify 
+each node in the card data tree represented on the screen.
+A \emph{path} is a string that is composed of a list of positive numbers separated 
+by a colon\footnote{For programmers familiar with GTK++ 2.0, these are the same 
+conventions as in the GTK ``tree model''}. 
+Each number represents the position (starting at 0) of a node relatively to its parent.
+The \emph{path} ``0:2:1'' represents the second child node of the third child 
+node of the first top node, and ``0'' simply represents the first top node.
+The detailed value of a \emph{path} is usually not important for the programmer, 
+who normally manipulates it as an opaque value. 
+
+The \texttt{ui} library functions are the following:
+
+\begin{description}
+
+\item[\texttt{ui.tree\_add\_node(path\_to\_parent, name, [id, [length, [comment]]])}]
+{
+  Adds a node in the card tree structure. 
+
+  The new node will be appended to the children of the node identified by the 
+  \emph{path} \texttt{path\_to\_parent}.
+  If \texttt{path\_to\_parent} is \texttt{nil} the new node will be added at 
+  the top level.
+
+  \texttt{name} describes the type of data that is represented by the node 
+  (such as a ``file'' or a ``record'' for example). 
+
+  \texttt{id} is an optional identifier that identifies the node uniquely within 
+  a context (such as an application ``AID'' or a ``record number'').
+
+  \texttt{length} is an optional value number describing the length of the 
+  data element associated to the node.
+
+  \texttt{comment} is an optional informative string that provides additional 
+  information related to the node.
+  
+  Upon success the node returns a string representing the \emph{path} to the 
+  newly created node. 
+  If the function fails, it returns \texttt{nil}.
+  Once the node is created with this function, data can be associated to it with the \texttt{ui.tree\_set\_value} function.
+}
+
+\item[\texttt{ui.tree\_set\_value(path\_to\_node, val)}]
+{
+  Associate the data \texttt{val} to the node identified by the \emph{path} 
+  \texttt{path\_to\_node}.
+
+  The value \texttt{val} is generally a bytestring, 
+  as constructed by the \texttt{bytes} module functions.
+
+  Once a value \texttt{val} is associated to a node \texttt{path\_to\_node} 
+  it is not possible to add a child node with the function \texttt{ui.tree\_add\_node}.
+	  
+  The function returns \texttt{true} on success and \texttt{false} otherwise.
+}
+
+\item[\texttt{ui.tree\_get\_value(path\_to\_node)}]
+{
+  Returns the value associated with the node identified by \texttt{path\_to\_parent}, 
+  or \texttt{nil} if no value is associated with the node or if the function fails.
+} 
+
+\item[\texttt{ui.tree\_get\_node(path\_to\_node)}]
+{
+  Returns an array of 5 elements associated to the node identified by 
+  \texttt{path\_to\_node}.
+ 
+  These elements are: ${name, id, length, comment, num\_children}$. 
+  The first 4 elements are the same as the parameters of the function 
+  \texttt{ui.tree\_add\_node}, and the last parameter describes the number of 
+  children attached to that node in the tree (0 means none).
+
+  If the function fails, it returns \texttt{nil}.
+}
+
+\item[\texttt{ui.tree\_delete\_node(path\_to\_node)}]
+{
+  Deletes the node identified by \texttt{path\_to\_node} as well as all its 
+  children.
+	  
+  The function returns \texttt{true} on success and \texttt{false} otherwise.
+}
+
+\item[\texttt{ui.tree\_to\_xml(path\_to\_node)}]
+{
+  Returns an XML representation of the sub-tree that has \texttt{path\_to\_node} 
+  as a root.
+	  
+  If \texttt{path\_to\_node} is \texttt{nil} the representation of the whole 
+  tree is returned.
+  
+  If the function fails, it returns \texttt{nil}.
+}
+
+\item[\texttt{ui.tree\_find\_node(origin, name, id)}]
+{
+  Searches inside the sub-tree of root $origin$ for the first node that has 
+  name \texttt{name} and/or the id \texttt{id}.
+
+  If \texttt{name=nil} or \texttt{id=nil} they are ignored in the search.
+  If a node is found, the function returns the path to that node otherwise 
+  it returns \texttt{nil}.
+}
+
+\item[\texttt{ui.tree\_save(file\_name)}]
+{
+  Saves the tree in XML format inside the file $file\_name$.
+
+  The function returns \texttt{true} on success and \texttt{false} otherwise.
+}
+
+\item[\texttt{ui.tree\_load(file\_name)}]
+{
+  Loads the tree from the XML file $file\_name$.
+
+  The function returns \texttt{true} on success and \texttt{false} otherwise.
+}
+
+\item[\texttt{ui.question(text, buttons)}]
+{
+  Asks the user a question requesting him to answer by selecting a response.
+
+  The question is described in the string \texttt{text}, while the set of 
+  possible answers described in the table \texttt{buttons}. 
+  Each element in \texttt{buttons} is string representing a possible answer.
+  
+  Upon success, the function returns the index of the answer selected by the 
+  user in the table \texttt{buttons} 
+  (LUA table indexes are usually numbers greater or equal to 1). 
+  Upon failure failure the function returns 0.
+}
+
+\item[\texttt{ui.readline(text [,len [,default]])}]
+{
+  Request the user to enter a text string. 
+
+  The user's input can optionally be limited to \texttt{len} characters and 
+  can hold a predefined value \texttt{default}.
+  
+  The function returns the user's input upon success and \texttt{false} otherwise.
+}
+
+\end{description}
+
+\subsection{The \texttt{log} library}
+
+The \texttt{log} library contains just one function described below, which allows to print messages in the ``log'' tab of the application.
+
+\begin{description}
+
+\item[\texttt{log.print(level, text)}]
+{
+  Prints a message \texttt{text} in the console window.
+
+  \texttt{level} describes the type of message that is printed. 
+  \texttt{level} can take the following values: \texttt{log.INFO}, 
+  \texttt{log.DEBUG}, \texttt{log.WARNING}, or \texttt{log.ERROR}.}
+
+  All messages printed on the screen with this function are also 
+  saved in the file ``\texttt{\$HOME/.cardpeek.log''.
+}
+
+\end{description}
+
+\section{Future developments}
+
+The short term development `road map' is:
+\begin{description}
+\item[GSM:]{Add a SIM card explorer script.}
+\item[Navigo/Calypso:]{Provide better analysis of the card data, perhaps with city specific data.}
+\item[Translation:]{Translate this document in French.}
+\end{description}
+
+\section{Licence}
+
+\texttt{Cardpeek} is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+\texttt{Cardpeek} is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see \url{http://www.gnu.org/licenses/}.
+
+\end{document}

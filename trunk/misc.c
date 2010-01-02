@@ -231,15 +231,17 @@ int a_sprintf(a_string_t* cs, const char *format, ...)
 
   va_start(al,format);
   reclen=vsnprintf(cs->_data,0,format,al);
+  va_end(al);
   if (reclen+1>cs->_alloc)
   {
     cs->_alloc=reclen+1;
     free(cs->_data);
     cs->_data=(char *)malloc(cs->_alloc);
   }
+  va_start(al,format);
   vsnprintf(cs->_data,reclen+1,format,al);
-  cs->_size=reclen+1;
   va_end(al);
+  cs->_size=reclen+1;
   return reclen;
 }
 

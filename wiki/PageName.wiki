@@ -1,5 +1,0 @@
-#summary One-sentence summary of this page.
-
-= Welcome to the cardpeek Wiki =
-
-There's not much information yet on this page.

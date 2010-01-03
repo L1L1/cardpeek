@@ -49,7 +49,7 @@ docs-clean:
 		cd doc; make clean
 
 package:	clean
-		cd ..; tar zcvf cardpeek-`date +%Y%m%d`.tgz cardpeek/
+		cd ..; tar zcvf cardpeek-`date +%Y%m%d`.tgz --exclude-vcs cardpeek/
 
 clean:		docs-clean
 		rm -f cardpeek *.o

@@ -2,6 +2,6 @@
 
 = Cardpeek Screenshots =
 == EMV ==
-http://cardpeek.googlecode.com/files/Carpeek-screenshot2.png
+http://cardpeek.googlecode.com/files/Cardpeek-screenshot2.jpg
 == Navigo ==
-http://cardpeek.googlecode.com/files/Carpeek-screenshot.png
+http://cardpeek.googlecode.com/files/Cardpeek-screenshot.jpg

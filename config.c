@@ -36,6 +36,7 @@ const char *CONFIG_OPTIONS[]={
   ".cardpeek/logs/",
   ".cardpeek/config.lua",
   ".cardpeek.log",
+  ".cardpeek/version",
   NULL
 };
 

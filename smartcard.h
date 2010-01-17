@@ -27,6 +27,9 @@
 #define PROTOCOL_T0 1
 #define PROTOCOL_T1 2
 
+#define SMARTCARD_ERROR 0
+#define SMARTCARD_OK 1
+
 /********************************************************************
  * CARDMANAGER
  */ 
@@ -65,6 +68,7 @@ struct _cardreader_t {
   int (*reset)(cardreader_t*);
   unsigned short (*transmit)(cardreader_t*,const bytestring_t*, bytestring_t*);
   bytestring_t* (*last_atr)(cardreader_t*);
+  char** (*get_info)(cardreader_t*,char**);
   int (*fail)(cardreader_t*);
   void (*finalize)(cardreader_t*);
 };
@@ -85,6 +89,8 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 unsigned short cardreader_get_sw(cardreader_t *reader);
 
 bytestring_t* cardreader_last_atr(cardreader_t *reader);
+
+char** cardreader_get_info(cardreader_t *reader);
 
 int cardreader_fail(cardreader_t *reader);
 

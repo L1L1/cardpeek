@@ -24,19 +24,22 @@
 int emul_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   cardemul_t* emul = cr->extra_data;
-  
+
+  cr->connected = 1;
   return cardemul_run_cold_reset(emul);
 }
 
 int emul_disconnect(cardreader_t *cr)
 {
+  cr->connected = 0;
+  log_printf(LOG_INFO,"Disconnected reader");
   return 1;
 }
 
 int emul_reset(cardreader_t *cr)
 {
   cardemul_t* emul = cr->extra_data;
-  
+  log_printf(LOG_INFO,"Reset reader");
   return cardemul_run_warm_reset(emul);
 }
 
@@ -45,8 +48,10 @@ unsigned short emul_transmit(cardreader_t* cr,
 			     bytestring_t* result)
 {
   cardemul_t* emul = cr->extra_data;
-  unsigned short SW;
-  cardemul_run_command(emul,command,&SW,result);
+  unsigned short SW = 0;
+
+  if (cr->connected) 
+    cardemul_run_command(emul,command,&SW,result);
   return SW;
 }
 
@@ -55,14 +60,19 @@ bytestring_t* emul_last_atr(cardreader_t* cr)
   cardemul_t* emul = cr->extra_data;
   bytestring_t* res = bytestring_new(8);
 
-  cardemul_run_last_atr(emul,res);
-
+  if (cr->connected)
+    cardemul_run_last_atr(emul,res);
   return res;
+}
+
+char** emul_get_info(cardreader_t* cr,char** parent)
+{
+  return parent; /* nothing to add */
 }
 
 int emul_fail(cardreader_t* cr)
 {
-  return 0;
+  return (cr->connected==0);
 }
 
 void emul_finalize(cardreader_t* cr)
@@ -93,6 +103,7 @@ int emul_initialize(cardreader_t *reader)
   reader->reset        = emul_reset;
   reader->transmit     = emul_transmit;
   reader->last_atr     = emul_last_atr;
+  reader->get_info     = emul_get_info;
   reader->fail         = emul_fail;
   reader->finalize     = emul_finalize;
   return 1;

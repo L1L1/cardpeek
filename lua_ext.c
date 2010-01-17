@@ -212,6 +212,9 @@ int luax_init()
   luaopen_card(LUA_STATE);
   luaopen_log(LUA_STATE);
   luaopen_ui(LUA_STATE);
+  chdir(config_get_string(CONFIG_FOLDER_CARDPEEK));
+  log_printf(LOG_DEBUG,"Running configuration script %s",config_get_string(CONFIG_FILE_CONFIG));
+  run_file(LUA_STATE,config_get_string(CONFIG_FILE_CONFIG));
   return 0;
 }
 
@@ -220,3 +223,41 @@ void luax_release()
   x_lua_end(LUA_STATE);
 }
 
+const char *luax_get_string_value(const char *identifier)
+{
+  static char result_buffer[256];
+  char *result = result_buffer;
+
+  lua_getglobal(LUA_STATE,identifier);
+
+  switch (lua_type(LUA_STATE,-1)) {
+    case LUA_TNIL:
+      result = NULL;
+      break;
+    case LUA_TNUMBER:
+      sprintf(result,"%f",lua_tonumber(LUA_STATE,-1));
+      break;
+    case LUA_TBOOLEAN:
+      if (lua_toboolean(LUA_STATE,-1))
+	strcpy(result,"true");
+      else
+	strcpy(result,"false");
+      break;
+    case LUA_TSTRING:
+      strncpy(result,lua_tostring(LUA_STATE,-1),255);
+      result[255]=0;
+      break;
+    case LUA_TTABLE:
+    case LUA_TFUNCTION:
+    case LUA_TUSERDATA:
+    case LUA_TTHREAD:
+    case LUA_TLIGHTUSERDATA:
+      sprintf(result,"[%s]",lua_typename(LUA_STATE,-1));
+      break;
+    default:
+      result = NULL;
+      break;
+  }
+  lua_pop(LUA_STATE,1);
+  return result;
+}

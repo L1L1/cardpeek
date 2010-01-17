@@ -27,11 +27,13 @@
 #include <unistd.h>
 #include <dirent.h>
 #include "config.h"
+#include "lua_ext.h"
 
 const char* iso7816_error_code(unsigned short sw);
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
 int cardmanager_search_emul_readers(cardmanager_t *cm);
+int cardmanager_search_acg_readers(cardmanager_t *cm);
 
 /********************************************************************
  * CARDMANAGER
@@ -43,6 +45,8 @@ cardmanager_t *cardmanager_new()
   memset(cm,0,sizeof(cardmanager_t));
 
   cardmanager_search_pcsc_readers(cm);
+  cardmanager_search_acg_readers(cm);
+
   cardmanager_search_emul_readers(cm);
   return cm;
 }
@@ -135,6 +139,7 @@ int cardlog_count_records()
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
 #include "drivers/emul_driver.c"
+#include "drivers/acg_driver.c"
 
 
 cardreader_t* cardreader_new(const char *card_reader_name)
@@ -158,6 +163,12 @@ cardreader_t* cardreader_new(const char *card_reader_name)
   {
     reader->name=strdup(card_reader_name);
     emul_initialize(reader);
+    return reader;
+  }
+  if (strncmp(card_reader_name,"acg://",6)==0)
+  {
+    reader->name=strdup(card_reader_name);
+    acg_initialize(reader);
     return reader;
   }
  
@@ -252,6 +263,29 @@ unsigned short cardreader_get_sw(cardreader_t *reader)
 bytestring_t *cardreader_last_atr(cardreader_t *reader)
 {
   return reader->last_atr(reader);
+}
+
+char** cardreader_get_info(cardreader_t *reader)
+{
+  char SW_string[5];
+  char **prev = malloc(sizeof(char*)*(2*5+1));
+
+  prev[0]=strdup("Name");
+  prev[1]=strdup(reader->name);
+  prev[2]=strdup("Connected");
+  if (reader->connected)
+    prev[3]=strdup("TRUE");
+  else
+    prev[3]=strdup("FALSE");
+  prev[4]=strdup("Protocol");
+  prev[5]=strdup("Undefined");
+  prev[6]=strdup("SW");
+  sprintf(SW_string,"%04X",reader->sw);
+  prev[7]=strdup(SW_string);
+  prev[8]=strdup("CommandInterval");
+  prev[9]=strdup("0");
+  prev[10]=NULL;
+  return reader->get_info(reader, prev);
 }
 
 int cardreader_fail(cardreader_t *reader)
@@ -473,22 +507,65 @@ int cardmanager_search_emul_readers(cardmanager_t *cm)
   a_string_t* fn;
   struct dirent **namelist;
   const char* log_folder = config_get_string(CONFIG_FOLDER_LOGS); 
-  int n;
+  int count,n;
 
   n = scandir(log_folder,&namelist,select_clf,alphasort);
 
-  if (n<0)
-    return 1;
+  if (n<=0)
+    return 0;
+  count=0;
   
   cm->readers=(char **)realloc(cm->readers,sizeof(char*)*(cm->readers_count+n));
   while (n--)
   {
+    count++;
     fn = a_strnew(NULL);
     a_sprintf(fn,"emulator://%s",namelist[n]->d_name);
     cm->readers[cm->readers_count++]=a_strfinalize(fn);
     free(namelist[n]);
   }
   free(namelist);
-  return 1;
+  return count;
+}
+
+int cardmanager_search_acg_readers(cardmanager_t *cm)
+{
+  a_string_t* reader;
+  const char *reader_name;
+  int count=0;
+  const char *device_name;
+
+  device_name = luax_get_string_value("ACG_MULTI_ISO_TTY");
+  if (device_name)
+  {
+    reader_name=acg_detect(device_name);
+    if (reader_name)
+    {
+      count++;
+      cm->readers=(char **)realloc(cm->readers,sizeof(char*)*(cm->readers_count+1));
+      reader=a_strnew("acg://");
+      a_strcat(reader,device_name);
+      a_strcat(reader,"/");
+      a_strcat(reader,reader_name);
+      cm->readers[cm->readers_count++]=a_strfinalize(reader);
+    }
+  }
+ 
+  device_name = luax_get_string_value("ACG_LFX_TTY");
+  if (device_name)
+  {
+    reader_name=acg_detect(device_name);
+    if (reader_name)
+    {
+      count++;
+      cm->readers=(char **)realloc(cm->readers,sizeof(char*)*(cm->readers_count+1));
+      reader=a_strnew("acg://");
+      a_strcat(reader,device_name);
+      a_strcat(reader,"/");
+      a_strcat(reader,reader_name);
+      cm->readers[cm->readers_count++]=a_strfinalize(reader);
+    }
+  }
+  return count;
 }
 

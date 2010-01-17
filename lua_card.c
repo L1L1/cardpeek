@@ -61,84 +61,23 @@ int subr_card_last_atr(lua_State* L)
   return 1;
 }
 
-int subr_card_status(lua_State* L)
+int subr_card_info(lua_State* L)
 {
-  /*
-  cardInformation cri = READER.information();
+  char **info=cardreader_get_info(READER);
   int index;
 
   lua_newtable(L);
 
-  lua_pushstring(L,"reader");
-  lua_pushstring(L,cri.cri_name.c_str());
-  lua_settable(L,-3);
-
-  lua_pushstring(L,"state");
-  lua_newtable(L);
-  index=1;
-  if (cri.cri_state&SCARD_ABSENT)
+  for (index=0;info[index]!=NULL;index+=2)
   {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"absent");
+    lua_pushstring(L,info[index]);
+    lua_pushstring(L,info[index+1]);
     lua_settable(L,-3);
+    free(info[index]);
+    free(info[index+1]);
   }
-
-  if (cri.cri_state&SCARD_PRESENT)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"present");
-    lua_settable(L,-3);
-  }
-
-  if (cri.cri_state&SCARD_SWALLOWED)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"swallowed");
-    lua_settable(L,-3);
-  }
-
-  if (cri.cri_state&SCARD_POWERED)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"powered");
-    lua_settable(L,-3);
-  }
-
-  if (cri.cri_state&SCARD_NEGOTIABLE)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"negotiable");
-    lua_settable(L,-3);
-  }
-
-  if (cri.cri_state&SCARD_SPECIFIC)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"specific");
-    lua_settable(L,-3);
-  }
-
-  if (cri.cri_state&SCARD_ABSENT)
-  {
-    lua_pushinteger(L,index++);
-    lua_pushstring(L,"absent");
-    lua_settable(L,-3);
-  }
-  lua_settable(L,-3);
-
-  lua_pushstring(L,"protocol");
-  if (cri.cri_protocol==SCARD_PROTOCOL_T0) lua_pushstring(L,"T0");
-  else if (cri.cri_protocol==SCARD_PROTOCOL_T1) lua_pushstring(L,"T1");
-  else lua_pushstring(L,"unknown");
-  lua_settable(L,-3);
-
-  lua_pushstring(L,"atr");
-  lua_pushbytestring(L,cri.cri_atr);
-  lua_settable(L,-3);
+  free(info);
   return 1;
-  */
-	  log_printf(LOG_WARNING,"this function is not implemented");
-  return 0;
 }
 
 int subr_card_send(lua_State* L)
@@ -166,7 +105,7 @@ static const struct luaL_reg cardlib [] = {
   {"disconnect", subr_card_disconnect },
   {"warm_reset", subr_card_warm_reset },
   {"last_atr", subr_card_last_atr },
-  {"status", subr_card_status },
+  {"info", subr_card_info },
   {"send", subr_card_send },
   {"set_command_interval", subr_card_set_command_interval },
   {NULL, NULL}  /* sentinel */

@@ -1,13 +1,15 @@
 CC=gcc
 
-CFLAGS=`pkg-config lua5.1 --cflags` `pkg-config gtk+-2.0 --cflags` -I /usr/include/PCSC -Wall -pedantic -c
+CFLAGS=-Wall -pedantic -c `pkg-config --exists lua5.1 && pkg-config lua5.1 --cflags || pkg-config lua --cflags` \
+	`pkg-config libpcsclite gtk+-2.0 --cflags`
 
-LFLAGS=-L/usr/include/lua5.1 `pkg-config lua5.1 --libs` `pkg-config gtk+-2.0 --libs` -lpcsclite -lreadline
+LFLAGS=-Wall `pkg-config --exists lua5.1 && pkg-config lua5.1 --libs || pkg-config lua --libs`\
+	`pkg-config libpcsclite gtk+-2.0 --libs`
 
 OBJECTS=bytestring.o asn1.o misc.o config.o smartcard.o cardtree.o gui.o \
 	lua_ext.o main.o dot_cardpeek.o emulator.o 
 
-DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c
+DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 
 all:		cardpeek
 
@@ -53,3 +55,4 @@ package:	clean
 
 clean:		docs-clean
 		rm -f cardpeek *.o
+

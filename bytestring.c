@@ -73,46 +73,10 @@ unsigned hex_nibble(const char nibble)
 bytestring_t* bytestring_new_from_string(unsigned element_width, const char *str)
 {
   bytestring_t *dat=bytestring_new(element_width);
-  unsigned str_len=strlen(str);
-  unsigned c;
-  unsigned value;
-  unsigned state;
-  size_t i=0;
-
-  if (element_width==8)
-  {
-    /*bytestring_resize(dat,str_len/2);*/
-    state=0;
-    value=0;
-    for (i=0;i<str_len;i++)
-    {
-      c=hex_nibble(str[i]);
-      if (c==BYTESTRING_NPOS)
-	continue;
-      value=(value<<4)|c;
-      state++;
-      if (state==2)
-      {	
-  	bytestring_pushback(dat,(unsigned char)value);
-	state=0;
-	value=0;
-      }
-    }
-    if (state==1)
-      bytestring_pushback(dat,(unsigned char)(value<<4));
-  }
-  else
-  {
-    /*testring_resize(dat,str_len);*/
-    for (i=0;i<str_len;i++)
-    {
-      value=hex_nibble(str[i]);
-      if (value==BYTESTRING_NPOS)
-	continue;
-      bytestring_pushback(dat,(unsigned char)value);
-    }
-  }
-  return dat; 
+  if (bytestring_assign_from_string(dat,str)==BYTESTRING_OK)
+    return dat; 
+  bytestring_free(dat);
+  return NULL;
 }
 
 bytestring_t* bytestring_duplicate(const bytestring_t *bs)
@@ -137,6 +101,53 @@ int bytestring_assign_element(bytestring_t* bs,
 {
   bytestring_resize(bs,len);
   memset(bs->data,c&bs->mask,len);
+  return BYTESTRING_OK;
+}
+
+int bytestring_assign_from_string(bytestring_t* bs,
+				  const char *str)
+{
+  unsigned str_len=strlen(str);
+  unsigned c;
+  unsigned value;
+  unsigned state;
+  size_t i=0;
+
+  bytestring_clear(bs);
+
+  if (bs->width==8)
+  {
+    /*bytestring_resize(dat,str_len/2);*/
+    state=0;
+    value=0;
+    for (i=0;i<str_len;i++)
+    {
+      c=hex_nibble(str[i]);
+      if (c==BYTESTRING_NPOS)
+	continue;
+      value=(value<<4)|c;
+      state++;
+      if (state==2)
+      {	
+  	bytestring_pushback(bs,(unsigned char)value);
+	state=0;
+	value=0;
+      }
+    }
+    if (state==1)
+      bytestring_pushback(bs,(unsigned char)(value<<4));
+  }
+  else
+  {
+    /*testring_resize(dat,str_len);*/
+    for (i=0;i<str_len;i++)
+    {
+      value=hex_nibble(str[i]);
+      if (value==BYTESTRING_NPOS)
+	continue;
+      bytestring_pushback(bs,(unsigned char)value);
+    }
+  }
   return BYTESTRING_OK;
 }
 

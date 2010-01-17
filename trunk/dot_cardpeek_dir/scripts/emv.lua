@@ -19,6 +19,7 @@
 
 require('lib.apdu')
 require('lib.tlv')
+require('lib.strict')
 
 --------------------------------------------------------------------------
 -- GLOBAL EMV CARD COMMANDS extending general lib.apdu 
@@ -53,9 +54,14 @@ EMV_REFERENCE = {
    ['91'] = "Issuer Authentication Data", 
    ['92'] = "Issuer PK Remainder", 
    ['93'] = "Signed Static Application Data", 
-   ['94'] = "Application File Locator (AFL)", 
+   ['94'] = "Application File Locator (AFL)",
+   ['95'] = "Terminal Verification Results (TVR)",
    ['97'] = "Transaction Certificate Data Object List (TDOL)", 
+   ['9A'] = "Transaction Date",
+   ['9C'] = "Transaction Type",
    ['A5'] = "FCI Proprietary Template", 
+   ['9F02'] = "Amount, Authorized",
+   ['9F03'] = "Amount, Other",
    ['9F05'] = "Application Discretionary Data", 
    ['9F07'] = "Application Usage Control", 
    ['9F08'] = "Application Version Number", 
@@ -70,6 +76,7 @@ EMV_REFERENCE = {
    ['9F14'] = "Lower Consecutive Offline Limit (Terminal Check)", 
    ['9F17'] = "PIN Try Counter", 
    ['9F19'] = "Dynamic Data Authentication Data Object List (DDOL)", 
+   ['9F1A'] = "Terminal Country Code",
    ['9F1F'] = "Track 1 Discretionary Data", 
    ['9F23'] = "Upper Consecutive Offline Limit (Terminal Check)", 
    ['9F26'] = "Application Cryptogram (AC)", 
@@ -89,9 +96,9 @@ EMV_REFERENCE = {
    ['9F4A'] = "Static Data Authentication Tag List", 
    ['9F4B'] = "Signed Dynamic Application Data", 
    ['9F4C'] = "Integrated Circuit Card (ICC) Dynamic Number",
-   ["9F4F"] = "Log Fromat",
-   ['9F51'] = "Application Currency Code", 
-   ['9F52'] = "Application Default Action (ADA)", 
+   ['9F4F'] = "Log Fromat",
+   ['9F51'] = "Application Currency Code",
+   ['9F52'] = "Card Verification Results (CVR)", 
    ['9F53'] = "Consecutive Transaction Limit (International)", 
    ['9F54'] = "Cumulative Total Transaction Amount Limit", 
    ['9F55'] = "Geographic Indicator", 
@@ -133,9 +140,12 @@ EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }
 
 
 function emv_process_pse(cardenv)
+	local sw, resp
 	local APP
 	local ref
 	local sfi
+	local FILE
+	local rec
 	local REC
 	local RECORD
 	local aid
@@ -224,6 +234,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	local LOG_DATA
 	local LOG_FORMAT
 	local REC
+	local ITEM
 	local log_recno
 
 	LOG_FILE   = ui.tree_add_node(application,"file",log_sfi)
@@ -239,19 +250,17 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	log_tag, log_format = asn1.split(log_format)
 
 	i = 1
+	item = ""
 	while log_format 
 	do
 	    tag, log_format = asn1.split_tag(log_format)
 	    len, log_format = asn1.split_length(log_format)
-	    log_items[i]= { tag, len }
-	    i = i+1
 	    tag_name = tlv_tag_name(tag,EMV_REFERENCE,0);
-	    if tag_name then
-	        ui.tree_add_node(LOG_FORMAT,tag_name,string.format("%X",tag),len)
-	    else
-	        ui.tree_add_node(LOG_FORMAT,"tlv",string.format("%X",tag),len)
-	    end
+	    log_items[i]= { tag, len, tag_name }
+	    i = i+1
+	    item = item .. string.format("0x%X[%d] ", tag, len);
 	end
+	ui.tree_set_value(LOG_FORMAT,item);
 
 	log.print(log.INFO,string.format("Reading LOG SFI %i",log_sfi))
 	for log_recno =1,log_max do
@@ -261,10 +270,14 @@ function emv_process_application_logs(application, log_sfi, log_max)
 		  break
 	   else
 	          REC = ui.tree_add_node(LOG_DATA,"record",log_recno,#resp)
-		  item = ""
 		  item_pos = 0
 		  for i=1,#log_items do
-		     item = item .. tostring(bytes.sub(resp,item_pos,item_pos+log_items[i][2]-1)) .. "  "
+		     if log_items[i][3] then
+		        ITEM = ui.tree_add_node(REC,log_items[i][3],nil,log_items[i][2])
+		     else
+		        ITEM = ui.tree_add_node(REC,string.format("tag %X",log_items[i][1]),nil,log_items[i][2])
+		     end
+		     ui.tree_set_value(ITEM,tostring(bytes.sub(resp,item_pos,item_pos+log_items[i][2]-1)))
 	             item_pos = item_pos + log_items[i][2]
 	          end
 		  ui.tree_set_value(REC,item)
@@ -274,6 +287,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
 end
 
 function emv_process_application(cardenv,aid)
+	local sw, resp
 	local APP
 	local ref
 	local GPO
@@ -422,6 +436,7 @@ CPLC_DATA =
 
 
 function emv_process_cplc(cardenv)
+	local sw, resp
 	local CPLC
 	local cplc_data
 	local cplc_tag
@@ -455,7 +470,7 @@ end
 
 card.connect()
 
-mycard = card.tree_startup("EMV")
+local mycard = card.tree_startup("EMV")
 
 emv_process_pse(mycard)
 card.warm_reset()

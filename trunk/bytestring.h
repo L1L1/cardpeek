@@ -45,7 +45,10 @@ bytestring_t* bytestring_duplicate(const bytestring_t *bs);
 int bytestring_assign_data(bytestring_t* bs, 
 			   unsigned len, const unsigned char *data);
 int bytestring_assign_element(bytestring_t* bs, 
-			    unsigned len, unsigned char c);
+			      unsigned len, unsigned char c);
+int bytestring_assign_from_string(bytestring_t* bs,
+				  const char* str);
+
 int bytestring_copy(bytestring_t *bs, 
 		    const bytestring_t *src);
 int bytestring_convert(bytestring_t *bs,

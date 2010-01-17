@@ -88,6 +88,7 @@ void gui_logfunction(int log_level, const char* str)
     gtk_statusbar_pop (STATUS_BAR, STATUS_BAR_CONTEXT_ID);
     gtk_statusbar_push (STATUS_BAR, STATUS_BAR_CONTEXT_ID,tmp);
   }
+  gui_update(1);
 }
 
 /***************************************************************/
@@ -361,8 +362,8 @@ static GtkItemFactoryEntry menu_items[] = {
   { "/_Reader/Reset",            NULL,         G_CALLBACK(menu_cb),  12, "<StockItem>", GTK_STOCK_REDO },
   { "/_Reader/Disconnect",       NULL,         G_CALLBACK(menu_cb),  13, "<StockItem>", GTK_STOCK_DISCONNECT },
   { "/_Reader/sep1",             NULL,         NULL,                  0, "<Separator>" },
-  { "/_Reader/Record card data", NULL,         G_CALLBACK(menu_cb),  14, "<CheckItem>" }, 
-  { "/_Reader/Save card data",   NULL,         G_CALLBACK(menu_cb),  15, "<Item>" }, 
+  { "/_Reader/Record APDU's", NULL,         G_CALLBACK(menu_cb),  14, "<CheckItem>" }, 
+  { "/_Reader/Save APDU's to file",   NULL,         G_CALLBACK(menu_cb),  15, "<Item>" }, 
   { "/_Help",                    NULL,         NULL,                  0, "<LastBranch>" },
   { "/_Help/About",              NULL,         G_CALLBACK(menu_cb),  99, "<StockItem>", GTK_STOCK_INFO },
 };

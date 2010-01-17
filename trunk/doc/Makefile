@@ -2,7 +2,10 @@ LATEX=pdflatex
 
 all:			cardpeek_ref.en.pdf cardpeek_ref.fr.pdf
 
-%.pdf:			%.tex
+%.toc:			%.tex
+			$(LATEX) $<
+
+%.pdf:			%.tex %.toc
 			$(LATEX) $<
 
 clean:

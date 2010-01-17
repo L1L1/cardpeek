@@ -186,6 +186,11 @@ bytestring_t* pcsc_last_atr(cardreader_t* cr)
   return res;
 }
 
+char **pcsc_get_info(cardreader_t* cr, char** parent)
+{
+  return parent;
+}
+
 int pcsc_fail(cardreader_t* cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
@@ -211,6 +216,7 @@ int pcsc_initialize(cardreader_t *reader)
   reader->reset        = pcsc_reset;
   reader->transmit     = pcsc_transmit;
   reader->last_atr     = pcsc_last_atr;
+  reader->get_info     = pcsc_get_info;
   reader->fail         = pcsc_fail;
   reader->finalize     = pcsc_finalize;
   return 1;

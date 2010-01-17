@@ -29,6 +29,7 @@
 #include "gui.h"
 #include "config.h"
 #include "lua_ext.h"
+#include "script_version.h"
 
 extern unsigned char _binary_dot_cardpeek_tar_gz_start;
 extern unsigned char _binary_dot_cardpeek_tar_gz_end;
@@ -37,28 +38,64 @@ int install_dot_file()
 {
   const char* dot_dir = config_get_string(CONFIG_FOLDER_CARDPEEK);
   const char* home_dir = config_get_string(CONFIG_FOLDER_HOME);
+  const char* version_file = config_get_string(CONFIG_FILE_SCRIPT_VERSION);
   struct stat sbuf;
   FILE* f;
   int status;
   a_string_t* astr;
+  unsigned dot_version=0;
+  int response;
 
   if (stat(dot_dir,&sbuf)==0)
   {
     log_printf(LOG_DEBUG,"Found directory '%s'",dot_dir);
-    return 1;
-  }
-  
-  astr = a_strnew(NULL);
-  a_sprintf(astr,"It seems this is the first time you run Cardpeek, because \n'%s' does not exit.\n"
-	    "Do you want to create '%s' ?",dot_dir,dot_dir);
 
-  if (gui_question(a_strval(astr),"Yes","No",NULL)!=0)
-  {
-    log_printf(LOG_DEBUG,"'%s' will not be created",dot_dir);
+    if ((f = fopen(version_file,"r"))!=NULL) 
+    {
+      fscanf(f,"%u",&dot_version);
+      fclose(f);
+      if (dot_version>=SCRIPT_VERSION) 
+      {
+	log_printf(LOG_DEBUG,"Scripts are up to date.");
+	return 1;
+      }
+    }
+    astr = a_strnew(NULL);
+    a_sprintf(astr,"Some scripts in '%s' seem to come from an older version of Cardpeek\n"
+	      "Do you want to upgrade these scripts ?",dot_dir);
+
+    if ((response = gui_question(a_strval(astr),"Yes","No","No, don't ask me again",NULL))!=0)
+    {
+      log_printf(LOG_DEBUG,"The scripts in '%s' will not be upgraded.",dot_dir);
+      a_strfree(astr);
+
+      if (response==2)
+      {
+	if ((f=fopen(version_file,"w"))!=NULL)
+	{
+	  fprintf(f,"%u\n",SCRIPT_VERSION);
+	  fclose(f);
+	}
+      }
+      return 0;
+    }
     a_strfree(astr);
-    return 0;
   }
-  a_strfree(astr);
+  else
+  {
+    astr = a_strnew(NULL);
+    a_sprintf(astr,"It seems this is the first time you run Cardpeek, because \n'%s' does not exit.\n"
+  	      "Do you want to create '%s' ?",dot_dir,dot_dir);
+
+    if (gui_question(a_strval(astr),"Yes","No",NULL)!=0)
+    {
+      log_printf(LOG_DEBUG,"'%s' will not be created",dot_dir);
+      a_strfree(astr);
+
+      return 0;
+    }
+    a_strfree(astr);
+  }
     
   chdir(home_dir);
   f = fopen("dot_cardpeek.tar.gz","w");
@@ -100,6 +137,8 @@ int main(int argc, char **argv)
   
   install_dot_file();
 
+  luax_init();
+
   CTX = cardmanager_new();
 
   reader_name = gui_select_reader(cardmanager_count_readers(CTX),cardmanager_reader_name_list(CTX));
@@ -107,8 +146,6 @@ int main(int argc, char **argv)
   READER = cardreader_new(reader_name);
   if (reader_name) g_free(reader_name);
   cardmanager_free(CTX);
-
-  luax_init();
 
   luax_set_card_reader(READER);
 

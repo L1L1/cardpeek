@@ -8,7 +8,7 @@ The goal of this project is to allow smartcard owners to be better informed abou
 
 The tool currently reads the contents of : 
   * EMV cards 
-  * [http://code.google.com/p/cardpeek/wiki/navigo Navigo] public transport cards 
+  * [http://code.google.com/p/cardpeek/wiki/Navigo Navigo] public transport cards 
   * Moneo ePurse cards 
 
 

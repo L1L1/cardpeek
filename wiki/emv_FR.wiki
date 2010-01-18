@@ -1,0 +1,17 @@
+#summary Lire le contenu de sa carte bancaire EMV
+
+= Comment lire le contenu de sa carte bancaire EMV =
+
+http://cardpeek.googlecode.com/files/sample-emv.jpg
+
+Le logiciel *cardpeek* contient un script "emv" qui permet de lire le contenu des cartes bancaires EMV utilisées dans le monde.
+
+= Notes =
+
+Le script réalise ce qu'on appelle techniquement un GPO (Get Processing Options). Voir le manuel de cardpeek pour plus de détails sur ce point.
+
+= Protection des données personnelles =
+
+Certaines cartes bancaires conservent un historique de vos transactions qui peut dépasser la centaine d'enregistrement. Ces enregistrements, qui contiennent notamment la date, le montant et le pays de vos achats/retraits, peuvent poser des risques pour la protection de la vie privée. La question demeure de savoir pourquoi les banques conservent tant d'informations dans la carte du porteur ?
+
+Les éléments de sécurité de la carte comme le PIN (Code personnel) et les clés cryptographiques bancaires sont protégées dans la carte et ne peuvent absolument pas être lues.

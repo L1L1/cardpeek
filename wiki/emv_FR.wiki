@@ -1,17 +1,23 @@
-#summary Lire le contenu de sa carte bancaire EMV
+#summary Reading the content of an EMV bank card
 
-= Comment lire le contenu de sa carte bancaire EMV ? =
+= How can I read the contents of my EMV bank card? =
 
 http://cardpeek.googlecode.com/files/sample-emv.jpg
 
-Le logiciel *cardpeek* contient un script "emv" qui permet de lire le contenu des cartes bancaires EMV utilisées dans le monde.
+The "emv" script in *cardpeek* provides an analysis of EMV banking cards used across the
+world.
 
 = Notes =
 
-Le script réalise ce qu'on appelle techniquement un GPO (Get Processing Options). Voir le manuel de cardpeek pour plus de détails sur ce point.
+This script will ask you if you want to issue a Get Processing Option (GPO)
+command for each application on the card. Since some cards have several applications
+(e.g. a national and an international application), this question may be asked twice or
+more. This command is needed to allow access to some information in the card. Issuing this command will also increase an internal counter inside the card (the ATC).
 
-= Protection des données personnelles =
+= Notes on privacy =
 
-Certaines cartes bancaires conservent un historique de vos transactions qui peut dépasser la centaine d'enregistrement. Ces enregistrements, qui contiennent notamment la date, le montant et le pays de vos achats/retraits, peuvent poser des risques pour la protection de la vie privée. La question demeure de savoir pourquoi les banques conservent tant d'informations dans la carte du porteur ?
+You will notice that many of these bank cards keep a \transaction log" of the last
+transactions you have made with your card. Some banks cards keep way over a hundred
+transactions that are freely readable, containing the date, the amount and the country of the transaction, which brings up some privacy issues. Why do banks need to keep so much information in the card?
 
-Les éléments de sécurité de la carte comme le PIN (Code personnel) et les clés cryptographiques bancaires sont protégées dans la carte et ne peuvent absolument pas être lues.
+The security elements in the card, such as the PIN and the cryptographic keys are fully protected in the card and cannot be read.

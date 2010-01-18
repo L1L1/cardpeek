@@ -1,6 +1,6 @@
 #summary Lire le contenu de sa carte bancaire EMV
 
-= Comment lire le contenu de sa carte bancaire EMV =
+= Comment lire le contenu de sa carte bancaire EMV ? =
 
 http://cardpeek.googlecode.com/files/sample-emv.jpg
 

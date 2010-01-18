@@ -1,0 +1,58 @@
+CC=gcc
+
+CFLAGS=-Wall -pedantic -c `pkg-config --exists lua5.1 && pkg-config lua5.1 --cflags || pkg-config lua --cflags` \
+	`pkg-config libpcsclite gtk+-2.0 --cflags`
+
+LFLAGS=-Wall `pkg-config --exists lua5.1 && pkg-config lua5.1 --libs || pkg-config lua --libs`\
+	`pkg-config libpcsclite gtk+-2.0 --libs`
+
+OBJECTS=bytestring.o asn1.o misc.o config.o smartcard.o cardtree.o gui.o \
+	lua_ext.o main.o dot_cardpeek.o emulator.o 
+
+DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
+
+all:		cardpeek
+
+cardpeek:	icons.c $(OBJECTS)
+		$(CC) $(LFLAGS) $(OBJECTS) -o cardpeek
+
+icons.c:	icons/
+		gdk-pixbuf-csource --raw --name icon_item   icons/item.png > icons.c
+		gdk-pixbuf-csource --raw --name icon_card   icons/drive.png >> icons.c
+		gdk-pixbuf-csource --raw --name icon_folder icons/folder.png >> icons.c
+		gdk-pixbuf-csource --raw --name icon_file   icons/document.png >> icons.c
+		gdk-pixbuf-csource --raw --name icon_record icons/card.png >> icons.c
+		gdk-pixbuf-csource --raw --name icon_block  icons/block.png >> icons.c
+		touch cardtree.c
+
+%.o:		%.c %.h
+		$(CC) $(CFLAGS) $<
+
+gui.o:		gui.c gui.h
+		$(CC) $(CFLAGS) -Wno-write-strings $<
+
+smartcard.o:	smartcard.c smartcard.h $(DRIVERS)
+		$(CC) $(CFLAGS) $<
+
+lua_ext.o:	lua_ext.c lua_ext.h lua_asn1.c  lua_bit.c  lua_bytes.c lua_card.c lua_log.c  lua_ui.c
+		$(CC) $(CFLAGS) -Wno-write-strings $<
+
+dot_cardpeek.o:	dot_cardpeek_dir
+		cp -R dot_cardpeek_dir .cardpeek
+		tar cvzf dot_cardpeek.tar.gz --exclude-vcs .cardpeek
+		rm -rf .cardpeek
+		$(CC) $(CFLAGS) script.S -o $@
+		rm -f dot_cardpeek.tar.gz
+
+docs:
+		cd doc; make
+
+docs-clean:
+		cd doc; make clean
+
+package:	clean
+		cd ..; tar zcvf cardpeek-`date +%Y%m%d`.tgz --exclude-vcs cardpeek/
+
+clean:		docs-clean
+		rm -f cardpeek *.o
+

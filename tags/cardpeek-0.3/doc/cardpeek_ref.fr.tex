@@ -1,0 +1,77 @@
+\documentclass[11pt]{article} 
+\usepackage{url} 
+\title{Manuel \texttt{Cardpeek}\\{\huge Avertissement : Traduction en cours\\voir le texte en Anglais.}}
+\author{Copyright 2009, L1L1@gmx.com} 
+\addtolength{\textwidth}{2cm} 
+\addtolength{\hoffset}{-1cm} 
+\begin{document} 
+
+\maketitle 
+
+Ceci est le manuel de \texttt{Cardpeek}, un outil de lecture de carte \`a puce
+sous GNU Linux.
+
+
+\section{Pr\'esentation}
+
+\texttt{Cardpeek} est un outil de lecture de carte \`a puce avec une interface graphique bas\'ee sur GTK 2.0, fonctionnant sous GNU Linux et extensible par le langage de programmation LUA. 
+Ce logiciel n\'ecessite un lecteur PCSC pour fonctionner.
+
+Les cartes \`a puce sont devenues banales dans notre quotidien. Nous les utilisons pour le paiement, le transport, le t\'el\'ephone et beaucoup d'autres applications. 
+Ces cartes contiennent bien souvent beaucoup d'informations, comme par exemple les traces de nos derni\`eres transactions bancaires ou encore la trace de nos derniers d\'eplacements dans les transports publics. 
+
+\texttt{Cardpeek} est un outil qui a pour objectif de vous permettre d'acc\'eder \`a ces informations personnelles. Vous pouvez ainsi \^etre mieux inform\'e des donn\'ees qui sont collect\'ees sur vous.
+
+\texttt{Cardpeek} explore le contenu d'une carte \`a puce respectant les normes ISO 7816 et la repr\'esente sous la forme d'une arborescence en respectant grossi\`erement la structure qu'elles ont sur la carte.
+
+Dans cette version, l'application est capable de lire le contenu des cartes suivantes :
+\begin{itemize}
+\item{Les cartes bancaires EMV}
+\item{Les cartes de transport parisien Navigo et certaines autres cartes similaires utilis\'ees en France.}
+\item{Les cartes Mon\'eo}
+\end{itemize}
+
+La lecture des cartes de transport est encore en version `b\'eta', et il manque d'autres types de cartes comme les cartes SIM des t\'el\'ephones mobiles. 
+Heureusement, l'application peut \^etre modifi\'ee et entendue simplement gr\^ace au langage de script LUA. 
+Pour plus d'informations sur le projet LUA, voir \texttt{http://www.lua.org/}.
+
+\section{Installation}
+
+Utiliser le \texttt{Makefile} pour construire le programme \`a partir de sa source. 
+Ce logiciel n\'ecessite les librairies GTK, LUA et PCSCLITE.
+Pour plus de d\'etails, lire le fichier \texttt{INSTALL}.
+
+\section{Descriptif de l'interface utilisateur}
+
+L'interface utilisateur est partag\'ee en trois parties : le menu, l'arborescence et la console de messages.
+
+Le menu contient deux parties :
+\begin{itemize}
+\item{un menu `fichier' permettant de charger ou de sauvegarder le contenu de l'arborescence.}
+\item{un menu `outil' permettant d'ex\'ecuter des scripts de lecture de carte \`a puce.}
+\end{itemize}
+
+L'arborescence repr\'esente la structure de la carte \`a puce, telle qu'elle est lue par le script qui est ex\'ecut\'e. Cette arborescence est enti\`erement construite par le script (voir les fonctions de l'unit\'e 'ui' ci-apr\`es).
+
+La console de message affiche des messages informatifs ou d'alerte cr\'e\'es par l'application ou le script en cours d'ex\'ecution. (voir la commande log.print ci-apr\`es).
+
+\section{Descriptif du langage de script}
+
+Les outils permettant de lire les diff\'erents formats de carte \`a puce sont stock\'es dans votre r\'epertoire \texttt{\$HOME/.cardpeek/scripts/}. 
+Ces outils sont \'ecris en LUA, un langage de programmation qui ressemble au C et au Pascal (voir \texttt{http://www.lua.org/}). 
+Pour permettre de dialoguer avec des cartes \`a puce, le langage LUA a \'et\'e \'etendu. 
+Les paragraphes suivants pr\'esentent ces extensions.
+
+\begin{center}
+{\Large A compl\'eter.}
+\end{center}
+
+\section{Licence}
+
+\texttt{Cardpeek} est un logiciel libre ; vous pouvez le redistribuer ou le modifier suivant les termes de la "GNU General Public License" telle que publi\'ee par la Free Software Foundation : soit la version 3 de cette licence, soit (\`a votre gr\'e) toute version ult\'erieure.
+  
+\texttt{Cardpeek} est distribu\'e dans l'espoir qu'il vous sera utile, mais SANS AUCUNE GARANTIE : sans m\^eme la garantie implicite de COMMERCIALISABILIT\'E ni d'AD\'EQUATION \'A UN OBJECTIF PARTICULIER. Consultez la Licence G\'en\'erale Publique GNU pour plus de d\'etails.
+  
+Vous devriez avoir reçu une copie de la Licence G\'en\'erale Publique GNU avec ce programme ; si ce n'est pas le cas, consultez :
+\texttt{http://www.gnu.org/licenses/}.
+\end{document}

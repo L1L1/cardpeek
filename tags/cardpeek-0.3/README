@@ -1,0 +1,40 @@
+UTF-8 English/Français
+
+[EN]
+Cardpeek is a Linux tool to read the contents of ISO7816 smartcards. 
+It features a GTK GUI to represent card data is a tree view, and is 
+extendable with a scripting language (LUA). 
+
+The goal of this project is to allow smartcard owners to be better 
+informed about what type of personnal information is stored in these 
+devices. 
+
+The tool currently reads the contents of : 
+    * EMV cards 
+    * Navigo public transport cards 
+    * Moneo ePurse cards 
+
+See doc/cardpeek_ref.en.pdf for more details.
+
+L1L1@gmx.com
+
+[FR]
+Cardpeek est un outil de lecture de carte à puce avec une interface 
+graphique basée sur GTK 2.0, fonctionnant sous GNU Linux et extensible 
+par le langage de programmation LUA. 
+
+Cardpeek est un outil qui a pour objectif de vous permettre d’accéder 
+aux information personnelles contenues dans ces ces dispositifs.
+    
+Dans cette version, l’application est capable de lire le contenu des 
+cartes suivantes :
+    * Les cartes bancaires EMV
+    * Les cartes de transport parisien Navigo et certaines autres 
+      cartes similaires.
+    * Les cartes Monéo
+
+Voir doc/cardpeek_ref.en.pdf pour plus de détails.
+(La version française de ce document n'est pas encore à jour).
+
+L1L1@gmx.com
+

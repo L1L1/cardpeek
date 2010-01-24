@@ -137,8 +137,9 @@ static int subr_bytes_assign(lua_State *L)
 static int subr_bytes_append(lua_State *L)
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  bytestring_t *tmp = x_bytes_create(L,bs->width,1,lua_gettop(L));
-  lua_pushbytestring(L,tmp);
+  bytestring_t *tmp = x_bytes_create(L,bs->width,2,lua_gettop(L));
+  lua_pushboolean(L,bytestring_append(bs,tmp)==BYTESTRING_OK);
+  bytestring_free(tmp);
   return 1;
 }
 

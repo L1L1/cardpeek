@@ -36,6 +36,120 @@ int cardmanager_search_emul_readers(cardmanager_t *cm);
 int cardmanager_search_acg_readers(cardmanager_t *cm);
 
 /********************************************************************
+ * APDU FUNCTIONS
+ */
+
+#define APDU_OK 1
+#define APDU_ERROR 0
+
+typedef struct {
+  unsigned class;
+  unsigned lc_len;
+  unsigned lc;
+  unsigned le_len;
+  unsigned le;
+} apdu_descriptor_t;
+
+enum {
+  APDU_CLASS_NONE,
+  APDU_CLASS_1,
+  APDU_CLASS_2S,
+  APDU_CLASS_3S,
+  APDU_CLASS_4S,
+  APDU_CLASS_2E,
+  APDU_CLASS_3E,
+  APDU_CLASS_4E
+};
+const char *APDU_CLASS_NAMES[]={"None","1","2S","3S","4S","2E","3E","4E"};
+
+int apdu_describe(apdu_descriptor_t *ad, const bytestring_t* apdu)
+{
+  unsigned apdu_len = bytestring_get_size(apdu);
+  unsigned char c;
+
+  memset(ad,0,sizeof(*ad));
+
+  if (apdu_len<4)
+    return APDU_ERROR;
+
+  if (apdu_len==4) /* CASE 1 */
+  {
+    ad->class = APDU_CLASS_1;
+    return APDU_OK;
+  }
+  
+  bytestring_get_element(&c,apdu,4);
+
+  if (apdu_len==5) /* CASE 2S */
+  {
+    ad->class = APDU_CLASS_2S;
+    ad->le_len = 1;
+    ad->le     = c;
+    return APDU_OK;
+  }
+
+  if (c>0) /* apdu_len>5 */
+  {
+    ad->lc_len= 1;
+    ad->lc    = c;
+
+    if ((5+ad->lc)==apdu_len) /* CASE 3S */
+    {
+      ad->class = APDU_CLASS_3S;
+      return APDU_OK;
+    }
+    bytestring_get_element(&c,apdu,ad->lc+5);
+    if ((ad->lc+6)==apdu_len) /* CASE 4S */
+    {
+      ad->class = APDU_CLASS_4S;
+      ad->le_len = 1;
+      ad->le     = c;
+      return APDU_OK;
+    }
+  }
+  else /* c==0 */
+  {
+    if (apdu_len<7)
+      return APDU_ERROR;
+    if (apdu_len==7) /* CASE 2E */
+    {
+      ad->class = APDU_CLASS_2E;
+      ad->le_len=3;
+      bytestring_get_element(&c,apdu,5);
+      ad->le = c;
+      bytestring_get_element(&c,apdu,6);
+      ad->le = ((ad->le)<<8)|c;
+      return APDU_OK;
+    }
+   
+    ad->lc_len=3;
+    bytestring_get_element(&c,apdu,5);
+    ad->lc = c;
+    bytestring_get_element(&c,apdu,6);
+    ad->lc = ((ad->lc)<<8)|c;
+    if (apdu_len==ad->lc+7) /* case 3E */
+    {
+      ad->class = APDU_CLASS_3E;
+      return APDU_OK;
+    }
+    if (apdu_len==ad->lc+10) /* case 4E */
+    {
+      bytestring_get_element(&c,apdu,ad->lc+7);
+      if (c!=0)
+	return APDU_ERROR;
+      ad->class = APDU_CLASS_4E;
+      ad->le_len = 3;
+      bytestring_get_element(&c,apdu,ad->lc+8);
+      ad->le = c;
+      bytestring_get_element(&c,apdu,ad->lc+9);
+      ad->le = ((ad->le)<<8)|c;
+      return APDU_OK; 
+    }
+  }
+  return APDU_ERROR;
+}
+
+/********************************************************************
  * CARDMANAGER
  */
 
@@ -208,9 +322,16 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   bytestring_t* get_response;
   bytestring_t* tmp_response;
   char *tmp;
+  apdu_descriptor_t ad;
+
+  if (apdu_describe(&ad,command)!=APDU_OK)
+  {
+    log_printf(LOG_ERROR,"Could not parse APDU format");
+    return 0x6F00;
+  }
 
   tmp = bytestring_to_alloc_string(command);
-  log_printf(LOG_INFO,"send: %s", tmp);
+  log_printf(LOG_INFO,"send: %s [%s]", tmp, APDU_CLASS_NAMES[ad.class]);
   free(tmp);
 
   reader->sw = reader->transmit(reader,command,result);
@@ -227,12 +348,14 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   if (SW1==0x6C) /* Re-issue with right length */
   {
     command_dup = bytestring_duplicate(command);
+    if (ad.le_len==3) /* in case of extended le */
+      bytestring_resize(command_dup,bytestring_get_size(command_dup)-2);
     bytestring_set_element(command_dup,-1,SW2);
     reader->sw = cardreader_transmit(reader,command_dup,result);
     bytestring_free(command_dup);
   }
 
-  if (SW1==0x61) /* use Get Response */
+  while (SW1==0x61) /* use Get Response */
   {
     get_response = bytestring_new_from_string(8,"00C0000000");
     tmp_response = bytestring_new(8);
@@ -247,6 +370,8 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
     bytestring_free(get_response);
     bytestring_free(tmp_response);
+    SW1 = (reader->sw>>8)&0xFF;
+    SW2 = reader->sw&0xFF;
   }
 
   if (reader->command_interval)

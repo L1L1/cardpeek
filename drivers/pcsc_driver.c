@@ -20,6 +20,9 @@
 */
 
 #include <winscard.h>
+#include <reader.h>
+
+#define MAX_PCSC_READ_LENGTH 270 
 
 typedef struct {
   LONG         hcontext;
@@ -31,6 +34,9 @@ typedef struct {
 
 int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
+  DWORD attr_maxinput;
+  DWORD attr_maxinput_len = sizeof(unsigned int);
+
   pcsc_data_t* pcsc = cr->extra_data;
   
   pcsc->status = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL,
@@ -57,6 +63,11 @@ int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 	       pcsc_stringify_error(pcsc->status));
     return 0;
   }
+
+  if (SCardGetAttrib(pcsc->hcard,SCARD_ATTR_MAXINPUT,(LPBYTE)&attr_maxinput,(LPDWORD)&attr_maxinput_len)==SCARD_S_SUCCESS)
+    log_printf(LOG_INFO,"Reader maximum input length is %u bytes",attr_maxinput);
+  else
+    log_printf(LOG_WARNING,"Could not determinate reader maximum input length");
 
   log_printf(LOG_INFO,"Connection successful");
   cr->connected=1;
@@ -107,17 +118,11 @@ unsigned short pcsc_transmit(cardreader_t* cr,
 			     bytestring_t* result)
 {
   pcsc_data_t* pcsc = cr->extra_data;
-  BYTE REC_DAT[258]; /* 256 + 2 bytes SW MAX */
-  DWORD REC_LEN=256;
+  BYTE REC_DAT[MAX_PCSC_READ_LENGTH];
+  DWORD REC_LEN=MAX_PCSC_READ_LENGTH;
   SCARD_IO_REQUEST pioRecvPci;
   /*char *tmp; */
   unsigned short SW;
-
-/*
-  tmp = bytestring_to_hex_string(command);
-  log_printf(LOG_INFO,"core-send: %s", tmp);
-  free(tmp);
-*/
 
   if (cr->protocol==SCARD_PROTOCOL_T0)
   {
@@ -147,11 +152,6 @@ unsigned short pcsc_transmit(cardreader_t* cr,
 
   SW = (REC_DAT[REC_LEN-2]<<8)|REC_DAT[REC_LEN-1];
 
-/*
-  tmp = bytestring_to_hex_string(result);
-  log_printf(LOG_INFO,"core-recv: %04X %s", SW, tmp);
-  free(tmp);
-*/
   return SW;
 }
 

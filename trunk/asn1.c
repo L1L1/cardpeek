@@ -53,6 +53,8 @@ int asn1_decode_tag(unsigned *pos, const bytestring_t *tlv, unsigned *tag)
   unsigned char element;
   unsigned room = bytestring_get_size(tlv);
 
+  *tag = 0;
+
   ASN1_VERIFY(tlv);
 
   if (room<*pos+1)
@@ -88,6 +90,8 @@ int asn1_decode_length(unsigned *pos, const bytestring_t *lv, unsigned* len)
   unsigned room = bytestring_get_size(lv);
   unsigned i;
   
+  *len=0;
+
   ASN1_VERIFY(lv);
 
   if (room<*pos+1)
@@ -96,7 +100,6 @@ int asn1_decode_length(unsigned *pos, const bytestring_t *lv, unsigned* len)
     return BYTESTRING_ERROR;
   }
   room -=*pos;
-  *len=0;
 
   bytestring_get_element(&element,lv,(*pos)++);
 
@@ -104,7 +107,7 @@ int asn1_decode_length(unsigned *pos, const bytestring_t *lv, unsigned* len)
   {
     unsigned len_of_len=element&0x7F;
  
-    if (room<=len_of_len)
+    if (room<=len_of_len || len_of_len>4)
     {
       log_printf(LOG_WARNING,"Length of length error in tlv");
       return BYTESTRING_ERROR;
@@ -144,10 +147,17 @@ int asn1_decode_value(unsigned *pos, const bytestring_t *lv, bytestring_t *val)
 
   if (*pos+len>bytestring_get_size(lv))
   {
+    log_printf(LOG_ERROR,"Value length error in tlv at position %i: expected %i, have only %i",*pos,*pos+len,bytestring_get_size(lv));
+    *pos+=bytestring_get_size(lv);
+    return BYTESTRING_ERROR;
+  }
+/*** 
+  {
     log_printf(LOG_WARNING,"Value length error in tlv at position %i: expected %i, have only %i",*pos,*pos+len,bytestring_get_size(lv));
     len = bytestring_get_size(lv)-*pos;
     log_printf(LOG_WARNING,"Attempting to shrink tlv length to %i, with unpredictable results",len);
   }
+***/
   bytestring_substr(val,*pos,len,lv);
   *pos+=len;
   return BYTESTRING_OK;

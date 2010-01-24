@@ -388,6 +388,7 @@ GtkWidget *create_menubar(GtkWidget *window)
   GtkItemFactoryEntry fentry;
   struct menu_script* menu_item;
   char *dot;
+  char *underscore;
 
 
   /* Make an accelerator group (shortcut keys) */
@@ -415,9 +416,16 @@ GtkWidget *create_menubar(GtkWidget *window)
 	menu_item->script_name = (char* )malloc(strlen(namelist[n]->d_name)+11);
 	strcpy(menu_item->script_name,"/Analyzer/");
 	strcat(menu_item->script_name,namelist[n]->d_name);
+
 	dot = rindex(menu_item->script_name,'.');
 	if (dot)
 	  *dot=0;
+
+	underscore=menu_item->script_name;
+	do 
+	  if (*underscore=='_') *underscore=' '; 
+	while (*underscore++);
+
 	menu_item->script_file = strdup(namelist[n]->d_name);
 	menu_item->prev=SCRIPTS;
 	SCRIPTS = menu_item;

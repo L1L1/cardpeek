@@ -1,13 +1,29 @@
 CC=gcc
 
-CFLAGS=-Wall -pedantic -c `pkg-config --exists lua5.1 && pkg-config lua5.1 --cflags || pkg-config lua --cflags` \
-	`pkg-config libpcsclite gtk+-2.0 --cflags`
+# GENERAL DEFS
 
-LFLAGS=-Wall `pkg-config --exists lua5.1 && pkg-config lua5.1 --libs || pkg-config lua --libs`\
-	`pkg-config libpcsclite gtk+-2.0 --libs`
+CFLAGS_Linux=-Wall -pedantic -c `pkg-config --exists lua5.1 && pkg-config lua5.1 --cflags || pkg-config lua --cflags` \
+		`pkg-config libpcsclite gtk+-2.0 --cflags`
+
+LFLAGS_Linux=-Wall `pkg-config --exists lua5.1 && pkg-config lua5.1 --libs || pkg-config lua --libs`\
+		`pkg-config libpcsclite gtk+-2.0 --libs`
+
+CFLAGS_FreeBSD=-Wall -pedantic -c `pkg-config --exists lua-5.1 && pkg-config lua-5.1 --cflags || pkg-config lua --cflags` \
+	       	`pkg-config libpcsclite gtk+-2.0 --cflags`
+ 
+LFLAGS_FreeBSD=-Wall `pkg-config --exists lua-5.1 && pkg-config lua-5.1 --libs || pkg-config lua --libs`\
+		`pkg-config libpcsclite gtk+-2.0 --libs`
+
+# SPECIFIC DEFS
+#   Replace 'Linux' by 'FreeBSD' in both definitions
+#   below if you are using FreeBSD.
+
+CFLAGS=$(CFLAGS_Linux)
+
+LFLAGS=$(LFLAGS_Linux)
 
 OBJECTS=bytestring.o asn1.o misc.o config.o smartcard.o cardtree.o gui.o \
-	lua_ext.o main.o dot_cardpeek.o emulator.o 
+	iso7816.o lua_ext.o main.o dot_cardpeek.o emulator.o 
 
 DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 
@@ -39,7 +55,7 @@ lua_ext.o:	lua_ext.c lua_ext.h lua_asn1.c  lua_bit.c  lua_bytes.c lua_card.c lua
 
 dot_cardpeek.o:	dot_cardpeek_dir
 		cp -R dot_cardpeek_dir .cardpeek
-		tar cvzf dot_cardpeek.tar.gz --exclude-vcs .cardpeek
+		tar cvzf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
 		rm -rf .cardpeek
 		$(CC) $(CFLAGS) script.S -o $@
 		rm -f dot_cardpeek.tar.gz

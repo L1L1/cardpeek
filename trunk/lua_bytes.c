@@ -441,9 +441,9 @@ static const struct luaL_reg byteslib [] = {
   {"width",subr_bytes_width},
   {"maxn",subr_bytes_maxn},
   {"is_printable",subr_bytes_is_printable},
-  {"to_printable",subr_bytes_to_printable},
+  {"toprintable",subr_bytes_to_printable},
   {"convert",subr_bytes_convert},
-  {"to_number",subr_bytes_to_number},
+  {"tonumber",subr_bytes_to_number},
   {NULL, NULL}
 };
 

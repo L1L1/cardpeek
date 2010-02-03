@@ -18,7 +18,7 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-
+#include <limits.h>
 #include "../emulator.h"
 
 int emul_connect(cardreader_t *cr, unsigned prefered_protocol)
@@ -48,7 +48,7 @@ unsigned short emul_transmit(cardreader_t* cr,
 			     bytestring_t* result)
 {
   cardemul_t* emul = cr->extra_data;
-  unsigned short SW = 0;
+  unsigned short SW = CARDPEEK_ERROR_SW;
 
   if (cr->connected) 
     cardemul_run_command(emul,command,&SW,result);

@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "config.h"
+#include "iso7816.h"
 
 /****************************************/
 

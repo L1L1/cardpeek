@@ -28,126 +28,13 @@
 #include <dirent.h>
 #include "config.h"
 #include "lua_ext.h"
+#include "iso7816.h"
 
-const char* iso7816_error_code(unsigned short sw);
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
 int cardmanager_search_emul_readers(cardmanager_t *cm);
 int cardmanager_search_acg_readers(cardmanager_t *cm);
 
-/********************************************************************
- * APDU FUNCTIONS
- */
-
-#define APDU_OK 1
-#define APDU_ERROR 0
-
-typedef struct {
-  unsigned class;
-  unsigned lc_len;
-  unsigned lc;
-  unsigned le_len;
-  unsigned le;
-} apdu_descriptor_t;
-
-enum {
-  APDU_CLASS_NONE,
-  APDU_CLASS_1,
-  APDU_CLASS_2S,
-  APDU_CLASS_3S,
-  APDU_CLASS_4S,
-  APDU_CLASS_2E,
-  APDU_CLASS_3E,
-  APDU_CLASS_4E
-};
-const char *APDU_CLASS_NAMES[]={"None","1","2S","3S","4S","2E","3E","4E"};
-
-int apdu_describe(apdu_descriptor_t *ad, const bytestring_t* apdu)
-{
-  unsigned apdu_len = bytestring_get_size(apdu);
-  unsigned char c;
-
-  memset(ad,0,sizeof(*ad));
-
-  if (apdu_len<4)
-    return APDU_ERROR;
-
-  if (apdu_len==4) /* CASE 1 */
-  {
-    ad->class = APDU_CLASS_1;
-    return APDU_OK;
-  }
-  
-  bytestring_get_element(&c,apdu,4);
-
-  if (apdu_len==5) /* CASE 2S */
-  {
-    ad->class = APDU_CLASS_2S;
-    ad->le_len = 1;
-    ad->le     = c;
-    return APDU_OK;
-  }
-
-  if (c>0) /* apdu_len>5 */
-  {
-    ad->lc_len= 1;
-    ad->lc    = c;
-
-    if ((5+ad->lc)==apdu_len) /* CASE 3S */
-    {
-      ad->class = APDU_CLASS_3S;
-      return APDU_OK;
-    }
-    bytestring_get_element(&c,apdu,ad->lc+5);
-    if ((ad->lc+6)==apdu_len) /* CASE 4S */
-    {
-      ad->class = APDU_CLASS_4S;
-      ad->le_len = 1;
-      ad->le     = c;
-      return APDU_OK;
-    }
-  }
-  else /* c==0 */
-  {
-    if (apdu_len<7)
-      return APDU_ERROR;
-    if (apdu_len==7) /* CASE 2E */
-    {
-      ad->class = APDU_CLASS_2E;
-      ad->le_len=3;
-      bytestring_get_element(&c,apdu,5);
-      ad->le = c;
-      bytestring_get_element(&c,apdu,6);
-      ad->le = ((ad->le)<<8)|c;
-      return APDU_OK;
-    }
-   
-    ad->lc_len=3;
-    bytestring_get_element(&c,apdu,5);
-    ad->lc = c;
-    bytestring_get_element(&c,apdu,6);
-    ad->lc = ((ad->lc)<<8)|c;
-    if (apdu_len==ad->lc+7) /* case 3E */
-    {
-      ad->class = APDU_CLASS_3E;
-      return APDU_OK;
-    }
-    if (apdu_len==ad->lc+10) /* case 4E */
-    {
-      bytestring_get_element(&c,apdu,ad->lc+7);
-      if (c!=0)
-	return APDU_ERROR;
-      ad->class = APDU_CLASS_4E;
-      ad->le_len = 3;
-      bytestring_get_element(&c,apdu,ad->lc+8);
-      ad->le = c;
-      bytestring_get_element(&c,apdu,ad->lc+9);
-      ad->le = ((ad->le)<<8)|c;
-      return APDU_OK; 
-    }
-  }
-  return APDU_ERROR;
-}
 
 /********************************************************************
  * CARDMANAGER
@@ -324,14 +211,14 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   char *tmp;
   apdu_descriptor_t ad;
 
-  if (apdu_describe(&ad,command)!=APDU_OK)
+  if (iso7816_describe_apdu(&ad,command)!=ISO7816_OK)
   {
     log_printf(LOG_ERROR,"Could not parse APDU format");
-    return 0x6F00;
+    return CARDPEEK_ERROR_SW;
   }
 
   tmp = bytestring_to_alloc_string(command);
-  log_printf(LOG_INFO,"send: %s [%s]", tmp, APDU_CLASS_NAMES[ad.class]);
+  log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
   free(tmp);
 
   reader->sw = reader->transmit(reader,command,result);
@@ -341,7 +228,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   SW2 = reader->sw&0xFF;
 
   tmp = bytestring_to_alloc_string(result);
-  log_printf(LOG_INFO,"Recv: %04X %s [%s]", reader->sw, tmp, iso7816_error_code(reader->sw));
+  log_printf(LOG_INFO,"Recv: %04X %s [%s]", reader->sw, tmp, iso7816_stringify_sw(reader->sw));
   free(tmp);
 
 
@@ -431,128 +318,7 @@ void cardreader_set_command_interval(cardreader_t *reader, unsigned interval)
   reader->command_interval=interval;
 }
 
-/********************************************************************/
-
-const char* iso7816_error_code(unsigned short sw)
-{
-  static char msg[200];
-
-  msg[0]=0;
-
-  if (sw==0x9000)
-    return strcpy(msg,"Normal processing");
-
-  switch (sw>>8) {
-    case 0x61: 
-      strcpy(msg,"More bytes available (see SW2)");
-      break;
-    case 0x62: 
-      strcpy(msg,"State of non-volatile memory unchanged - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x81: strcat(msg,"Part of returned data may be corrupted"); break;
-	case 0x82: strcat(msg,"End of file/record reached before reading Le bytes"); break;
-	case 0x83: strcat(msg,"Selected file invalidated"); break;
-	case 0x84: strcat(msg,"FCI not formatted correctly"); break;
-      }
-      break;
-    case 0x63:
-      strcpy(msg,"State of non-volatile memory changed - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x81: strcat(msg,"File filled up by the last write"); break;
-      }
-      if ((sw&0xF0)==0xC0) strcat(msg,"Counter value");
-      break;
-    case 0x64:
-      strcpy(msg,"State of non-volatile memory unchanged - ");
-      if ((sw&0xFF)==0) strcat(msg,"OK");
-      break;
-    case 0x65:
-      strcpy(msg,"State of non-volatile memory changed - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x81: strcat(msg,"Memory failure"); break;
-      }
-      break;
-    case 0x66:
-      strcpy(msg,"security-related issue - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-      }
-      break;
-    case 0x67:
-      if (sw==0x6700) 
-	strcpy(msg,"Wrong length");
-      else
-	strcpy(msg,"Unknown 67XX error code");
-      break;
-    case 0x68:
-      strcpy(msg,"Functions in CLA not supported - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x81: strcat(msg,"Logical channel not supported"); break;
-	case 0x82: strcat(msg,"Secure messaging not supported"); break;
-      }
-      break;
-    case 0x69:
-      strcpy(msg,"Command not allowed - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x81: strcat(msg,"Command incompatible with file structure"); break;
-	case 0x82: strcat(msg,"Security status not satisfied"); break;
-	case 0x83: strcat(msg,"Authentication method blocked"); break;
-	case 0x84: strcat(msg,"Referenced data invalidated"); break;
-	case 0x85: strcat(msg,"Conditions of use not satisfied"); break;
-	case 0x86: strcat(msg,"Command not allowed (no current EF)"); break;
-	case 0x87: strcat(msg,"Expected SM data objects missing"); break;
-	case 0x88: strcat(msg,"SM data objects incorrect"); break;
-      }
-      break;
-    case 0x6A:
-      strcpy(msg,"Wrong parameter(s) P1-P2 - ");
-      switch (sw&0xFF) {
-	case 0x00: strcat(msg,"No information given"); break;
-	case 0x80: strcat(msg,"Incorrect parameters in the data field"); break;
-	case 0x81: strcat(msg,"Function not supported"); break;
-	case 0x82: strcat(msg,"File not found"); break;
-	case 0x83: strcat(msg,"Record not found"); break;
-	case 0x84: strcat(msg,"Not enough memory space in the file"); break;
-	case 0x85: strcat(msg,"Lc inconsistent with TLV structure"); break;
-	case 0x86: strcat(msg,"Incorrect parameters P1-P2"); break;
-	case 0x87: strcat(msg,"Lc inconsistent with P1-P2"); break;
-	case 0x88: strcat(msg,"Referenced data not found"); break;
-      }
-      break;
-    case 0x6B:
-      if (sw==0x6B00)
-        strcpy(msg,"Wrong parameter(s) P1-P2");
-      else
-        strcpy(msg,"Unknown 6BXX error code");
-      break;
-    case 0x6C:
-      strcpy(msg,"Wrong length Le, see SW2");
-      break;
-    case 0x6D:
-      if (sw==0x6D00)
-        strcpy(msg,"Instruction code not supported or invalid");
-      else
-        strcpy(msg,"Unknown 6DXX error code");
-      break;
-    case 0x6E:
-      if (sw==0x6E00)
-        strcpy(msg,"Class not supported");
-      else
-        strcpy(msg,"Unknown 6EXX error code");
-      break;
-    case 0x6F:
-      strcpy(msg,"No precise diagnosis");
-      break;
-    default:
-      strcpy(msg,"** Unkown error code **");
-  }
-  return msg;
-}
+/************************************************/
 
 /* this should not be here but in pcsc_driver.c */
 int cardmanager_search_pcsc_readers(cardmanager_t *cm)

@@ -31,13 +31,7 @@ int subr_asn1_split(lua_State* L)
   {
     lua_pushinteger(L,tag);
     
-    /*if (bytestring_get_size(value))*/
-      lua_pushbytestring(L,value);
-    /*else
-    {
-      bytestring_free(value);
-      lua_pushnil(L);
-    }*/
+    lua_pushbytestring(L,value);
     
     if (pos<bytestring_get_size(tlv))
     {

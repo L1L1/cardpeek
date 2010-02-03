@@ -100,6 +100,33 @@ int subr_card_set_command_interval(lua_State* L)
   return 0;
 }
 
+int subr_make_file_path(lua_State* L)
+{
+  int path_type;
+  bytestring_t *file_path = bytestring_new(8);
+  const char *path;
+
+  if (lua_isnoneornil(L,1))
+    path = "";
+  else
+    path = lua_tostring(L,1);
+
+  if (iso7816_make_file_path(file_path,&path_type,path)!=ISO7816_OK)
+  {
+    bytestring_free(file_path);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    log_printf(LOG_DEBUG,"Could not parse path %s",path);
+  }
+  else {
+    lua_pushbytestring(L,file_path);
+    lua_pushinteger(L,path_type);
+  }
+  return 2;
+}
+
+
+
 static const struct luaL_reg cardlib [] = {
   {"connect", subr_card_connect },
   {"disconnect", subr_card_disconnect },
@@ -108,6 +135,7 @@ static const struct luaL_reg cardlib [] = {
   {"info", subr_card_info },
   {"send", subr_card_send },
   {"set_command_interval", subr_card_set_command_interval },
+  {"make_file_path", subr_make_file_path },
   {NULL, NULL}  /* sentinel */
 };
 

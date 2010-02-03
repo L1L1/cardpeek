@@ -103,13 +103,12 @@ int serial_open(const char *dev_name, struct termios *oldtio)
      default values can be found in /usr/include/termios.h, and are given
      in the comments, but we don't need them here
    */
+#ifdef DO_UNECESSARY_INITIALIZATION
   newtio.c_cc[VINTR]    = 0;     /* Ctrl-c */
   newtio.c_cc[VQUIT]    = 0;     /* Ctrl-\ */
   newtio.c_cc[VERASE]   = 0;     /* del */
   newtio.c_cc[VKILL]    = 0;     /* @ */
-  newtio.c_cc[VEOF]     = 4;     /* Ctrl-d */
   newtio.c_cc[VTIME]    = 0;     /* inter-character timer unused */
-  newtio.c_cc[VMIN]     = 1;     /* blocking read until 1 character arrives */
   newtio.c_cc[VSWTC]    = 0;     /* '\0' */
   newtio.c_cc[VSTART]   = 0;     /* Ctrl-q */
   newtio.c_cc[VSTOP]    = 0;     /* Ctrl-s */
@@ -120,7 +119,10 @@ int serial_open(const char *dev_name, struct termios *oldtio)
   newtio.c_cc[VWERASE]  = 0;     /* Ctrl-w */
   newtio.c_cc[VLNEXT]   = 0;     /* Ctrl-v */
   newtio.c_cc[VEOL2]    = 0;     /* '\0' */
+#endif
 
+  newtio.c_cc[VMIN]     = 1;     /* blocking read until 1 character arrives */
+  newtio.c_cc[VEOF]     = 4;     /* Ctrl-d */
   /*
      now clean the line and activate the settings for the port
    */
@@ -479,7 +481,7 @@ unsigned short acg_transmit_pcsc_emulation(cardreader_t* cr,
   /* FF CA 01 00 : Get Data -> Historical bytes */
   /* FF 86 00 00 05 01 MSB LSB KeyType KeyNum -> Login */
   /* FF B0 MSB LSB -> read */ 
-  return 0x6D00;
+  return CARDPEEK_ERROR_SW;
 }
 
 unsigned short acg_transmit(cardreader_t* cr,
@@ -497,7 +499,7 @@ unsigned short acg_transmit(cardreader_t* cr,
   unsigned char CLA;
 
   if (extra->status!=SMARTCARD_OK && !cr->connected)
-    return 0;
+    return CARDPEEK_ERROR_SW;
   bytestring_clear(result);
 
   bytestring_get_element(&CLA,command,0);
@@ -519,7 +521,7 @@ unsigned short acg_transmit(cardreader_t* cr,
     free(extended_command_string);
     log_printf(LOG_ERROR,"Failed to send command to %s",cr->name);
     extra->status = SMARTCARD_ERROR;
-    return 0;
+    return CARDPEEK_ERROR_SW;
   }
   free(extended_command_string);
  
@@ -532,7 +534,7 @@ unsigned short acg_transmit(cardreader_t* cr,
   {
     log_printf(LOG_ERROR,"Did not receive an answer from %s",cr->name);
     extra->status = SMARTCARD_ERROR;
-    return 0;
+    return CARDPEEK_ERROR_SW;
   }
     
   log_printf(LOG_DEBUG,"Receiving %s from card",extended_result_string);

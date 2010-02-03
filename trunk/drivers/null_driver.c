@@ -36,7 +36,7 @@ unsigned short null_transmit(cardreader_t* cr,
 			     bytestring_t* result)
 {
   null_error(cr);
-  return 0x6D00;
+  return CARDPEEK_ERROR_SW;
 }
 
 bytestring_t* null_last_atr(cardreader_t* cr)

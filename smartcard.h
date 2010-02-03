@@ -30,6 +30,8 @@
 #define SMARTCARD_ERROR 0
 #define SMARTCARD_OK 1
 
+#define CARDPEEK_ERROR_SW 0x6FFF
+
 /********************************************************************
  * CARDMANAGER
  */ 

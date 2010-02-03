@@ -145,7 +145,7 @@ unsigned short pcsc_transmit(cardreader_t* cr,
   {
     log_printf(LOG_ERROR,"Failed to transmit command to card [%s]",
 	       pcsc_stringify_error(pcsc->status));
-    return 0;
+    return CARDPEEK_ERROR_SW;
   }
 
   bytestring_assign_data(result,REC_LEN-2,REC_DAT);

@@ -5,14 +5,18 @@ UTF-8 English/Français
          * libgtk 2.0 (http://www.gtk.org)
          * liblua 5.1 (http://www.lua.org)
          * libpcsclite (http://pcsclite.alioth.debian.org/)
-      (Note: On a Debian system, these packages are all available through 
+      (Note: On a Debian system, these packages are all available through
       apt/aptitude.)
-   2. Unpack the source if needed and change directory to the source directory.
+   2. Unpack the source if needed and change directory to the source 
+      directory.
    3. Type 'make'
-   4. The binary executable is 'cardtree', use it directly or copy it to the 
-      desired location.
+   4. The binary executable is 'cardtree', use it directly or copy it to 
+      the desired location.
 
 See doc/carpeek_ref.en.pdf for more details
+
+(For FreeBSD, you must edit the Makefile as described in the comments 
+included in that file.)
 
 [FR] Instructions:
    1. Vérifier que les outils de développement suivants sont intallés:
@@ -28,3 +32,7 @@ See doc/carpeek_ref.en.pdf for more details
       dans un autre répertoire
 
 Voir doc/cardpeek_ref.fr.pdf pour plus de détails. 
+
+Pour FreeBSD, il faut faire un modificiation légère du Makefile, en suivant 
+les indications contenues dans ce fichier.
+

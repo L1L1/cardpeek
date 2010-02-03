@@ -13,6 +13,7 @@ The tool currently reads the contents of :
     * EMV cards 
     * Navigo public transport cards 
     * Moneo ePurse cards 
+    * Vitale 2 French health cards.
 
 See doc/cardpeek_ref.en.pdf for more details.
 
@@ -32,6 +33,7 @@ cartes suivantes :
     * Les cartes de transport parisien Navigo et certaines autres 
       cartes similaires.
     * Les cartes Monéo
+    * Les cartes 'Vitale 2'
 
 Voir doc/cardpeek_ref.en.pdf pour plus de détails.
 (La version française de ce document n'est pas encore à jour).

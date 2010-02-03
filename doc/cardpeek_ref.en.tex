@@ -2,11 +2,13 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{pmboxdraw}
-\title{\texttt{Cardpeek} Reference Manual - v0.3}
+\title{\texttt{Cardpeek} Reference Manual - v0.4}
 \author{Copyright 2009, L1L1@gmx.com}
-\date{January 2010}
+\date{February 2010}
 \addtolength{\textwidth}{2cm}
 \addtolength{\hoffset}{-1cm}
+
+\newcommand{\mansection}[1]{\vspace{0.5em}\par\noindent\textsc{#1}\vspace{0.5em}\par}
 
 \begin{document}
 \maketitle
@@ -30,6 +32,7 @@ In this version, this tool is capable of reading the contents of the following t
 \item{EMV "chip and PIN" bank cards used in many countries throughout the world}
 \item{\textit{Navigo} transport cards used in Paris and other \textit{Calypso} cards used in France and elsewhere.}
 \item{Moneo, the French electronic purse (with limited data interpretation).}
+\item{Vitale 2, the French health card.}
 \end{itemize}
 
 Some important card types are missing such as the SIM card used in mobile phones.
@@ -44,7 +47,9 @@ Support for the ACG\texttrademark Multi-ISO contactless card-reader is still exp
 \chapter{Installation}
 
 \texttt{Cardpeek} can be compiled from source using the provided \texttt{Makefile}.
-It has currently only been tested under Linux Debian version 5.
+It has currently been tested under \emph{Linux Debian version 5} (both i386 and amd64).
+
+It has been reported to compile and work under \emph{FreeBSD} as well, with a minor tweak.
 
 \section{Compiling and installing}
 
@@ -62,14 +67,17 @@ Instructions:
 
 \item{Unpack the source if needed and change directory to the source directory.}
 
-\item{Type `\texttt{make}'}
+\item{Type\footnote{Note for FreeBSD: before executing \texttt{make}, 
+you will need to make a small change in the Makefile included in the source, 
+as described in the comments included in that file.} `\texttt{make}'}
 
 \item{The binary executable is `\texttt{cardtree}', use it directly or copy it to the desired location.}
 
 \end{enumerate}
 
+
 \section{Related files and initial setup}
-When first running \texttt{cardpeek} the program will attempt to create the
+When first running \texttt{Cardpeek} the program will attempt to create the
 \texttt{.cardpeek/} directory in your home directory. This is normal.
 
 The \texttt{.cardpeek/} directory will contain two elements: \texttt{config.lua} and the \texttt{scripts/} directory.
@@ -88,7 +96,7 @@ This file contains a copy of the messages displayed in the ``log'' tab of the ap
 
 \section{Quick start}
 
-To experiment with \texttt{cardpeek}, your may start with your EMV ``PIN and chip'' smartcard for example, by following these steps:
+To experiment with \texttt{Cardpeek}, your may start with your EMV ``PIN and chip'' smartcard for example, by following these steps:
 \begin{enumerate}
 \item{Start \texttt{cardpeek}.}
 \item{Select your PCSC card-reader in the first dialog box.}
@@ -223,6 +231,15 @@ It has been successfully tested on \emph{Navigo D\'ecouverte}, \emph{Navigo} and
 You must use the contact interface to read a Navigo card, because they cannot be read with a normal conctactless card-reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B).
 See the section about \emph{calypso} for other information.
 
+\section{vitale 2}
+
+\paragraph{Overview:}
+This script provides an analysis of the second generation French health card called ``Vitale 2''.
+
+\paragraph{Notes:}
+This analysis is based on a lot of guesswork and needs further testing.
+Some zones, notably the one containing the cardholder's photography, seem protected: this is a good design choice in terms of privacy protection.
+
 \section{Adding your own scripts to Cardpeek}
 Adding or modifying a script in \texttt{Cardpeek} is easy: simply add or modify a script in the \texttt{\$HOME/.cardpeek/scripts/} directory.
 
@@ -290,24 +307,52 @@ The LUA language is easy to learn and we refer the reader to \url{http://www.lua
 
 Since LUA does not have native bit manipulation functions, the following functions have been added.
 
-\begin{description}
+%------------------------------------------------
+\subsection{bit.AND}
 
-\item[\texttt{bit.AND(A,B)}]
-{Compute the binary operation \texttt{A} \textit{and} \texttt{B}.}
+\mansection{Synopsis}
+\texttt{bit.AND(A,B)}
 
-\item[\texttt{bit.OR(A,B)}]
-{Compute the binary operation \texttt{A} \textit{or} \texttt{B}.}
+\mansection{Description}
+Compute the binary operation \texttt{A} \textit{and} \texttt{B}.
 
-\item[\texttt{bit.XOR(A,B)}]
-{Compute the binary operation \texttt{A} \textit{xor} \texttt{B}.}
+%------------------------------------------------
+\subsection{bit.OR}
 
-\item[\texttt{bit.SHL(A,B)}]
-{Compute $\texttt{A}{\times}2^{\texttt{B}}$.}
+\mansection{Synopsis}
+\texttt{bit.OR(A,B)}
 
-\item[\texttt{bit.SHR(A,B)}]
-{Compute $\texttt{A}/2^{\texttt{B}}$}
+\mansection{Description}
+Compute the binary operation \texttt{A} \textit{or} \texttt{B}.
 
-\end{description}
+%------------------------------------------------
+\subsection{bit.XOR}
+
+\mansection{Synopsis}
+\texttt{bit.XOR(A,B)}
+
+\mansection{Description}
+  Compute the binary operation \texttt{A} \textit{xor} \texttt{B}.
+
+%------------------------------------------------
+\subsection{bit.SHL}
+
+\mansection{Synopsis}
+\texttt{bit.SHL(A,B)}
+
+\mansection{Description}
+  Shift the bits of A by B positions to the left. 
+  This is equivalent to computing $\texttt{A}{\times}2^{\texttt{B}}$.
+
+%------------------------------------------------
+\subsection{bit.SHR}
+
+\mansection{Synopsis}
+\texttt{bit.SHR(A,B)}
+
+\mansection{Description}
+  Shift the bits of A by B positions to the right. 
+  This is equivalent to computing $\texttt{A}/2^{\texttt{B}}$
 
 \section{The \texttt{bytes} library}
 
@@ -319,10 +364,12 @@ the card-reader in the application.
 
 The elements in the array are most commonly (8 bit) bytes, but
 it is also possible to construct arrays of (4 bit) half-bytes or
-arrays of individual bits. The size of each element is specified 
-when the array is created with the function \texttt{bytes.new()}
-described in this section. A function to convert between different 
-types of arrays is also provided.
+arrays of individual bits. All elements in a bytestring have the same
+size (8, 4 or 1), which is referred as the ``\emph{width}'' of the bytestring.
+The width of each element is specified when the array is created 
+with the function \texttt{bytes.new()} described in this section. 
+A function to convert between bytestrings of differents widths 
+is also provided.
 
 Individual elements in a bytestring array can be accessed the same 
 way traditional arrays are accessed in LUA. Thus, if \texttt{BS} is
@@ -340,47 +387,71 @@ with an array (e.g. \texttt{\#BS}).
 
 Bytestrings cannot be copied like arrays with a simple assignment 
 using the ``\texttt{=}'' operator, the \texttt{bytes.assign()} function
-or the \texttt{bytes.clone()} must be used instead.  
+or the \texttt{bytes.clone()} function must be used instead.  
 
 The functions of the \texttt{bytes} library are:
 
-\begin{description}
+%------------------------------------------------
+\subsection{Operators on bytestrings}
+  
+The operators that can be used on bytestrings are ``\texttt{..}'', ``\texttt{==}'', ``\texttt{$\sim$=}'' and ``\texttt{\#}''
 
-\item[Operators on bytestrings]
-{
-  ``\texttt{..}'', ``\texttt{==}'', ``\texttt{$\sim$=}'' and ``\texttt{\#}''
+\mansection{Synopsis}
+
+\texttt{A..B} 
+
+\texttt{A==B}
+
+\texttt{A$\sim$=B}
+
+\texttt{\#A}
+
+\mansection{Description}
   
-  The ``..'' operator creates a new bytestring by concatenating two bytestrings together.
-  The concatenation operator also works if one of the operands is a string or a number, 
-  by converting it to a bytestring first, following the rules described in the 
-  \texttt{bytes.assign()} function. 
-  \texttt{A..B} is equivalent to \texttt{bytes.concat(A,B)}.
+The ``..'' operator creates a new bytestring by concatenating two bytestrings together.
+The concatenation operator also works if one of the operands is a string or a number, 
+by converting it to a bytestring first, following the rules described in the 
+\texttt{bytes.assign()} function. 
+\texttt{A..B} is equivalent to \texttt{bytes.concat(A,B)}.
   
-  The ``=='' and ``$\sim$='' operators allow to compare two bytestrings for equality or
-  non-equality respectively. To be equal, two bytestrings must have the same width
-  and the same elements in the same order.
+The ``=='' and ``$\sim$='' operators allow to compare two bytestrings for equality or
+non-equality respectively. To be equal, two bytestrings must have the same width
+and the same elements in the same order.
  
-  Finally the ``\#'' operator returns the number of elements in a bytestring.
-}
+Finally the ``\#'' operator returns the number of elements in a bytestring.
 
-\item[\texttt{bytes.append(BS, $value_0$ [, $value_1$, ..., $value_n$])}]
-{
-  Append a value to $BS$.
+%------------------------------------------------
+\subsection{bytes.append}
 
-  The appended value is composed of $value_0$, optionally concatenated with
-  any additional value $value_1$, ..., $value_n$ (from left to right).
+\mansection{Synopsis}
 
-  This function is equivalent to 
-  \texttt{bytes.assign(BS, BS, $value_0$ [, $value_1$, ..., $value_n$])}.
-  See \texttt{bytes.assign()} for further details.
+\texttt{bytes.append(BS, $value_0$ [, $value_1$, ..., $value_n$])}]
 
-  This function modifies its main argument $BS$.
+\mansection{Description}
 
-  This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
+Append a value to $BS$.
 
-\item[\texttt{bytes.assign(BS, $value_0$ [, $value_1$, ..., $value_n$])}]
-{
+The appended value is composed of $value_0$, optionally concatenated with
+any additional value $value_1$, ..., $value_n$ (from left to right).
+
+This function is equivalent to 
+\texttt{bytes.assign(BS, BS, $value_0$ [, $value_1$, ..., $value_n$])}.
+See \texttt{bytes.assign()} for further details.
+
+This function modifies its main argument $BS$.
+
+\mansection{Return value}
+
+This function returns \texttt{true} upon success and \texttt{false} otherwise.
+
+%------------------------------------------------
+\subsection{bytes.assign}
+
+\mansection{Synopsis}
+\texttt{bytes.assign(BS, $value_0$ [, $value_1$, ..., $value_n$])}
+
+\mansection{Description}
+
   Assigns a value to $BS$. 
 
   The assigned value is composed of $value_0$, optionally concatenated with 
@@ -400,31 +471,48 @@ The functions of the \texttt{bytes} library are:
 
   This function modifies its main argument $BS$.
 
+\mansection{Return value}
+
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-} 
 
-\item[\texttt{bytes.clone(BS)}]
-{
+%------------------------------------------------
+\subsection{bytes.clone}
+
+\mansection{Synopsis}
+\texttt{bytes.clone(BS)}
+
+\mansection{Description}
   Creates and returns a copy of $BS$.
-  This function returns \texttt{nil} if it fails.
-}
 
-\item[\texttt{bytes.concat($value_0$, $value_1$ [,$value_2$ , ..., $value_n$])}]
-{
+\mansection{Return value}
+  This function returns \texttt{nil} if it fails.
+
+%------------------------------------------------
+\subsection{bytes.concat}
+
+\mansection{Synopsis}
+\texttt{bytes.concat($value_0$, $value_1$ [,$value_2$ , ..., $value_n$])}
+
+\mansection{Description}
   Returns the concatenation of $value_0$, ..., $value_n$ (from left to right).
 
   For the rules governing the processing of $value_0 ... value_n$, see
   the \texttt{bytes.assign()} function above.
 
+\mansection{Return value}
   This function returns a bytestring upon success and \texttt{nil} otherwise.
-}
 
-\item[\texttt{bytes.convert(w,BS)}]
-{
+%------------------------------------------------
+\subsection{bytes.convert}
+
+\mansection{Synopsis}
+\texttt{bytes.convert(w,BS)}
+
+\mansection{Description}
   Converts $BS$ to a new bytestring where each element has a width $w$.
 
   Depending on $w$, the elements in the converted bytestring are obtained by either 
-  splitting elements of $BS$ into severall smaller elements in the new bytestring or 
+  splitting elements of $BS$ into several smaller elements in the new bytestring or 
   by grouping several elements of $BS$ into a single element in the new bytestring.
 
   If the conversion requires splitting elements of $BS$, then the original elements will
@@ -436,11 +524,16 @@ The functions of the \texttt{bytes} library are:
   elements are formed by considering elements of $BS$ with a lower index as more 
   significant than elements with a higher index.
 
+\mansection{Return value}
   This function returns a new bytestring upon success and \texttt{nil} otherwise.
-}
 
-\item[\texttt{bytes.insert(BS, pos, $value_0$ [, $value_1$, ..., $value_n$])}]
-{
+%------------------------------------------------
+\subsection{bytes.insert}
+
+\mansection{Synopsis}
+\texttt{bytes.insert(BS, pos, $value_0$ [, $value_1$, ..., $value_n$])}
+
+\mansection{Description}
   Inserts a value in $BS$ at index $pos$.
 
   The elements in $BS$ of index 0 to $pos-1$ will remain untouched.
@@ -455,11 +548,16 @@ The functions of the \texttt{bytes} library are:
 
   This function modifies its main argument $BS$.
   
+\mansection{Return value}
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
 
-\item[\texttt{bytes.invert(BS)}]
-{
+%------------------------------------------------
+\subsection{bytes.invert}
+
+\mansection{Synopsis}
+\texttt{bytes.invert(BS)}
+
+\mansection{Description}
   Reverses the order of elements in $BS$.
 
   If $BS$ has $N$ elements then $BS[0]$ is swapped with $BS[N-1]$,
@@ -467,28 +565,44 @@ The functions of the \texttt{bytes} library are:
   in reverse order in $BS$.
 
   This function modifies its main argument.
-
+\mansection{Return value}
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
 
-\item[\texttt{bytes.is\_printable(BS)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.is\_printable}
+
+\mansection{Synopsis}
+\texttt{bytes.is\_printable(BS)}
+
+\mansection{Description}
   Returns \texttt{true} if all elements in $BS$ can be converted to 
   printable ascii characters, and \texttt{false} otherwise.
 
+\mansection{Return value}
   This function always returns \texttt{false} if the width of $BS$ is 
   not 8 (elements of width 4 or 1 are not printable ascii values).  
-}
 
-\item[\texttt{bytes.maxn(BS)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.maxn}
+
+\mansection{Synopsis}
+\texttt{bytes.maxn(BS)}
+
+\mansection{Description}
   Returns the last index in $BS$ (equivalent to $\#BS-1$).
-
+\mansection{Return value}
   This function returns \texttt{nil} if $BS$ is empty.
-}
 
-\item[\texttt{bytes.new(width [,$value_0$, $value_1$, ..., $value_n$])}]
-{
+
+%------------------------------------------------
+\subsection{bytes.new}
+
+\mansection{Synopsis}
+\texttt{bytes.new(width [,$value_0$, $value_1$, ..., $value_n$])}
+
+\mansection{Description}
   Creates a new bytestring, where each element is $width$ bits in size.
   $width$ can be either 8, 4 or 1.
 
@@ -496,12 +610,17 @@ The functions of the \texttt{bytes} library are:
   several values $value_0$, $value_1$, ..., $value_n$ that will be concatenated
   together to form the content of the bytestring. See the function 
   \texttt{bytes.assign()} for more details.
-
+\mansection{Return value}
   This function returns a bytestring upon success and \texttt{nil} otherwise. 
-}
 
-\item[\texttt{bytes.pad\_left(BS, length, value)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.pad\_left}
+
+\mansection{Synopsis}
+\texttt{bytes.pad\_left(BS, length, value)}
+
+\mansection{Description}
   Pads $BS$ on the left with the element $value$ until the number of elements 
   of $BS$ reaches a multiple of $length$.
 
@@ -509,11 +628,17 @@ The functions of the \texttt{bytes} library are:
 
   This function modifies its main argument $BS$.
   
+\mansection{Return value}
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
 
-\item[\texttt{bytes.pad\_right(BS, length, value)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.pad\_right}
+
+\mansection{Synopsis}
+\texttt{bytes.pad\_right(BS, length, value)}
+
+\mansection{Description}
   Pads $BS$ on the right with the element $value$ until the number of elements 
   of $BS$ reaches a multiple of $length$.
 
@@ -521,11 +646,17 @@ The functions of the \texttt{bytes} library are:
 
   This function modifies its main argument $BS$.
   
+\mansection{Return value}
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
 
-\item[\texttt{bytes.remove(BS, start [,end])}]
-{
+
+%------------------------------------------------
+\subsection{bytes.remove}
+
+\mansection{Synopsis}
+\texttt{bytes.remove(BS, start [,end])}
+
+\mansection{Description}
   Deletes a part of $BS$.
 
   Removes all elements of $BS$ that have an index that verifies 
@@ -539,11 +670,17 @@ The functions of the \texttt{bytes} library are:
 
   This function modifies its main argument.
   
+\mansection{Return value}
   This function returns \texttt{true} upon success and \texttt{false} otherwise.
-}
 
-\item[\texttt{bytes.sub(BS, start [,end])}]
-{
+
+%------------------------------------------------
+\subsection{bytes.sub}
+
+\mansection{Synopsis}
+\texttt{bytes.sub(BS, start [,end])}
+
+\mansection{Description}
   Returns a copy of a substring from $BS$.
 
   The returned value represents a bytestring containing a copy of all the 
@@ -553,22 +690,35 @@ The functions of the \texttt{bytes} library are:
   If $start$ (or $end$) is negative, it will be replaced by $\#BS+start$
   (or $\#BS+end$ resp.).
 
+\mansection{Return value}
   This function returns a bytestring upon success and \texttt{nil} otherwise.
-}
 
-\item[\texttt{bytes.to\_number(BS)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.tonumber}
+
+\mansection{Synopsis}
+\texttt{bytes.tonumber(BS)}
+
+\mansection{Description}
   Converts the bytestring \texttt{BS} to a string representing the unsigned 
   decimal value of $BS$.
 
   This conversion considers $BS[0]$ as the most significant element of $BS$, 
   and $BS[\#BS-1]$ as the least significant. 
   
+\mansection{Return value}
+  This function returns a string.
   If needed LUA will automatically convert the resulting string to a number.
-}
 
-\item[\texttt{bytes.to\_printable(BS)}]
-{
+
+%------------------------------------------------
+\subsection{bytes.toprintable}
+
+\mansection{Synopsis}
+\texttt{bytes.toprintable(BS)}
+
+\mansection{Description}
   Converts each element in $BS$ into an ascii character and returns the
   resulting string.
 
@@ -576,16 +726,23 @@ The functions of the \texttt{bytes} library are:
   is replaced by the character ``?''. 
 
   If $BS$ is empty, the resulting string is also empty.
-}
 
-\item[\texttt{bytes.width(BS)}]
-{
+\mansection{Return value}
+  A string.
+
+
+%------------------------------------------------
+\subsection{bytes.width}
+
+\mansection{Synopsis}
+\texttt{bytes.width(BS)}
+
+\mansection{Description}
   Return the width of the elements in $BS$.
 
+\mansection{Return value}
   This function may return 1, 4 or 8.
-}
 
-\end{description}
 
 \section{The \texttt{asn1} library}
 
@@ -593,12 +750,16 @@ The ASN1 library allows to manipulate ASN1 TLV bytestrings following the DER
 encoding (Distinguished Encoding Rules).
 These bytestrings must be 8 bit wide.
 
-The library provides the following functions:
+The library provides the following functions.
 
-\begin{description}
 
-\item[\texttt{asn1.enable\_single\_byte\_length(enable)}]
-{
+%------------------------------------------------
+\subsection{asn1.enable\_single\_byte\_length}
+
+\mansection{Synopsis}
+\texttt{asn1.enable\_single\_byte\_length(enable)}
+
+\mansection{Description}
   This function is only used in rare cases with erroneous card implementation.
   
   If $\texttt{enable}=true$ the behavior of TLV decoding functions 
@@ -607,112 +768,383 @@ The library provides the following functions:
   
   This means that even if the first byte of the encoded length is greater 
   than \texttt{0x80} it will be interpreted as the length of the TLV value.
-}
 
-\item[\texttt{asn1.join(tag, val [,extra])}]
-{
+\mansection{Return value}
+  None.
+
+%------------------------------------------------
+\subsection{asn1.join}
+
+\mansection{Synopsis}
+\texttt{asn1.join(tag, val [,extra])}
+
+\mansection{Description}
   Performs the opposite of \texttt{bytes.tlv\_split}: creates a bytestring 
   representing the ASN1 DER encoding of the TLV $\{tag,len,val\}$ where $len=\#val$ 
   and appends \texttt{extra} to the result.
 
   \texttt{tag} is positive integer number, \texttt{val} is a bytestring and 
   \texttt{extra} is a bytestring or \texttt{nil}.
-}
 
-\item[\texttt{asn1.split(str)}]
-{
+\mansection{Return value}
+  This function returns a bytestring.
+
+%------------------------------------------------
+\subsection{asn1.split}
+
+\mansection{Synopsis}
+\texttt{asn1.split(str)}
+
+\mansection{Description}
   Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
   TLV encoding rules, and extracts a tag $T$ and a bytestring value $V$.
 
-  The function then returns 3 elements $(T, V, extra)$, 
+\mansection{Return value}
+  The function returns 3 elements $(T, V, extra)$, 
   where $extra$ is an optional bytestring representing the remaining part of 
   \texttt{str} that was not parsed or \texttt{nil} if no data remains.
 
   If this function fails it returns a triplet of \texttt{nil} values.
-}	
 
-\item[\texttt{asn1.split\_length(str)}]
-{
+
+%------------------------------------------------
+\subsection{asn1.split\_length}
+
+\mansection{Synopsis}
+\texttt{asn1.split\_length(str)}
+
+\mansection{Description}
   Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
   and extracts a length $L$. 
 
-  The function then returns $(L, extra)$, where $extra$ is an optional bytestring 
+\mansection{Return value}
+  The function returns $(L, extra)$, where $extra$ is an optional bytestring 
   representing the remaining part of \texttt{str} that was not parsed or \texttt{nil} 
   if no data remains.
 
   If this function fails it returns a pair of \texttt{nil} values.
-}
 
-\item[\texttt{asn1.split\_tag(str)}]
-{
+
+%------------------------------------------------
+\subsection{asn1.split\_tag}
+
+\mansection{Synopsis}
+\texttt{asn1.split\_tag(str)}
+
+\mansection{Description}
   Parses the beginning of the bytestring \texttt{str} according to ASN1 BER 
   and extracts a tag $T$. 
 
-  The function then returns $(T, extra)$, where $extra$ is an optional bytestring 
+\mansection{Return value}
+  The function returns $(T, extra)$, where $extra$ is an optional bytestring 
   representing the remaining part of \texttt{str} that was not parsed or 
   \texttt{nil} if no data remains.
 
   If this function fails it returns a pair of \texttt{nil} values.
-}
 
-\end{description}
 
 \section{The \texttt{card} library}
 
 The \texttt{card} library is used to communicate with a smartcard in a card-reader.
 
-This library contains the following functions:
+Cardpeek internally defines a minimal set of card functions in the \texttt{card} 
+library.
+Some additional extensions to the \texttt{card} library are written in LUA and can
+be found in the file \texttt{\$HOME/.cardpeek/scripts/lib/apdu.lua}, which should 
+be loaded automatically when cardpeek starts.
 
-\begin{description}
+This library contains the following functions.
 
-\item[\texttt{card.connect()}]
-{
+
+%------------------------------------------------
+\subsection{card.connect}
+
+\mansection{Synopsis}
+\texttt{card.connect()}
+
+\mansection{Description}
   Connect to the card currently inserted in the selected smartcard-reader. 
 
   This command is used at the start of most smartcard scripts.
 
-  This function returns \texttt{true} on success, and \texttt{false} otherwise.
-}
+\mansection{Return value}
+   This function returns \texttt{true} on success, and \texttt{false} otherwise.
 
-\item[\texttt{card.disconnect()}]
-{
+
+%------------------------------------------------
+\subsection{card.disconnect}
+
+\mansection{Synopsis}
+\texttt{card.disconnect()}
+
+\mansection{Description}
   Disconnect the card currently inserted in the selected smartcard-reader.
 	  
   This command concludes most smartcard scripts.
 
+\mansection{Return value}
   This function returns \texttt{true} on success, and \texttt{false} otherwise.
-}
 
-\item[\texttt{card.last\_atr()}]
-{
+%------------------------------------------------
+\subsection{card.get\_data}
+
+\mansection{Synopsis}
+\texttt{card.get\_data(id [, length\_expected])}
+
+
+\mansection{Description}
+  Execute the GET\_DATA command from ISO 7816-4 where:
+  \begin{itemize}
+  \item{$id$ is the tag number of the value to read from the card.}
+  \item{$length\_expected$ is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
+  \end{itemize}
+
+  The value of ``CLA'' in the command send to the card is defined by by the variable \texttt{card.CLA}.
+
+  This function is implemented in \texttt{apdu.lua}.
+
+\mansection{Return value}
+  See \texttt{card.send} (section \ref{sec:card_send}).
+
+
+%------------------------------------------------
+\subsection{card.last\_atr}
+
+\mansection{Synopsis}
+\texttt{card.last\_atr()}
+
+\mansection{Description}
   Returns a bytestring representing the last ATR (Answer To Reset) returned by the card.
-}
 
-\item[\texttt{card.send(APDU)}]
-{
+\mansection{Return value}
+  This function returns a bytestring.
+
+%------------------------------------------------
+\subsection{card.make\_file\_path}
+
+\mansection{Synopsis}
+\texttt{card.make\_file\_path(path)}
+
+\mansection{Description}
+  This function is designed to be a helper function for the implementation of \texttt{card.select}.
+
+  It converts a human readable path string (representing a file location in
+  a smartcard) into a format that is compatible with the SELECT\_FILE command from ISO 7816-4.
+
+  This function parses the string $path$ and returns a pair of values $path\_binary, path\_type$ 
+  where:
+  \begin{itemize}
+  \item{$path\_binary$ is a bytestring representing the encoded binary value of $path$, and}
+  \item{$path\_type$ is a number describing the path type (i.e. a relative path, an AID, ...)}
+  \end{itemize}
+
+  The general rules needed to form a path string can be summarized as follows:
+  \begin{itemize}
+  \item{A file ID is represented by 4 hexadecimal digits 
+    (however, there is an exception for ADFs that can also be represented by their AID, 
+     which requires 10 to 32 hexadecimal digits, or 5 to 16 bytes).}
+  \item{If $path$ starts with the `\texttt{\#}' character, the file is selected directly by its unique ID or AID.}
+  \item{If $path$ starts with the `\texttt{.}' character, the file is selected relatively to the current DF or EF.}
+  \item{Files can also be selected by specifying a relative or absolute path, 
+    where each element in the path is represented by a 4 digit file ID separated by the `\texttt{/}' character:}
+     \begin{itemize}
+     \item{If $path$ starts with `\texttt{/}' the file is selected by its full path (excluding the MF).}
+     \item{If $path$ starts with `\texttt{./}' the file is selected by its relative path (excluding the current DF).}
+     \end{itemize}
+  \end{itemize}
+
+  The next table describes the format of the string $path$ and how it is interpreted more precisely. 
+  In this table, as a convention, hexadecimal characters are written with the character `\texttt{h}' 
+  and repeated elements are summarized by writing ``[\ldots ]''.
+
+  \begin{table}[!hbp]
+  \begin{tabular}{|l|p{7cm}|c|}
+  \hline
+  $path$ format 
+  & interpretation
+  & $path\_type$ \\
+  \hline
+  \hline
+  \texttt{\#}
+  & Directly select the MF (equivalent to \texttt{\#3F00})
+  & 0 \\
+  \hline
+  \texttt{\#hhhh}
+  & Directly select the file with ID=\texttt{hhhh}
+  & 0 \\
+  \hline
+  \texttt{\#hhhhhh}[\ldots ]\texttt{hh}
+  & Directly select the DF with AID=\texttt{hhhhhh}[\ldots ]\texttt{hh}    
+  & 4 \\
+  \hline
+  \hline
+  \texttt{.hhhh}
+  & Under the current DF, select the file with ID=\texttt{hhhh} 
+  & 1 \\
+  \hline
+  \texttt{.hhhh/}
+  & Under the current DF, select the DF with ID=\texttt{hhhh}   
+  & 2 \\
+  \hline
+  \texttt{..} 
+  & Select the parent of the current EF or DF.
+  & 3 \\
+  \hline
+  \hline
+  \texttt{./hhhh/hhhh/hh}[\ldots ]
+  & Select a file using a relative path from the current DF. 
+    All intermediary DF's are represented by their file ID 
+    separated by the `\texttt{/}' character.
+  & 9 \\
+  \hline
+  \texttt{/hhhh/hhhh/hh}[\ldots ] 
+  & Select a file with an absolute path from the MF (the MF is omitted) 
+    All intermediary DF's are represented by their file ID 
+    separated by the `\texttt{/}' character.
+   & 8 \\
+  \hline
+  \end{tabular}
+  \end{table}
+  
+
+  The resulting bytestring $path\_binary$ is simply produced from the concatenation 
+  of the hexadecimal values in $path$ (represented by `\texttt{h}' in the table above.)
+
+\mansection{Return value}
+  Upon success this function returns a pair of values consisting of a bytestring and a number.
+  Upon failure, this functions returns a pair of \texttt{nil} values.
+
+
+%------------------------------------------------
+\mansection{Synopsis}
+\texttt{card.read\_binary(sfi [[, address [, length\_expected]])}
+
+
+\mansection{Description}
+  Execute the READ\_BINARY command from ISO 7816-4 where:
+  \begin{itemize}
+  \item{$sfi$ is a number representing a short file identifier ($1\le sfi \le 30$) or the string `.' to refer to the currently selected file.}
+  \item{$address$ is an optional start address to read data (defaults to 0).}
+  \item{$length\_expected$ is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
+  \end{itemize}
+
+  The value of ``CLA'' in the command send to the card is defined by by the variable \texttt{card.CLA}.
+
+  This function is implemented in \texttt{apdu.lua}.
+
+\mansection{Return value}
+  See \texttt{card.send} (section \ref{sec:card_send}).
+
+
+%------------------------------------------------
+\subsection{card.read\_record}
+
+\mansection{Synopsis}
+\texttt{card.read\_record(sfi, r, [, length\_expected])}
+
+
+\mansection{Description}
+  Execute the READ\_RECORD command from ISO 7816-4 where:
+  \begin{itemize}
+  \item{$sfi$ is a number representing a short file identifier ($1\le sfi \le 30$) or the string `.' to refer to the currently selected file.}
+  \item{$r$ is the record number to read.}
+  \item{$length\_expected$ is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
+  \end{itemize}
+
+  The value of ``CLA'' in the command send to the card is defined by the variable \texttt{card.CLA}.
+
+  This function is implemented in \texttt{apdu.lua}.
+
+\mansection{Return value}
+  See \texttt{card.send} (section \ref{sec:card_send}).
+
+
+%------------------------------------------------
+\subsection{card.select}
+
+\mansection{Synopsis}
+\texttt{card.select(file\_path [, return\_what [, length]])}
+
+\mansection{Description}
+  Execute the SELECT\_FILE command from ISO 7816-4 where:
+  \begin{itemize}
+  \item{$file\_path$ is string describing the file to select, according to the format described in \texttt{card.make\_file\_path}.}
+  \item{$return\_what$ is an optional value describing the expected result, as described in the table below (defaults to 0).}
+  \item{$length$ is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
+  \end{itemize}
+
+  The following constants have been defined for $return\_what$ (some can be combined together by addition):
+
+  \begin{table}[!hbp]
+  \begin{tabular}{|l|c|}
+  \hline
+  Constant & value \\
+  \hline
+  card.SELECT\_RETURN\_FIRST      & 0 \\
+  card.SELECT\_RETURN\_LAST       & 1 \\
+  card.SELECT\_RETURN\_NEXT       & 2 \\
+  card.SELECT\_RETURN\_PREVIOUS   & 3 \\
+  card.SELECT\_RETURN\_FCI        & 0 \\
+  card.SELECT\_RETURN\_FCP        & 4 \\
+  card.SELECT\_RETURN\_FMD        & 8 \\
+  \hline
+  \end{tabular}
+  \end{table}
+
+  The value of ``CLA'' in the command send to the card is defined by by the variable \texttt{card.CLA}.
+  The value of ``P1'' in the command send to the card corresponds to the file type computed by \texttt{card.make\_file\_path}.
+  The value of ``P2'' in the command send to the card corresponds to $return\_what$.
+
+  This function is implemented in \texttt{apdu.lua}.
+
+\mansection{Return value}
+  See \texttt{card.send} (section \ref{sec:card_send}).
+
+
+%------------------------------------------------
+\subsection{card.send}
+\label{sec:card_send}
+
+\mansection{Synopsis}
+\texttt{card.send(APDU)}
+
+\mansection{Description}
   Sends the command \texttt{APDU} to the card. 
 
+\mansection{Return value}
   The function returns a pair of values: a number representing the status word 
   returned by the card (ex. 0x9000) and the response data returned by the card.
   
   Both the command \texttt{APDU} and the response data are bytestrings 
   (see the \texttt{bytes} library).
-}
 
-\item[\texttt{card.info()}]
-{
+
+%------------------------------------------------
+\subsection{card.info}
+
+\mansection{Synopsis}
+\texttt{card.info()}
+
+\mansection{Description}
   Return detailed information about the state of the card-reader.
 
-  This function returns an indexed array.
-}
+\mansection{Return value}
+  This function returns an associative array of $(name \Rightarrow value)$ pairs.
 
-\item[\texttt{card.warm\_reset()}]
-{
+
+%------------------------------------------------
+\subsection{card.warm\_reset}
+
+\mansection{Synopsis}
+\texttt{card.warm\_reset()}
+
+\mansection{Description}
   Performs a warm reset of the card 
   (reconnects the card currently inserted in the selected smartcard-reader).
-}
 
-\end{description}
+\mansection{Return value}
+  None
+
 
 
 \section{The \texttt{ui} library}
@@ -734,10 +1166,14 @@ who normally manipulates it as an opaque value.
 
 The \texttt{ui} library functions are the following:
 
-\begin{description}
 
-\item[\texttt{ui.tree\_add\_node(path\_to\_parent, name, [id, [length, [comment]]])}]
-{
+%------------------------------------------------
+\subsection{ui.tree\_add\_node}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_add\_node(path\_to\_parent, name, [$id$ [, $length$ [,$comment$]]])}
+
+\mansection{Description}
   Adds a node in the card tree structure. 
 
   The new node will be appended to the children of the node identified by the 
@@ -757,14 +1193,20 @@ The \texttt{ui} library functions are the following:
   \texttt{comment} is an optional informative string that provides additional 
   information related to the node.
   
+\mansection{Return value}
   Upon success the node returns a string representing the \emph{path} to the 
   newly created node. 
   If the function fails, it returns \texttt{nil}.
   Once the node is created with this function, data can be associated to it with the \texttt{ui.tree\_set\_value} function.
-}
 
-\item[\texttt{ui.tree\_set\_value(path\_to\_node, val)}]
-{
+
+%------------------------------------------------
+\subsection{ui.tree\_set\_value}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_set\_value(path\_to\_node, val)}
+
+\mansection{Description}
   Associate the data \texttt{val} to the node identified by the \emph{path} 
   \texttt{path\_to\_node}.
 
@@ -774,17 +1216,31 @@ The \texttt{ui} library functions are the following:
   Once a value \texttt{val} is associated to a node \texttt{path\_to\_node} 
   it is not possible to add a child node with the function \texttt{ui.tree\_add\_node}.
 	  
+\mansection{Return value}
   The function returns \texttt{true} on success and \texttt{false} otherwise.
-}
 
-\item[\texttt{ui.tree\_get\_value(path\_to\_node)}]
-{
+
+%------------------------------------------------
+\subsection{ui.tree\_get\_value}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_get\_value(path\_to\_node)}
+
+\mansection{Description}
   Returns the value associated with the node identified by \texttt{path\_to\_parent}, 
   or \texttt{nil} if no value is associated with the node or if the function fails.
-} 
 
-\item[\texttt{ui.tree\_get\_node(path\_to\_node)}]
-{
+\mansection{Return value}
+  This function returns a string.
+ 
+
+%------------------------------------------------
+\subsection{ui.tree\_get\_node}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_get\_node(path\_to\_node)}
+
+\mansection{Description}
   Returns an array of 5 elements associated to the node identified by 
   \texttt{path\_to\_node}.
  
@@ -793,98 +1249,145 @@ The \texttt{ui} library functions are the following:
   \texttt{ui.tree\_add\_node}, and the last parameter describes the number of 
   children attached to that node in the tree (0 means none).
 
+\mansection{Return value}
+  Upon success, this function returns an array.
   If the function fails, it returns \texttt{nil}.
-}
 
-\item[\texttt{ui.tree\_delete\_node(path\_to\_node)}]
-{
+%------------------------------------------------
+\subsection{ui.tree\_delete\_node}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_delete\_node(path\_to\_node)}
+
+\mansection{Description}
   Deletes the node identified by \texttt{path\_to\_node} as well as all its 
   children.
-	  
-  The function returns \texttt{true} on success and \texttt{false} otherwise.
-}
 
-\item[\texttt{ui.tree\_to\_xml(path\_to\_node)}]
-{
+\mansection{Return value}
+  The function returns \texttt{true} on success and \texttt{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_to\_xml}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_to\_xml(path\_to\_node)}
+
+\mansection{Description}
   Returns an XML representation of the sub-tree that has \texttt{path\_to\_node} 
   as a root.
 	  
   If \texttt{path\_to\_node} is \texttt{nil} the representation of the whole 
   tree is returned.
   
+\mansection{Return value}
+  This function returns a string upon success.
   If the function fails, it returns \texttt{nil}.
-}
 
-\item[\texttt{ui.tree\_find\_node(origin, name, id)}]
-{
+
+%------------------------------------------------
+\subsection{ui.tree\_find\_node}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_find\_node(origin, name, id)}
+
+\mansection{Description}
   Searches inside the sub-tree of root $origin$ for the first node that has 
   name \texttt{name} and/or the id \texttt{id}.
 
   If \texttt{name=nil} or \texttt{id=nil} they are ignored in the search.
+
+\mansection{Return value}
   If a node is found, the function returns the path to that node otherwise 
   it returns \texttt{nil}.
-}
 
-\item[\texttt{ui.tree\_save(file\_name)}]
-{
+
+%------------------------------------------------
+\subsection{ui.tree\_save}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_save(file\_name)}
+
+\mansection{Description}
   Saves the tree in XML format inside the file $file\_name$.
 
+\mansection{Return value}
   The function returns \texttt{true} on success and \texttt{false} otherwise.
-}
 
-\item[\texttt{ui.tree\_load(file\_name)}]
-{
+
+%------------------------------------------------
+\subsection{ui.tree\_load}
+
+\mansection{Synopsis}
+\texttt{ui.tree\_load(file\_name)}
+
+\mansection{Description}
   Loads the tree from the XML file $file\_name$.
 
+\mansection{Return value}
   The function returns \texttt{true} on success and \texttt{false} otherwise.
-}
 
-\item[\texttt{ui.question(text, buttons)}]
-{
+
+%------------------------------------------------
+\subsection{ui.question}
+
+\mansection{Synopsis}
+\texttt{ui.question(text, buttons)}
+
+\mansection{Description}
   Asks the user a question requesting him to answer by selecting a response.
 
   The question is described in the string \texttt{text}, while the set of 
   possible answers described in the table \texttt{buttons}. 
   Each element in \texttt{buttons} is string representing a possible answer.
   
+\mansection{Return value}
   Upon success, the function returns the index of the answer selected by the 
   user in the table \texttt{buttons} 
   (LUA table indexes are usually numbers greater or equal to 1). 
   
   Upon failure the function returns 0.
-}
 
-\item[\texttt{ui.readline(text [,len [,default]])}]
-{
+
+%------------------------------------------------
+\subsection{ui.readline}
+
+\mansection{Synopsis}
+\texttt{ui.readline(text [,$len$ [,$default$]])}
+
+\mansection{Description}
   Request the user to enter a text string. 
 
   The user's input can optionally be limited to \texttt{len} characters and 
   can hold a predefined value \texttt{default}.
   
+\mansection{Return value}
   The function returns the user's input upon success and \texttt{false} otherwise.
-}
 
-\end{description}
 
 \section{The \texttt{log} library}
 
 The \texttt{log} library contains just one function described below, which allows to print messages in the ``log'' tab of the application.
 
-\begin{description}
 
-\item[\texttt{log.print(level, text)}]
-{
+%------------------------------------------------
+\subsection{log.print}
+
+\mansection{Synopsis}
+\texttt{log.print(level, text)}
+
+\mansection{Description}
   Prints a message \texttt{text} in the console window.
 
   \texttt{level} describes the type of message that is printed. 
   \texttt{level} can take the following values: \texttt{log.INFO}, 
-  \texttt{log.DEBUG}, \texttt{log.WARNING}, or \texttt{log.ERROR}.}
+  \texttt{log.DEBUG}, \texttt{log.WARNING}, or \texttt{log.ERROR}.
 
   All messages printed on the screen with this function are also 
-  saved in the file ``\texttt{\$HOME/.cardpeek.log''.
-}
+  saved in the file ``\texttt{\$HOME/.cardpeek.log}''.
+\mansection{Return value}
+  None.
 
-\end{description}
 
 \chapter{Future developments}
 
@@ -896,7 +1399,8 @@ The short term development `road map' is:
 \item[Bugs:]{Fix some issues in the code and add some needed error checks.}
 \end{description}
 
-\chapter{Licence \label{chapter:licence}}
+\chapter{Licence}
+\label{chapter:licence}
 
 \texttt{Cardpeek} is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

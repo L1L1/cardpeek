@@ -135,7 +135,7 @@ int cardemul_run_command(cardemul_t* ce,
   emul_t cur; 
 
   bytestring_clear(response);
-  *sw=0x6900;
+  *sw=0x6FFF;
 
   if (ce->start.any==NULL || ce->pos.any==NULL)
     return CARDEMUL_ERROR;

@@ -32,17 +32,16 @@
 CARD = 0
 card.CLA=0x94 -- Class for navigo cards
 
-require('lib.apdu')
 require('lib.strict')
 
 LFI_LIST = {
-  ["0002"] = "Unknown",
-  ["2001"] = "Environment",
-  ["2010"] = "Event logs",
-  ["2020"] = "Contracts",
-  ["2040"] = "Special events",
-  ["2050"] = "Contract list",
-  ["2069"] = "Counters"
+  ["#0002"] = "Unknown",
+  ["#2001"] = "Environment",
+  ["#2010"] = "Event logs",
+  ["#2020"] = "Contracts",
+  ["#2040"] = "Special events",
+  ["#2050"] = "Contract list",
+  ["#2069"] = "Counters"
 }
 
 en1543_BITMAP = 1
@@ -185,7 +184,7 @@ function en1543_date(source, position)
 	local date_days
 	local part =  bytes.sub(source, position, position+13) -- 14 bits
 	bytes.pad_left(part,32,0)
-	date_days = EPOCH+bytes.to_number(part)*24*3600
+	date_days = EPOCH+bytes.tonumber(part)*24*3600
 	return os.date("%x",date_days)
 end
 
@@ -193,7 +192,7 @@ function en1543_time(source, position)
 	local date_minutes
 	local part = bytes.sub(source, position, position+10) -- 11 bits
 	bytes.pad_left(part,32,0)
-	date_minutes = bytes.to_number(part)*60
+	date_minutes = bytes.tonumber(part)*60
 	return os.date("%X",date_minutes)
 end
 
@@ -227,10 +226,10 @@ function en1543_parse_item(ctx, format, data, position, reference_index)
 	elseif format[1] == en1543_TIME then
 	   ui.tree_set_value(NODE,en1543_time(item,0)) 
 	elseif format[1] == en1543_NUMBER then
-	   ui.tree_set_value(NODE,bytes.to_number(item))
+	   ui.tree_set_value(NODE,bytes.tonumber(item))
         elseif format[1] == en1543_REPEAT then
-	   ui.tree_set_value(NODE,bytes.to_number(item))
-           for index=1,bytes.to_number(item) do
+	   ui.tree_set_value(NODE,bytes.tonumber(item))
+           for index=1,bytes.tonumber(item) do
 	       parsed = parsed + en1543_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
 	   end 
 	else 
@@ -343,19 +342,20 @@ function process_calypso(cardenv)
 	local LFI
 	local REC
 	local sw, resp
---
 	local NODE
 
+
+	sw, resp = card.select("#315449432e494341")
 
 	APP = ui.tree_add_node(cardenv,"application",DF_NAME)
 	-- note: no real DF select here
  
 	for lfi,lfi_desc in pairs(LFI_LIST) do
-	        sw,resp = card.select_file("2000",8)
+	        sw,resp = card.select("#2000")
 		if sw~=0x9000 then 
 		        break
 		end
-		sw,resp = card.select_file(lfi,8)
+		sw,resp = card.select(lfi)
 		if sw==0x9000 then
 	                local r
 			LFI = ui.tree_add_node(APP,lfi_desc,lfi)
@@ -365,10 +365,8 @@ function process_calypso(cardenv)
 					break
 				end
 				REC = ui.tree_add_node(LFI,"record",r,#resp)
---
                                 NODE = ui.tree_add_node(REC,"raw data")
 	                        ui.tree_set_value(NODE,tostring(resp))
-				--en1543_analyze(REC,resp,lfi_desc)
 			end
 		end
 	end

@@ -37,12 +37,12 @@ MONEO_SFI = {
 function process_moneo(card_ctx)
 	local sw, resp
 	local APP
-	local AID = "A00000006900"
+	local AID = "#A00000006900"
 	local r
 	local SFI
 	local REC
 
-	sw, resp = card.select_file(AID)
+	sw, resp = card.select(AID)
 
 	if (#resp==0) then
 	   return FALSE

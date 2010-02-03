@@ -10,6 +10,7 @@ The tool currently reads the contents of :
   * [http://code.google.com/p/cardpeek/wiki/emv EMV] bank cards 
   * [http://code.google.com/p/cardpeek/wiki/Navigo Navigo] public transport cards 
   * Moneo ePurse cards 
+  * The French health card "Vitale 2"
 
 
 Here are some [http://code.google.com/p/cardpeek/wiki/Screenshot screenshots] of cardpeek.
@@ -27,7 +28,8 @@ Dans cette version, l’application est capable de lire le contenu des cartes su
   * Les cartes bancaire [http://code.google.com/p/cardpeek/wiki/emv_FR EMV]
   * Les cartes de transport parisien [http://code.google.com/p/cardpeek/wiki/Navigo_FR Navigo] et certaines autres cartes similaires utilisée en France. 
   * Les cartes Monéo 
-
+  * Les cartes Vitales 2
+ 
 Voici des [http://code.google.com/p/cardpeek/wiki/Screenshot captures] d'écran de cardpeek.
 
 Pour plus de détails consulter le manuel Cardpeek

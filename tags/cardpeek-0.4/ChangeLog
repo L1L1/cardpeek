@@ -1,0 +1,27 @@
+cardpeek-0.4: L1L1@gmx.com
+03 February 2010
+- Added preliminary Vitale 2 health card analysis.
+- Extended the documentation.
+- Added LUA functions to run standard ISO 7816 commands.
+- Corrected some small bugs.
+- Added the possibility to compile the source under FreeBSD.
+- Added better upgrade capacity when installing a newer version over an older one.
+
+cardpeek-0.3: L1L1@gmx.com
+17 January 2010
+- Extended the documentation.
+- Defined a generic calypso script.
+- Added a specific navigo scripts with extended event analysis (thanks to ideas from Pascal Terjan).
+- Added better generic EMV log analysis.
+- Added experimental AGC Multi Iso contactless support.
+- Added APDU capture and card emulator driver code.
+
+cardpeek-0.2: L1L1@gmx.com
+3 January 2010
+- Complete rewrite of most of the code.
+- Imported ideas and bugfixes from Pascal Terjan (many thanks to him)
+
+cardpeek-0.1: L1L1@gmx.com
+20 July 2009
+- Initial version
+

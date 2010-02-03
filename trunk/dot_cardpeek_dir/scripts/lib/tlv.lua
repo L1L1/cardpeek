@@ -19,13 +19,27 @@
 
 -- HELPER LIBRARY : implements some TLV processing
 
+function tlv_tag_msb(tag)
+	while (tag>255) do tag = tag / 256 end
+	return tag
+end
+
 function tlv_tag_is_compound(tag)
-        while (tag>255) do tag = tag / 256 end
-        return (bit.AND(tag,0x20)==0x20)
+        return (bit.AND(tlv_tag_msb(tag),0x20)==0x20)
 end
 
 ISO_7816_IDO = {
-   ['6']  = "Object identifier",
+   ['2'] = "Integer",
+   ['3'] = "Bit String",
+   ['4'] = "Octet String",
+   ['5'] = "Null",
+   ['6'] = "Object identifier",
+   ['13'] = "Printable String",
+   ['14'] = "T61 String",
+   ['16'] = "IA5 String",
+   ['17'] = "UTC Time",
+   ['30'] = "Sequence",
+   ['31'] = "Set",
    ['41'] = "Country authority",
    ['42'] = "Issuer authority",
    ['43'] = "Card service data",
@@ -111,6 +125,13 @@ function tlv_tag_name(tlv_tag,reference,parent)
 	return tlv_ref
 end
 
+TLV_TYPES = {
+  "TLV (Universal)",
+  "TLV (Application-specific)",
+  "TLV (Context-specific)",
+  "TLV (Private)"
+}
+
 function internal_tlv_parse(cardenv,tlv,reference,parent)
         local ref
         local tlv_tag
@@ -122,26 +143,24 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
 	while tlv do
             tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
 	    
-	    if tlv_tag==nil then 
+	    if tlv_tag==nil or tlv_tag==0 then 
 	       break
 	    end--if
 
             tlv_ref = tlv_tag_name(tlv_tag,reference,parent)
 	    
-	    if bytes.is_printable(tlv_value) and (#tlv_value>1) then
-               text = "'"..bytes.to_printable(tlv_value).."'"
+	    if (bytes.is_printable(tlv_value) or tlv_tag==0x50) and (#tlv_value>1) then
+               text = "'"..bytes.toprintable(tlv_value).."'"
 	    else
 	       text = nil
-            end--if
+	    end--if
  
-            if tlv_ref then
-               ref = ui.tree_add_node(cardenv,tostring(tlv_ref),string.format('%X',tlv_tag),
+	    if tlv_ref==nil then
+	       tlv_ref = TLV_TYPES[bit.SHR(tlv_tag_msb(tlv_tag),6)+1]
+	    end--if
+
+	    ref = ui.tree_add_node(cardenv,tostring(tlv_ref),string.format('%X',tlv_tag),
                                       #tlv_value,text)
-            else
-	       -- tlv_ref = ISO78
-               ref = ui.tree_add_node(cardenv,"tlv",string.format('%X',tlv_tag),
-                                      #tlv_value,text)
-            end--if
 
             if (tlv_tag_is_compound(tlv_tag)) then
                internal_tlv_parse(ref,tlv_value,reference,tlv_tag)

@@ -17,7 +17,6 @@
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require('lib.apdu')
 require('lib.tlv')
 require('lib.strict')
 
@@ -30,10 +29,12 @@ function card.get_processing_options(pdol)
 	return card.send(command)
 end
 
+-- override card.get_data() for EMV
 function card.get_data(data)
-	local command = bytes.new(8,"80 CA", bit.AND(bit.SHR(data,8),0xFF), bit.AND(data,0xFF), 0)
-	return card.send(command)
+        local command = bytes.new(8,"80 CA",bit.AND(bit.SHR(data,8),0xFF),bit.AND(data,0xFF),0)
+        return card.send(command)
 end
+
 
 -- ------------------------------------------------------------------------
 -- EMV 
@@ -124,16 +125,16 @@ function emv_parse(cardenv,tlv)
 	tlv_parse(cardenv,tlv,EMV_REFERENCE)
 end
 
-PSE = "315041592E5359532E4444463031"
+PSE = "#315041592E5359532E4444463031"
 
 AID_LIST = { 
-  "A0000000421010",
-  "A0000000422010",
-  "A0000000031010",
-  "A0000000032010",
-  "A0000000041010",
-  "A0000000042010",
-  "A00000006900"
+  "#A0000000421010",
+  "#A0000000422010",
+  "#A0000000031010",
+  "#A0000000032010",
+  "#A0000000041010",
+  "#A0000000042010",
+  "#A00000006900"
 }
 
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }
@@ -150,7 +151,7 @@ function emv_process_pse(cardenv)
 	local RECORD
 	local aid
 
-        sw, resp = card.select_file(PSE)
+        sw, resp = card.select(PSE)
 	
 	-- Could it be a french card ?
 	if sw == 0x6E00 then 
@@ -158,7 +159,7 @@ function emv_process_pse(cardenv)
 	   card.warm_reset()
 	   ATR = ui.tree_add_node(cardenv,"ATR","warm")
 	   ui.tree_set_value(ATR,tostring(card.last_atr()))
-           sw, resp = card.select_file(PSE)
+           sw, resp = card.select(PSE)
 	end
 
 	if sw ~= 0x9000 then
@@ -183,7 +184,7 @@ function emv_process_pse(cardenv)
 	        RECORD = ui.tree_add_node(FILE,"record",tostring(rec))
 	        emv_parse(RECORD,resp)
 	        aid = ui.tree_get_value(ui.tree_find_node(RECORD,nil,"4F"))
-	        table.insert(AID_LIST,aid)
+	        table.insert(AID_LIST,"#"..aid)
 		rec = rec + 1
              end
 	   until sw ~= 0x9000
@@ -301,7 +302,7 @@ function emv_process_application(cardenv,aid)
 	log.print(log.INFO,"Processing application "..aid)
 
 	-- Select AID
-	sw,resp = card.select_file(aid)
+	sw,resp = card.select(aid)
 	if sw ~=0x9000 then
 	   return false
 	end

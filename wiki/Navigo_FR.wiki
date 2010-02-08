@@ -1,4 +1,4 @@
-#summary Visionner le contenu d'un Passe Navigo
+#summary Lire le contenu de sa carte Navigo
 
 = Comment lire le contenu de son "Passe Navigo" ? =
 

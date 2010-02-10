@@ -42,7 +42,7 @@ function process_moneo(card_ctx)
 	local SFI
 	local REC
 
-	sw, resp = card.select(AID)
+	sw, resp = card.select(AID,nil,0)
 
 	if (#resp==0) then
 	   return FALSE

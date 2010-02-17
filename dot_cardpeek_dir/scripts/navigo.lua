@@ -59,6 +59,8 @@ function navigo_process_events(ctx)
 	local code_value
 	local code_transport
 	local code_transition
+	local code_transport_string
+	local code_transition_string
 	local code_string
 	local service_provider_value
 	local location_id_value
@@ -66,9 +68,9 @@ function navigo_process_events(ctx)
 	local station_id
 	local location_string
 
-	EVENTS = ui.tree_find_node(ctx,"Event logs");
+	EVENTS = ui.tree_find_node(ctx,"File Event logs");
 	if EVENTS==nil then 
-	   log_printf(LOG_WARNING,"No event found in card")
+	   log.print(log.WARNING,"No event found in card")
 	   return 0 
 	end
 
@@ -82,9 +84,16 @@ function navigo_process_events(ctx)
 	    
 	    REF = ui.tree_find_node(RECORD,"Code")
 	    code_value = tonumber(ui.tree_get_value(REF))
-	    code_transport  = bit.SHR(code_value,4)
+
+	    code_transport = bit.SHR(code_value,4)
+	    code_transport_string  = TRANSPORT_LIST[code_transport]
+	    if code_transport_string==nil then code_transport_string = code_transport end
+
 	    code_transition = bit.AND(code_value,0xF)
-	    ui.tree_set_value(REF,TRANSPORT_LIST[code_transport].." - "..TRANSITION_LIST[code_transition])
+	    code_transition_string = TRANSITION_LIST[code_transition]
+	    if (code_transition_string==nil) then code_transition_string = code_transition end
+
+	    ui.tree_set_value(REF,code_transport_string.." - "..code_transition_string)
 
 	    if service_provider_value == 3 and code_transport >= 3 and code_transport <=5 then
 	       REF = ui.tree_find_node(RECORD,"LocationId")

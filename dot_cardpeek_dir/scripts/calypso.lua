@@ -53,7 +53,7 @@ en1543_REPEAT = 6
 
 en1543_BestContracts = {
   [0] = { en1543_REPEAT, 4, "Count", {
-    [0] = { en1543_BITMAP, 3, "Bitmap", {
+    [0] = { en1543_BITMAP, 3, "BestContractGeneralBitmap", {
       [0] = { en1543_ITEM, 24, "NetworkId" },
       [1] = { en1543_ITEM, 16, "Tariff" },
       [2] = { en1543_ITEM, 5, "Pointer" }
@@ -63,7 +63,7 @@ en1543_BestContracts = {
 
 en1543_Env = {
   [0] = { en1543_ITEM, 6, "VersionNumber" },
-  [1] = { en1543_BITMAP, 7, "GeneralBitmap",{
+  [1] = { en1543_BITMAP, 7, "EnvGeneralBitmap",{
     [0] = { en1543_ITEM, 24, "NetworkId" },
     [1] = { en1543_ITEM, 8, "ApplicationIssuerId" },
     [2] = { en1543_DATE, 14, "ApplicationValidityEndDate" },
@@ -75,6 +75,56 @@ en1543_Env = {
       [1] = { en1543_ITEM, 0, "Extra" },
     }}
   }
+}
+
+en1543_Holder = {
+  [0] = { en1543_BITMAP, 8, "HolderGeneralBitmap", {
+    [0] = { en1543_BITMAP, 2, "NameBitmap", {
+      [0] = { en1543_ITEM, 85, "Surname" },
+      [1] = { en1543_ITEM, 85, "Forename" }
+    }},
+    [1] = { en1543_BITMAP, 2, "BirthBitmap", {
+      [0] = { en1543_ITEM, 32, "BirthDate" },
+      [1] = { en1543_ITEM, 115, "BirthPlace"}
+    }},
+    [2] = { en1543_ITEM, 85, "BirthName" },
+    [3] = { en1543_ITEM, 32, "IdNumber" },
+    [4] = { en1543_ITEM, 24, "CountryAlpha" },
+    [5] = { en1543_ITEM, 32, "Company" },
+    [6] = { en1543_REPEAT, 4, "Profiles(0..4)", {
+--[[
+      ProfileBitmap [0] 3 Bitmap Référ.
+      NetworkId [0] 24 Réseau Référ.
+      ProfileNumber [1] 8 Numéro du statut Référ.
+      ProfileDate [2] 14 Date de fin de validité du statut Référ.
+      ProfileBitmap [1] 3 Bitmap Référ.
+      NetworkId [0] 24 Réseau Référ.
+      ProfileNumber [1] 8 Numéro du statut Référ.
+      ProfileDate [2] 14 Date de fin de validité du statut Référ.
+      ProfileBitmap [2] 3 Bitmap Référ.
+      NetworkId [0] 24 Réseau Référ.
+      ProfileNumber [1] 8 Numéro du statut Référ.
+      ProfileDate [2] 14 Date de fin de validité du statut Référ.
+      ProfileBitmap [3] 3 Bitmap Référ.
+      NetworkId [0] 24 Réseau Référ.
+      ProfileNumber [1] 8 Numéro du statut Référ.
+      ProfileDate [2] 14 Date de fin de validité du statut Référ.
+--]] }},
+    [7] = { en1543_BITMAP, 12, "DataBitmap", {
+      [0] = { en1543_ITEM, 4, "DataCardStatus" },
+      [1] = { en1543_ITEM, 4, "DataTeleReglement" },
+      [2] = { en1543_ITEM, 17, "DataResidence" },
+      [3] = { en1543_ITEM, 6, "DataCommercialID" },
+      [4] = { en1543_ITEM, 17, "DataWorkPlace" },
+      [5] = { en1543_ITEM, 17, "DataStudyPlace" },
+      [6] = { en1543_ITEM, 16, "DataSaleDevice" },
+      [7] = { en1543_ITEM, 16, "DataAuthenticator" },
+      [8] = { en1543_ITEM, 14, "DataProfileStartDate1" },
+      [9] = { en1543_ITEM, 14, "DataProfileStartDate2" },
+      [10] = { en1543_ITEM, 14, "DataProfileStartDate3" },
+      [11] = { en1543_ITEM, 14, "DataProfileStartDate4" }
+    }}
+  }}
 }
 
 en1543_Contract = {
@@ -242,9 +292,12 @@ end
 function en1543_parse(ctx, format, data)
 	local index
 	local parsed = 0
+
 	for index=0,#format do
 	    parsed = parsed + en1543_parse_item(ctx,format[index],data,parsed,index)
 	end
+	--local REM = ui.tree_add_node(ctx,"Remaining unparsed data",nil,parsed,(parsed/8).."bytes");
+	--ui.tree_set_value(REM,tostring(bytes.sub(data,parsed,-1)))
 	return parsed
 end
 
@@ -255,8 +308,9 @@ function en1543_process(ctx)
 	local data
 	local bits
 	local index
+	local parsed
 
-	NODE_REF = ui.tree_find_node(ctx,"Event logs")
+	NODE_REF = ui.tree_find_node(ctx,"File Event logs")
 	
 	if NODE_REF then
 	   for index=1,16 do
@@ -268,10 +322,10 @@ function en1543_process(ctx)
 	      en1543_parse(RECORD_REF,en1543_Event,bits)
 	   end
 	else
-	   log.print(LOG_DEBUG,"No event logs")
+	   log.print(log.DEBUG,"No event logs")
 	end
 
-	NODE_REF = ui.tree_find_node(ctx,"Special events")
+	NODE_REF = ui.tree_find_node(ctx,"File Special events")
 	
 	if NODE_REF then
 	   for index=1,16 do
@@ -283,22 +337,23 @@ function en1543_process(ctx)
 	      en1543_parse(RECORD_REF,en1543_Event,bits)
 	   end
 	else
-	   log.print(LOG_DEBUG,"No special events")
+	   log.print(log.DEBUG,"No special events")
 	end
 
-	NODE_REF = ui.tree_find_node(ctx,"Environment")
+	NODE_REF = ui.tree_find_node(ctx,"File Environment")
 
 	if NODE_REF then
 	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
 	   DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
 	   data = bytes.new(8,ui.tree_get_value(DATA_REF))
 	   bits = bytes.convert(1,data)
-	   en1543_parse(RECORD_REF,en1543_Env,bits)
+	   parsed = en1543_parse(RECORD_REF,en1543_Env,bits)
+	   parsed = en1543_parse(RECORD_REF,en1543_Holder,bytes.sub(bits,parsed))
 	else
-	   log.print(LOG_DEBUG,"No environment") 
+	   log.print(log.DEBUG,"No environment") 
 	end
 
-	NODE_REF = ui.tree_find_node(ctx,"Contract list")
+	NODE_REF = ui.tree_find_node(ctx,"File Contract list")
 	
 	if NODE_REF then
 	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
@@ -312,10 +367,10 @@ function en1543_process(ctx)
 	   --        but for now we will assume that contract format is 'FF'
   
 	else
-	   log.print(LOG_DEBUG,"No contract list (BestContracts)") 
+	   log.print(log.DEBUG,"No contract list (BestContracts)") 
 	end
 
-	NODE_REF = ui.tree_find_node(ctx,"Contracts")
+	NODE_REF = ui.tree_find_node(ctx,"File Contracts")
 	
 	if NODE_REF then
 	   for index=1,16 do
@@ -327,7 +382,7 @@ function en1543_process(ctx)
 	      en1543_parse(RECORD_REF,en1543_Contract,bits)
 	   end
 	else
-	   log.print(LOG_DEBUG,"No contracts")
+	   log.print(log.DEBUG,"No contracts")
 	end
 
 
@@ -358,7 +413,7 @@ function process_calypso(cardenv)
 		sw,resp = card.select(lfi)
 		if sw==0x9000 then
 	                local r
-			LFI = ui.tree_add_node(APP,lfi_desc,lfi)
+			LFI = ui.tree_add_node(APP,"File "..lfi_desc,lfi)
 			for r=1,255 do
 				sw,resp=card.read_record(0,r,0x1D)
 				if sw ~= 0x9000 then

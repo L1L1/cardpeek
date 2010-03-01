@@ -32,6 +32,8 @@ typedef struct {
 } pcsc_data_t;
 
 
+char *CARD_PROTOCOL[] = { "Unknown", "T0", "T1" };
+
 int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   DWORD attr_maxinput;
@@ -69,7 +71,7 @@ int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   else
     log_printf(LOG_WARNING,"Could not determinate reader maximum input length");
 
-  log_printf(LOG_INFO,"Connection successful");
+  log_printf(LOG_INFO,"Connection successful, protocol is %s",CARD_PROTOCOL[cr->protocol]);
   cr->connected=1;
   return 1;
 }
@@ -131,14 +133,18 @@ unsigned short pcsc_transmit(cardreader_t* cr,
 				 bytestring_get_size(command),
 	     			 &pioRecvPci, REC_DAT,&REC_LEN);
   }
-  else
+  else if (cr->protocol==SCARD_PROTOCOL_T1)
   {
-    /* FIXME: incorrect T1 stuff */
     pcsc->status = SCardTransmit(pcsc->hcard,SCARD_PCI_T1,
 				 bytestring_get_data(command), 
                                  bytestring_get_size(command),
 	     			 &pioRecvPci, REC_DAT,&REC_LEN);
 
+  }
+  else
+  {
+    log_printf(LOG_ERROR,"Unknown smartcard protocol: %i",cr->protocol);
+    return CARDPEEK_ERROR_SW;
   }
 
   if (pcsc->status!=SCARD_S_SUCCESS)
@@ -155,7 +161,7 @@ unsigned short pcsc_transmit(cardreader_t* cr,
   return SW;
 }
 
-bytestring_t* pcsc_last_atr(cardreader_t* cr)
+const bytestring_t* pcsc_last_atr(cardreader_t* cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
   DWORD state;
@@ -164,7 +170,6 @@ bytestring_t* pcsc_last_atr(cardreader_t* cr)
   DWORD atrlen=MAX_ATR_SIZE;
   char readername[MAX_READERNAME];
   DWORD readernamelen=MAX_READERNAME;
-  bytestring_t* res = bytestring_new(8);
   char *tmp;
 
   pcsc->status = SCardStatus(pcsc->hcard,
@@ -175,15 +180,18 @@ bytestring_t* pcsc_last_atr(cardreader_t* cr)
 
   if (pcsc->status==SCARD_S_SUCCESS)
   {
-    bytestring_assign_data(res,atrlen,pbAtr);
-    tmp = bytestring_to_alloc_string(res);
+    bytestring_assign_data(cr->atr,atrlen,pbAtr);
+    tmp = bytestring_to_alloc_string(cr->atr);
     log_printf(LOG_INFO,"ATR=%s",tmp);
     free(tmp);
   }
   else
+  {
+    bytestring_clear(cr->atr);
     log_printf(LOG_ERROR,"Failed to query card status [%s]",
 	       pcsc_stringify_error(pcsc->status));
-  return res;
+  }
+  return cr->atr;
 }
 
 char **pcsc_get_info(cardreader_t* cr, char** parent)

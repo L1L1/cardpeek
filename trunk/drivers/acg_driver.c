@@ -30,7 +30,9 @@
 #include <termios.h>
 #include <errno.h>
 
+
 #define BAUDRATE B9600  /* from termios.h */
+/*#define BAUDRATE B57600 let's speed things up a bit */
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
 int serial_flush_input(int fd)
@@ -42,6 +44,50 @@ int serial_flush_output(int fd)
 {
   return tcflush(fd,TCOFLUSH);
 }
+
+int serial_send(int fd, char *s)
+{
+  int len = strlen(s);
+  int wr;
+
+  serial_flush_input(fd);
+  serial_flush_output(fd);
+  wr = write(fd,s,len);
+
+  if (wr!=len)
+    log_printf(LOG_ERROR,"Failed to write to serial line - %s",strerror(errno));
+
+  return wr == len;
+}
+
+const char* serial_recv(int fd)
+{
+  static char buf[1024];
+  int rd;
+  struct timeval Timeout;
+  fd_set readfs;
+  int res;
+
+  FD_ZERO(&readfs);
+  FD_SET(fd,&readfs);
+  Timeout.tv_sec  = 0;
+  Timeout.tv_usec = 500000;
+
+  res = select(fd+1,&readfs,NULL,NULL,&Timeout);
+  if (res == 1)
+  {
+    rd = read(fd,buf,1023);
+    if (rd<0) {
+      log_printf(LOG_ERROR,"Failed to read from serial line - %s",strerror(errno));
+      return NULL;
+    }
+    buf[rd--]=0;
+    while (rd>=0 && buf[rd]<' ') buf[rd--]=0;
+    return buf;
+  }
+  return NULL;
+}
+
 
 int serial_open(const char *dev_name, struct termios *oldtio)
 {
@@ -142,49 +188,6 @@ void serial_close(int fd, struct termios *restore)
   close(fd);
 }
 
-int serial_send(int fd, char *s)
-{
-  int len = strlen(s);
-  int wr;
-
-  serial_flush_input(fd);
-  serial_flush_output(fd);
-  wr = write(fd,s,len);
-
-  if (wr!=len)
-    log_printf(LOG_ERROR,"Failed to write to serial line - %s",strerror(errno));
-
-  return wr == len;
-}
-
-const char* serial_recv(int fd)
-{
-  static char buf[1024];
-  int rd;
-  struct timeval Timeout;
-  fd_set readfs;
-  int res;
-
-  FD_ZERO(&readfs);
-  FD_SET(fd,&readfs);
-  Timeout.tv_sec  = 0;
-  Timeout.tv_usec = 500000;
-
-  res = select(fd+1,&readfs,NULL,NULL,&Timeout);
-  if (res == 1)
-  {
-    rd = read(fd,buf,1023);
-    if (rd<0) {
-      log_printf(LOG_ERROR,"Failed to read from serial line - %s",strerror(errno));
-      return NULL;
-    }
-    buf[rd--]=0;
-    while (rd>=0 && buf[rd]<' ') buf[rd--]=0;
-    return buf;
-  }
-  return NULL;
-}
-
 
 /*********************************************
  * REAL CARD STUFF
@@ -192,7 +195,6 @@ const char* serial_recv(int fd)
 
 typedef struct {
   bytestring_t *serial;
-  bytestring_t *atr;
   unsigned reader_version;
   char *reader_version_string;
   unsigned tag_type;
@@ -241,6 +243,7 @@ const char *acg_reset_device(int line)
       return name;
     }
   }
+  log_printf(LOG_WARNING,"Could not reset ACG device");
   return NULL;
 }
 
@@ -429,23 +432,24 @@ int acg_connect(cardreader_t *cr, unsigned prefered_protocol)
   }
 
   extra->serial = bytestring_new_from_string(8,response+1);
-  extra->atr = bytestring_new_from_string(8,"3B 88 80 01");
+  /* FIXME should be an append */
+  cr->atr = bytestring_new_from_string(8,"3B 88 80 01");
   
   tmp = bytestring_new(8);
   if (bytestring_get_size(extra->serial)>10)
     bytestring_substr(tmp,4,BYTESTRING_NPOS,extra->serial);
   else /* this is an incorrect ATR */
     bytestring_substr(tmp,1,BYTESTRING_NPOS,extra->serial);
-  bytestring_append(extra->atr,tmp);
+  bytestring_append(cr->atr,tmp);
   bytestring_free(tmp);
 
   checksum=0;
-  for (count=1;count<bytestring_get_size(extra->atr);count++)
+  for (count=1;count<bytestring_get_size(cr->atr);count++)
   {
-    bytestring_get_element(&element,extra->atr,count);
+    bytestring_get_element(&element,cr->atr,count);
     checksum ^= element;
   }
-  bytestring_pushback(extra->atr,checksum);
+  bytestring_pushback(cr->atr,checksum);
  
   extra->status = SMARTCARD_OK;
   cr->connected=1;
@@ -458,7 +462,6 @@ int acg_disconnect(cardreader_t *cr)
   acg_data_t* extra = cr->extra_data;
 
   serial_close(extra->line,&(extra->old_line_state));
-  bytestring_clear(extra->atr);
   bytestring_clear(extra->serial);
   if (extra->reader_version_string)
     free(extra->reader_version_string);
@@ -516,6 +519,7 @@ unsigned short acg_transmit(cardreader_t* cr,
   bytestring_free(extended_command);
 
   log_printf(LOG_DEBUG,"Sending %s to card",extended_command_string+1);
+
   if (!serial_send(extra->line,extended_command_string+1))
   {
     free(extended_command_string);
@@ -527,8 +531,16 @@ unsigned short acg_transmit(cardreader_t* cr,
  
   extended_result_string = serial_recv(extra->line);
   
-  if (!extended_result_string)
+  if (!extended_result_string) /* Damned: the reader is not responding ! */
+  {
+    if (!serial_send(extra->line,"ra")) /* let's resend what's already in the reader buffer */
+    {
+      log_printf(LOG_ERROR,"Failed to re-send command to %s, after a first timeout",cr->name);
+      extra->status = SMARTCARD_ERROR;
+      return CARDPEEK_ERROR_SW;
+    }
     extended_result_string = serial_recv(extra->line);
+  }
 
   if (!extended_result_string)
   {
@@ -539,7 +551,7 @@ unsigned short acg_transmit(cardreader_t* cr,
     
   log_printf(LOG_DEBUG,"Receiving %s from card",extended_result_string);
   extended_result = bytestring_new_from_string(8,extended_result_string);
-  bytestring_substr(result,4,BYTESTRING_NPOS,extended_result);
+  bytestring_substr(result,2,BYTESTRING_NPOS,extended_result);
   bytestring_free(extended_result);
   res_len = bytestring_get_size(result);
   bytestring_get_element(&SW1,result,res_len-2);
@@ -551,12 +563,9 @@ unsigned short acg_transmit(cardreader_t* cr,
   return SW;
 }
 
-bytestring_t* acg_last_atr(cardreader_t* cr)
+const bytestring_t* acg_last_atr(cardreader_t* cr)
 {
-  acg_data_t* extra = cr->extra_data;
-  if (extra->status!=SMARTCARD_OK)
-    return NULL;
-  return bytestring_duplicate(extra->atr);
+  return cr->atr;
 }
 
 char **acg_get_info(cardreader_t* cr, char** parent)
@@ -586,7 +595,6 @@ int acg_fail(cardreader_t* cr)
 void acg_finalize(cardreader_t* cr)
 {
   acg_data_t* extra = cr->extra_data;
-  bytestring_free(extra->atr);
   bytestring_free(extra->serial);
   free(extra);
 }
@@ -600,7 +608,6 @@ int acg_initialize(cardreader_t *reader)
   
   memset(extra,0,sizeof(acg_data_t));
 
-  extra->atr = bytestring_new(8);
   extra->serial = bytestring_new(8);
   reader->extra_data   = extra;
  

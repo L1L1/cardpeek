@@ -55,14 +55,13 @@ unsigned short emul_transmit(cardreader_t* cr,
   return SW;
 }
 
-bytestring_t* emul_last_atr(cardreader_t* cr)
+const bytestring_t* emul_last_atr(cardreader_t* cr)
 {
   cardemul_t* emul = cr->extra_data;
-  bytestring_t* res = bytestring_new(8);
 
   if (cr->connected)
-    cardemul_run_last_atr(emul,res);
-  return res;
+    cardemul_run_last_atr(emul,cr->atr);
+  return cr->atr;
 }
 
 char** emul_get_info(cardreader_t* cr,char** parent)

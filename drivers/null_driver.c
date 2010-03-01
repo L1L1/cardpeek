@@ -39,9 +39,9 @@ unsigned short null_transmit(cardreader_t* cr,
   return CARDPEEK_ERROR_SW;
 }
 
-bytestring_t* null_last_atr(cardreader_t* cr)
+const bytestring_t* null_last_atr(cardreader_t* cr)
 {
-  return bytestring_new(8);
+  return cr->atr;
 }
 
 int null_fail(cardreader_t* cr)

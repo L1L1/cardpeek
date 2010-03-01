@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2010 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,16 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#include <lauxlib.h>
+#include "lua_bytes.h"
+#include "bytestring.h"
+#include "misc.h"
+#include <string.h>
+#include <stdlib.h>
 
 /*** LUA_BYTES: lua encapsulation of bytestring.c ***/
 
-static bytestring_t* luaL_checkbytestring(lua_State *L, int p)
+bytestring_t* luaL_checkbytestring(lua_State *L, int p)
 {
   void *ud = luaL_checkudata(L,p,"bytes.type");
   luaL_argcheck(L, ud != NULL, p, "`bytes' expected");
@@ -122,6 +128,17 @@ static int subr_bytes_new(lua_State *L)
   tmp=x_bytes_create(L,width,2,n);
   bytestring_copy(bs,tmp);
   bytestring_free(tmp);
+  return 1;
+}
+
+static int subr_bytes_new_from_text(lua_State *L)
+{
+  const char *str = luaL_checkstring(L, 1);
+  bytestring_t *bs = bytestring_new(8);
+  
+  bytestring_assign_data(bs,strlen(str),(const unsigned char *)str);
+
+  lua_pushbytestring(L,bs);
   return 1;
 }
 
@@ -320,48 +337,6 @@ static int subr_bytes_concat(lua_State *L)
   bs = x_bytes_create(L,width,1,lua_gettop(L)); 
   lua_pushbytestring(L,bs);
   return 1;
-
-/*
-   ********************
-   * Previous version *
-   ********************
-
-  bytestring_t *bs;
-  bytestring_t *res;
-  bytestring_t *extra;
-
-  if (lua_isuserdata(L,1))
-  {
-    bs = luaL_checkbytestring(L, 1);
-    res=luaL_newbytestring(L,bs->width);
-
-    if (lua_isstring(L,2))
-    {
-      bytestring_copy(res,bs);
-      extra=bytestring_new_from_string(bs->width,lua_tostring(L,2));
-      bytestring_append(res,extra);
-      bytestring_free(extra);
-    }
-    else if (luaL_checkbytestring(L,2))
-    {
-      bytestring_copy(res,bs);
-      extra=luaL_checkbytestring(L,2);
-      bytestring_append(res,extra);
-    }
-    else
-      return luaL_error(L,"can only concatenate `bytes' with `bytes' or `string'");
-  }
-  else if (lua_isstring(L,1))
-  {
-    extra=luaL_checkbytestring(L,2);
-    bs = bytestring_new_from_string(extra->width,lua_tostring(L,1));
-    res=luaL_newbytestring(L,extra->width);
-    bytestring_copy(res,bs);
-    bytestring_append(res,extra);
-    bytestring_free(bs);
-  }
-
-  return 1;*/
 }
 
 static int subr_bytes_eq(lua_State *L)
@@ -391,6 +366,7 @@ static int subr_bytes_to_printable(lua_State *L)
   return 1;
 }
 
+
 static int subr_bytes_convert(lua_State *L)
 {
   int base=luaL_checkint(L,1);
@@ -408,10 +384,9 @@ static int subr_bytes_convert(lua_State *L)
 static int subr_bytes_to_number(lua_State *L)
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  char *ret=bytestring_to_alloc_number(bs);
+  double ret=bytestring_to_number(bs);
   
-  lua_pushstring(L,ret);
-  free(ret);
+  lua_pushnumber(L,ret);
   return 1;
 }
 
@@ -428,6 +403,7 @@ static const struct luaL_reg byteslib_mt [] = {
 
 static const struct luaL_reg byteslib [] = {
   {"new", subr_bytes_new},
+  {"new_from_text",subr_bytes_new_from_text},
   {"assign",subr_bytes_assign},
   {"append",subr_bytes_append},
   {"insert",subr_bytes_insert},

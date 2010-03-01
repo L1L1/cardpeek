@@ -557,7 +557,6 @@ FILES = {
   { ['FID']=0x011D, ['name']='EF.SOD' } 
 }
 
-MRZ_DATA = "P200011571FRA0101011M1704268<<<<<<<<<<<<<<<6"
 MRZ_DATA = ui.readline("Enter lower MRZ data",44,MRZ_DATA)
 
 card.connect()

@@ -19,7 +19,7 @@
 
 ---------------------------------------------------------------------
 -- Most of the data and coding ideas in this file 
--- was contributed by 'Peter Terjan', based on location 
+-- was contributed by 'Pascal Terjan', based on location 
 -- data from 'Aurélien Baro'.
 ---------------------------------------------------------------------
 
@@ -78,12 +78,12 @@ function navigo_process_events(ctx)
 	    RECORD = ui.tree_find_node(EVENTS,"record",rec_index)
 	    if RECORD==nil then break end
 	    
-	    REF = ui.tree_find_node(RECORD,"ServiceProvider")
-	    service_provider_value = tonumber(ui.tree_get_value(REF))
-	    ui.tree_set_value(REF,SERVICE_PROVIDERS[service_provider_value])
+	    REF = ui.tree_find_node(RECORD,"EventServiceProvider")
+	    service_provider_value = tonumber(ui.tree_get_alt_value(REF))
+	    ui.tree_set_alt_value(REF,SERVICE_PROVIDERS[service_provider_value])
 	    
-	    REF = ui.tree_find_node(RECORD,"Code")
-	    code_value = tonumber(ui.tree_get_value(REF))
+	    REF = ui.tree_find_node(RECORD,"EventCode")
+	    code_value = tonumber(ui.tree_get_alt_value(REF))
 
 	    code_transport = bit.SHR(code_value,4)
 	    code_transport_string  = TRANSPORT_LIST[code_transport]
@@ -93,11 +93,11 @@ function navigo_process_events(ctx)
 	    code_transition_string = TRANSITION_LIST[code_transition]
 	    if (code_transition_string==nil) then code_transition_string = code_transition end
 
-	    ui.tree_set_value(REF,code_transport_string.." - "..code_transition_string)
+	    ui.tree_set_alt_value(REF,code_transport_string.." - "..code_transition_string)
 
 	    if service_provider_value == 3 and code_transport >= 3 and code_transport <=5 then
-	       REF = ui.tree_find_node(RECORD,"LocationId")
-	       location_id_value = tonumber(ui.tree_get_value(REF))
+	       REF = ui.tree_find_node(RECORD,"EventLocationId")
+	       location_id_value = tonumber(ui.tree_get_alt_value(REF))
 	       sector_id = bit.SHR(location_id_value,9)
 	       station_id = bit.AND(bit.SHR(location_id_value,4),0x1F)
 
@@ -116,7 +116,7 @@ function navigo_process_events(ctx)
 		     end
 	       end
 	       
-               ui.tree_set_value(REF,location_string)
+               ui.tree_set_alt_value(REF,location_string)
 
 	    end
 	end

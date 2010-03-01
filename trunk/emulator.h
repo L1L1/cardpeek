@@ -30,8 +30,8 @@ enum {
 };
 
 enum {
-  CARDEMUL_OK,
-  CARDEMUL_ERROR
+  CARDEMUL_ERROR,
+  CARDEMUL_OK
 };
 
 typedef struct _anyemul_t {
@@ -89,9 +89,9 @@ int cardemul_run_warm_reset(cardemul_t* ce);
 
 int cardemul_run_last_atr(const cardemul_t* ce, bytestring_t *atr);
 
-int cardemul_save_to_file(const cardemul_t* ce, char *filename);
+int cardemul_save_to_file(const cardemul_t* ce, const char *filename);
 
-cardemul_t* cardemul_new_from_file(char *filename);
+cardemul_t* cardemul_new_from_file(const char *filename);
 
 int cardemul_count_records(const cardemul_t* ce);
 

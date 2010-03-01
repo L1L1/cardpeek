@@ -5,7 +5,7 @@
 
 -- This forces cardpeek to preload some parts of the 'card' library
 -- that are written in LUA. Most card analysis scripts need this.
-require("scripts.lib.apdu")
+dofile("scripts/lib/apdu.lua")
 
 
 -- EXPERIMENTAL ACG CONTACTLESS USB READER SUPPORT:

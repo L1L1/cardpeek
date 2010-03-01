@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2010 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,13 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-
+#include <lauxlib.h>
+#include "lua_card.h"
+#include "smartcard.h"
+#include "lua_bytes.h"
+#include <stdlib.h>
+#include "iso7816.h"
+#include "misc.h"
 
 cardreader_t* READER=NULL;
 
@@ -55,9 +61,9 @@ int subr_card_warm_reset(lua_State* L)
 
 int subr_card_last_atr(lua_State* L)
 {
-  bytestring_t *atr = cardreader_last_atr(READER);
+  const bytestring_t *atr = cardreader_last_atr(READER);
 
-  lua_pushbytestring(L,atr);
+  lua_pushbytestring(L,bytestring_duplicate(atr));
   return 1;
 }
 
@@ -100,7 +106,7 @@ int subr_card_set_command_interval(lua_State* L)
   return 0;
 }
 
-int subr_make_file_path(lua_State* L)
+int subr_card_make_file_path(lua_State* L)
 {
   int path_type;
   bytestring_t *file_path = bytestring_new(8);
@@ -125,7 +131,33 @@ int subr_make_file_path(lua_State* L)
   return 2;
 }
 
+int subr_card_log_save(lua_State* L)
+{
+  const char *filename;
 
+  if (lua_isnoneornil(L,1))
+    return luaL_error(L,"Expecting one parameter: a filename (string)");
+
+  filename= lua_tostring(L,1);
+
+  if (cardreader_log_save(READER,filename)!=SMARTCARD_OK)
+  {
+    log_printf(LOG_ERROR,"Could not write data to '%s'",filename);
+    lua_pushboolean(L,0);
+  }
+  else
+  {
+    log_printf(LOG_INFO,"Wrote card data to '%s'",filename);
+    lua_pushboolean(L,1);
+  }
+  return 1;  
+}
+
+int subr_card_log_clear(lua_State* L)
+{
+  cardreader_log_clear(READER);
+  return 0;  
+}
 
 static const struct luaL_reg cardlib [] = {
   {"connect", subr_card_connect },
@@ -135,7 +167,9 @@ static const struct luaL_reg cardlib [] = {
   {"info", subr_card_info },
   {"send", subr_card_send },
   {"set_command_interval", subr_card_set_command_interval },
-  {"make_file_path", subr_make_file_path },
+  {"make_file_path", subr_card_make_file_path },
+  {"log_clear", subr_card_log_clear },
+  {"log_save", subr_card_log_save },
   {NULL, NULL}  /* sentinel */
 };
 

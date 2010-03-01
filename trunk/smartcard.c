@@ -79,60 +79,6 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
 }
 
 /********************************************************************
- * CARDREADER EMULATION
- */
-#include "emulator.h"
-
-cardemul_t* CARDLOG = NULL;
-int CARDLOG_ACTIVE  = 0;
-
-int cardlog_exists()
-{
-  return (CARDLOG!=NULL);
-}
-
-int cardlog_start()
-{
-  if (!cardlog_exists())
-    CARDLOG=cardemul_new();
-  CARDLOG_ACTIVE=1;
-  return CARDEMUL_OK;
-}
-
-int cardlog_stop()
-{
-  CARDLOG_ACTIVE=0;
-  return CARDEMUL_OK;
-}
-
-int cardlog_clear()
-{
-  if (!cardlog_exists())
-    return CARDEMUL_ERROR;
-  cardemul_free(CARDLOG);
-  CARDLOG=NULL;
-  CARDLOG_ACTIVE=0;
-  return CARDEMUL_OK;
-}
-
-int cardlog_save(char *filename)
-{
-  if (!cardlog_exists())
-  {
-    log_printf(LOG_ERROR,"Card log does not exist.");
-    return 0;
-  }
-  return cardemul_save_to_file(CARDLOG,filename);
-}
-
-int cardlog_count_records()
-{
-  if (!cardlog_exists())
-    return -1;
-  return cardemul_count_records(CARDLOG);
-}
-
-/********************************************************************
  * CARDREADER
  */
 
@@ -152,50 +98,61 @@ cardreader_t* cardreader_new(const char *card_reader_name)
   {
     reader->name=strdup("(none)");
     null_initialize(reader);
-    return reader;
   }
-  if (strncmp(card_reader_name,"pcsc://",7)==0)
+  else if (strncmp(card_reader_name,"pcsc://",7)==0)
   {
     reader->name=strdup(card_reader_name);
     pcsc_initialize(reader);
-    return reader;
   }
-  if (strncmp(card_reader_name,"emulator://",11)==0)
+  else if (strncmp(card_reader_name,"emulator://",11)==0)
   {
     reader->name=strdup(card_reader_name);
     emul_initialize(reader);
-    return reader;
   }
-  if (strncmp(card_reader_name,"acg://",6)==0)
+  else if (strncmp(card_reader_name,"acg://",6)==0)
   {
     reader->name=strdup(card_reader_name);
     acg_initialize(reader);
-    return reader;
+  }
+  else {
+    free(reader);
+    log_printf(LOG_ERROR,"Unknown reader type : %s",card_reader_name);
+    return NULL;
   }
  
-  free(reader);
-  log_printf(LOG_ERROR,"Unknown reader type : %s",card_reader_name);
-  return NULL;
+  reader->atr=bytestring_new(8);
+  reader->cardlog=cardemul_new();
+  return reader;
 }
 
 int cardreader_connect(cardreader_t *reader, unsigned protocol)
 {
   int retval = reader->connect(reader,protocol);
-  if (CARDLOG_ACTIVE)
-    cardemul_add_reset(CARDLOG,cardreader_last_atr(reader));
+
+  cardreader_last_atr(reader);
+
+  cardemul_add_reset(reader->cardlog,reader->atr);
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_CONNECT,reader->atr,0,NULL,reader->cb_data);
   return retval;
 }
 
 int cardreader_disconnect(cardreader_t *reader)
 {
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_DISCONNECT,NULL,0,NULL,reader->cb_data);
   return reader->disconnect(reader);
 }
 
 int cardreader_warm_reset(cardreader_t *reader)
 {
   int retval = reader->reset(reader);
-  if (CARDLOG_ACTIVE)
-    cardemul_add_reset(CARDLOG,cardreader_last_atr(reader)); 
+  
+  cardreader_last_atr(reader);
+
+  cardemul_add_reset(reader->cardlog,reader->atr); 
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_RESET,reader->atr,0,NULL,reader->cb_data);
   return retval;
 }
 
@@ -217,19 +174,28 @@ unsigned short cardreader_transmit(cardreader_t *reader,
     return CARDPEEK_ERROR_SW;
   }
 
+
   tmp = bytestring_to_alloc_string(command);
+  if (strlen(tmp)>37)
+    strcpy(tmp+32,"(...)");
   log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
   free(tmp);
 
+
   reader->sw = reader->transmit(reader,command,result);
-  if (CARDLOG_ACTIVE)
-    cardemul_add_command(CARDLOG,command,reader->sw,result);
+  
+  cardemul_add_command(reader->cardlog,command,reader->sw,result);
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_TRANSMIT,command,reader->sw,result,reader->cb_data);
   SW1 = (reader->sw>>8)&0xFF;
   SW2 = reader->sw&0xFF;
 
   tmp = bytestring_to_alloc_string(result);
+  if (strlen(tmp)>37)
+    strcpy(tmp+32,"(...)");
   log_printf(LOG_INFO,"Recv: %04X %s [%s]", reader->sw, tmp, iso7816_stringify_sw(reader->sw));
   free(tmp);
+
 
 
   if (SW1==0x6C) /* Re-issue with right length */
@@ -272,7 +238,7 @@ unsigned short cardreader_get_sw(cardreader_t *reader)
   return reader->sw;
 }
 
-bytestring_t *cardreader_last_atr(cardreader_t *reader)
+const bytestring_t *cardreader_last_atr(cardreader_t *reader)
 {
   return reader->last_atr(reader);
 }
@@ -290,7 +256,12 @@ char** cardreader_get_info(cardreader_t *reader)
   else
     prev[3]=strdup("FALSE");
   prev[4]=strdup("Protocol");
-  prev[5]=strdup("Undefined");
+  if (reader->protocol==PROTOCOL_T0)
+    prev[5]=strdup("T0");
+  else if (reader->protocol==PROTOCOL_T1)
+    prev[5]=strdup("T1");
+  else
+    prev[5]=strdup("Undefined");
   prev[6]=strdup("SW");
   sprintf(SW_string,"%04X",reader->sw);
   prev[7]=strdup(SW_string);
@@ -308,6 +279,8 @@ int cardreader_fail(cardreader_t *reader)
 void cardreader_free(cardreader_t *reader)
 {
   reader->finalize(reader);
+  bytestring_free(reader->atr);
+  cardemul_free(reader->cardlog);
   free(reader->name);
   free(reader);
 }
@@ -316,6 +289,26 @@ void cardreader_free(cardreader_t *reader)
 void cardreader_set_command_interval(cardreader_t *reader, unsigned interval)
 {
   reader->command_interval=interval;
+}
+
+void cardreader_log_clear(cardreader_t *reader)
+{
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_CLEAR_LOG,NULL,0,NULL,reader->cb_data);
+  cardemul_free(reader->cardlog);
+  reader->cardlog=cardemul_new();
+}
+
+int cardreader_log_save(const cardreader_t *reader, const char *filename)
+{
+  if (reader->cb_func)
+    reader->cb_func(CARDREADER_EVENT_SAVE_LOG,NULL,0,NULL,reader->cb_data);
+  return cardemul_save_to_file(reader->cardlog,filename);
+}
+
+int cardreader_log_count_records(const cardreader_t *reader)
+{
+  return cardemul_count_records(reader->cardlog);
 }
 
 /************************************************/
@@ -460,3 +453,8 @@ int cardmanager_search_acg_readers(cardmanager_t *cm)
   return count;
 }
 
+void cardreader_set_callback(cardreader_t *reader, cardreader_callback_t func, void *user_data)
+{
+  reader->cb_func=func;
+  reader->cb_data = user_data;
+}

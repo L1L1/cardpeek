@@ -5,6 +5,7 @@ UTF-8 English/Français
          * libgtk 2.0 (http://www.gtk.org)
          * liblua 5.1 (http://www.lua.org)
          * libpcsclite (http://pcsclite.alioth.debian.org/)
+	 * libssl (http://www.openssl.org/)
       (Note: On a Debian system, these packages are all available through
       apt/aptitude.)
    2. Unpack the source if needed and change directory to the source 
@@ -23,6 +24,7 @@ included in that file.)
          * libgtk 2.0 (http://www.gtk.org)
          * liblua 5.1 (http://www.lua.org)
          * libpcsclite (http://pcsclite.alioth.debian.org/)
+	 * libssl (http://www.openssl.org/)
       (Note: Sur un système Debian, ces outils sont tous disponibles avec
       apt/aptitude.)
    2. Dépaqueter le code source si nécessaire et se placer dans le répertoire

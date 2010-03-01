@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2010 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-
+#include <lauxlib.h>
+#include "lua_log.h"
+#include "misc.h"
 
 /***********************************************************
  * LOG FUNCTIONS

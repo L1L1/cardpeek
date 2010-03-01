@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2010 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,18 +19,28 @@
 
 require('lib.tlv')
 
+function ui_parse_asciidate(node,data)
+	local d = bytes.toprintable(data)
+	local t = os.time( { ['year']  = string.sub(d,1,4),
+	      	   	     ['month'] = string.sub(d,5,6),
+	      		     ['day']   = string.sub(d,7,8) } )
+	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_alt_value(node,os.date("%x",t))
+	return true
+end
+
 VITALE_IDO = {
-  ['65'] = "Bénéficiaire",
-  ['65/90'] = "Nationalité",
-  ['65/93'] = "Numéro de sécurité sociale",
-  ['65/80'] = "Nom",
-  ['65/81'] = "Prénom",
-  ['65/82'] = "Date de naissance",
-  ['66'] = "Carte vitale",
-  ['66/80'] = "Date de début de validité",
-  ['7F21']  = "Certificat",
-  ['5F37']  = "Signature de l'AC",
-  ['5F38']  = "Résidu de la clé publique",
+  ['65']    = { "Bénéficiaire" },
+  ['65/90'] = { "Nationalité", ui_parse_printable },
+  ['65/93'] = { "Numéro de sécurité sociale", ui_parse_printable },
+  ['65/80'] = { "Nom", ui_parse_printable },
+  ['65/81'] = { "Prénom", ui_parse_printable },
+  ['65/82'] = { "Date de naissance", ui_parse_asciidate },
+  ['66']    = { "Carte vitale" },
+  ['66/80'] = { "Date de début de validité", ui_parse_asciidate },
+  ['7F21']  = { "Certificat" },
+  ['5F37']  = { "Signature de l'AC" },
+  ['5F38']  = { "Résidu de la clé publique" },
 }
 
 function read_bin()
@@ -124,16 +134,16 @@ if map then
    for app in pairs(map) do
        sw,resp = card.select(map[app]['aid'])
        if sw==0x9000 then
-          APP = ui.tree_add_node(CARD,"AID",map[app]['aid'])
+          APP = ui.tree_add_node(CARD,"Application",map[app]['aid'],nil,"application")
 	  tlv_parse(APP,resp)
        end
        for i in pairs(map[app]['files']) do
-          EF = ui.tree_add_node(APP,"file",map[app]['files'][i]['name'],nil,"EF="..map[app]['files'][i]['ef'])
+          EF = ui.tree_add_node(APP,map[app]['files'][i]['name'],map[app]['files'][i]['ef'],nil,"file")
 	  sw,resp = card.select(map[app]['files'][i]['ef'])
 	  tlv_parse(EF,resp)
 	  if sw==0x9000 then
 	     sw,resp = read_bin()
-	     CONTENT = ui.tree_add_node(EF,"content")
+	     CONTENT = ui.tree_add_node(EF,"content",nil,#resp)
 	     if sw==0x9000 then
 	        if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
                   ui.tree_set_value(CONTENT,tostring(resp))

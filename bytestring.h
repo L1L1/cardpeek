@@ -115,7 +115,9 @@ char *bytestring_to_alloc_printable(const bytestring_t *bs);
 
 char *bytestring_to_alloc_string(const bytestring_t *bs);
 
-char *bytestring_to_alloc_number(const bytestring_t *bs);
+char *bytestring_to_alloc_string_integer(const bytestring_t *bs);
+
+double bytestring_to_number(const bytestring_t *bs);
 
 void bytestring_release(bytestring_t *bs);
 

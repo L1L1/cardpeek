@@ -110,7 +110,13 @@ void log_open_file()
 
 void log_close_file()
 {
-  if (LOGFILE) fclose(LOGFILE);
+  time_t now = time(NULL);
+
+  if (LOGFILE) 
+  {
+    fprintf(LOGFILE,"cardpeek log ends: %s",ctime(&now));
+    fclose(LOGFILE);
+  }
   LOGFILE = NULL;
 }
 

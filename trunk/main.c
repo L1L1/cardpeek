@@ -24,12 +24,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include "smartcard.h"
 #include "misc.h"
 #include "gui.h"
 #include "config.h"
 #include "lua_ext.h"
 #include "script_version.h"
+#include <sys/wait.h>
+#include <signal.h> 
+
 
 extern unsigned char _binary_dot_cardpeek_tar_gz_start;
 extern unsigned char _binary_dot_cardpeek_tar_gz_end;
@@ -120,6 +124,25 @@ int install_dot_file()
 }
 
 
+static char *message = 
+"+----------------------------------------------------------------+\n"
+"|  Oups...                                                       |\n"
+"|  Cardpeek has encoutered a problem and has exited abnormally.  |\n"
+"|  Additionnal information may be available in the file          |\n"
+"|    $HOME/.cardpeek.log                                         |\n"
+"|                                                                |\n"
+"|  L1L1@gmx.com                                                  |\n"
+"+----------------------------------------------------------------+\n"
+;
+
+void save_what_can_be_saved(int sig_num) 
+{ 
+  write(2,message,strlen(message));
+  log_close_file();
+  exit(-2);
+} 
+
+
 int main(int argc, char **argv)
 {
   cardmanager_t* CTX;
@@ -127,10 +150,12 @@ int main(int argc, char **argv)
   /*int i;*/
   char* reader_name;
 
+  signal(SIGSEGV, save_what_can_be_saved); 
+
   config_init();
     
   log_open_file();
-  
+ 
   gui_init(&argc,&argv);
   
   gui_create(luax_run_script_cb,luax_run_command_cb);
@@ -149,15 +174,19 @@ int main(int argc, char **argv)
 
   luax_set_card_reader(READER);
 
-  gui_run();
+  cardreader_set_callback(READER,gui_reader_print_data,NULL);
 
-  config_release();
+  gui_run();
 
   luax_release();
 
+  log_close_file();
+
+  config_release();  
+
   cardreader_free(READER);
 
-  log_close_file();
   return 0;
 }
+
 

@@ -28,10 +28,11 @@
 function card.tree_startup(title)
 	local mycard
 	local ref
+	local atr = card.last_atr()
 
-	mycard = ui.tree_add_node(nil,"card",title)
-	ref = ui.tree_add_node(mycard,"ATR","cold")
-	ui.tree_set_value(ref,tostring(card.last_atr()))
+	mycard = ui.tree_add_node(nil,"card",title,nil,"card")
+	ref = ui.tree_add_node(mycard,"ATR","cold",#atr,"block")
+	ui.tree_set_value(ref,tostring(atr))
 	return mycard
 end
 

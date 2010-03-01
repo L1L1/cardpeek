@@ -29,26 +29,17 @@
 #include <unistd.h>
 #include "config.h"
 #include "iso7816.h"
+#include "misc.h"
 
 /****************************************/
 
-#include "misc.h"
-#include "lua_log.c"
-
-#include "bytestring.h"
-#include "lua_bytes.c"
-
-#include "asn1.h"
-#include "lua_asn1.c"
-  
-#include "smartcard.h"
-#include "lua_card.c"
-
-#include "lua_bit.c"
-
-#include "cardtree.h"
-#include "gui.h"
-#include "lua_ui.c" 
+#include "lua_log.h"
+#include "lua_bytes.h"
+#include "lua_asn1.h"
+#include "lua_card.h"
+#include "lua_bit.h"
+#include "lua_crypto.h"
+#include "lua_ui.h" 
 
 
 /****************************************/
@@ -213,6 +204,7 @@ int luax_init()
   luaopen_card(LUA_STATE);
   luaopen_log(LUA_STATE);
   luaopen_ui(LUA_STATE);
+  luaopen_crypto(LUA_STATE);
   chdir(config_get_string(CONFIG_FOLDER_CARDPEEK));
   log_printf(LOG_DEBUG,"Running configuration script %s",config_get_string(CONFIG_FILE_CONFIG));
   run_file(LUA_STATE,config_get_string(CONFIG_FILE_CONFIG));

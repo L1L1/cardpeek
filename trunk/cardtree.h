@@ -25,21 +25,26 @@
 #include <gtk/gtk.h>
 
 enum {
-  C_MARKUP_NAME_ID,
+  /* node info */
   C_NAME,
   C_ID,
-  C_LENGTH,
-  C_COMMENT,
-  C_MARKUP_VALUE,
+  C_SIZE,
+  C_TYPE,
+  /* value data */
   C_VALUE,
+  C_ALT_VALUE,
+  /* extra helper columns */
+  C_MARKUP_VALUE,
+  C_MARKUP_NAME_ID,
+  C_MARKUP_ALT_VALUE,
   C_ICON,
+  C_FLAGS,
   NUM_COLS
 };
 
 #define CARDTREE_COUNT_ICONS 6
 
 typedef struct {
-  GtkTreeView*  _view;
   GtkTreeStore* _store;
   gchar*        _tmpstr;
   GdkPixbuf*    _icons[CARDTREE_COUNT_ICONS];
@@ -56,6 +61,14 @@ const char* cardtree_add_node(cardtree_t* ct,
 			      int length, 
 			      const char* comment);
 
+gboolean cardtree_get_attribute(cardtree_t* ct,
+			        const char* path,
+				char **attr_list);
+
+gboolean cardtree_set_attribute(cardtree_t* ct,
+			        const char* path,
+				const char **attr_list);
+
 gboolean cardtree_set_value(cardtree_t* ct,
 			    const char* path,
 			    const char* value);
@@ -64,6 +77,14 @@ gboolean cardtree_get_value(cardtree_t* ct,
 			    const char* path,
                             char** value);
 
+gboolean cardtree_set_alt_value(cardtree_t* ct,
+			      	const char* path,
+				const char* value);
+
+gboolean cardtree_get_alt_value(cardtree_t* ct,
+			      	const char* path,
+				char** value);
+
 gboolean cardtree_get_node(cardtree_t* ct, 
 			   const char* path,
 			   char** name, 
@@ -71,6 +92,14 @@ gboolean cardtree_get_node(cardtree_t* ct,
 			   int *length, 
 			   char** comment,
 			   int *num_children);
+
+gboolean cardtree_get_flags(cardtree_t* ct,
+		 	    const char* path,
+	 		    unsigned *flags);
+
+gboolean cardtree_set_flags(cardtree_t* ct,
+		    	    const char* path,
+	     		    unsigned flags);
 
 gboolean cardtree_delete_node(cardtree_t* ct, 
 			      const char *path);

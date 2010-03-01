@@ -27,8 +27,6 @@
 #include "misc.h"
 #include "cardtree.h"
 
-#include "icons.c"
-
 void cardtree_clear_tmpstr(cardtree_t* ct) 
 /* internal */
 { 
@@ -52,14 +50,11 @@ cardtree_t* cardtree_new()
 				  G_TYPE_STRING,
 				  G_TYPE_STRING,
 				  G_TYPE_STRING,
-				  GDK_TYPE_PIXBUF);
+				  G_TYPE_STRING,
+				  G_TYPE_STRING,
+				  G_TYPE_STRING,
+				  G_TYPE_UINT);
 
-  ct->_icons[0] = gdk_pixbuf_new_from_inline (-1, icon_item, FALSE, NULL);
-  ct->_icons[1] = gdk_pixbuf_new_from_inline (-1, icon_card, FALSE, NULL);
-  ct->_icons[2] = gdk_pixbuf_new_from_inline (-1, icon_folder, FALSE, NULL);
-  ct->_icons[3] = gdk_pixbuf_new_from_inline (-1, icon_file, FALSE, NULL);
-  ct->_icons[4] = gdk_pixbuf_new_from_inline (-1, icon_record, FALSE, NULL);
-  ct->_icons[5] = gdk_pixbuf_new_from_inline (-1, icon_block, FALSE, NULL);
   return ct;
 }
 
@@ -83,30 +78,38 @@ int iter_get_depth(GtkTreeModel *tree_model, GtkTreeIter* iter)
   return r;
 }
 
+int matchcaseprefix(const char *prefix, const char *str)
+{
+  if (strncasecmp(prefix,str,strlen(prefix))==0)
+    return 1;
+  return 0;
+}
+
 void cardtree_create_markup_name_id(cardtree_t* ct, GtkTreeIter* iter)
 {
   a_string_t *markup_name_id;
   char *name;
   char *id;
-  int icon_index;
+  char *type;
+  char *icon_name;
 
   gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
 		     C_NAME, &name,
+		     C_TYPE, &type,
 		     C_ID, &id,
 		     -1);
 
-  if (strcasecmp(name,"Card")==0)
-    icon_index=1;
-  else if (strcasecmp(name,"Application")==0)
-    icon_index=2;
-  else if (strcasecmp(name,"File")==0)
-    icon_index=3;
-  else if (strcasecmp(name,"Record")==0)
-    icon_index=4;
-  else if (iter_get_depth(GTK_TREE_MODEL(ct->_store),iter)==1)
-    icon_index=5;
-  else
-    icon_index=0;
+  icon_name="cardpeek-item";
+  if (type!=NULL) { 
+    switch (type[0]) {
+      case 'c': if (strcmp("card",type)==0)        icon_name="cardpeek-smartcard";   break;
+      case 'a': if (strcmp("application",type)==0) icon_name="cardpeek-application"; break;
+      case 'f': if (strcmp("file",type)==0)        icon_name="cardpeek-file";        break;
+      case 'r': if (strcmp("record",type)==0)      icon_name="cardpeek-record";      break;
+      case 'b': if (strcmp("block",type)==0)       icon_name="cardpeek-block";       break;
+    }
+    g_free(type);
+  }
 
   markup_name_id = a_strnew(NULL);
 
@@ -116,7 +119,7 @@ void cardtree_create_markup_name_id(cardtree_t* ct, GtkTreeIter* iter)
     a_sprintf(markup_name_id,"<b>%s</b>",name);
 
   gtk_tree_store_set (ct->_store, iter,
-		      C_ICON, ct->_icons[icon_index],
+		      C_ICON, icon_name,
 		      C_MARKUP_NAME_ID, a_strval(markup_name_id),
 		      -1);
 
@@ -125,35 +128,63 @@ void cardtree_create_markup_name_id(cardtree_t* ct, GtkTreeIter* iter)
   a_strfree(markup_name_id);
 }
 
-void cardtree_create_markup_value(cardtree_t* ct, GtkTreeIter* iter)
+char *cardtree_create_markup_text(const char* src, int full, const char *color)
 {
   a_string_t *markup_value;
+  int i,len,max;
+
+  markup_value   = a_strnew(NULL);
+  if (color)
+    a_sprintf(markup_value,"<span foreground=\"%s\">",color);
+  a_strcat(markup_value,"<tt>");
+  i=0;
+  len=strlen(src);
+  if (full)
+    max=len;
+  else
+    max=(256<len?256:len);
+  while (i<max)
+  {
+    switch (src[i]) {
+      case '<': 
+	a_strcat(markup_value,"&lt;"); break;
+      case '>':
+	a_strcat(markup_value,"&gt;"); break;
+      case '&':
+	a_strcat(markup_value,"&amp;"); break;
+      default:
+	a_strpushback(markup_value,src[i]);
+    }
+    i++;
+    if (((i%64)==0) && (i+1<len)) a_strpushback(markup_value,'\n');
+  }
+  a_strcat(markup_value,"</tt>");
+  if (len>256 && !full) a_strcat(markup_value,"<b>[...]</b>");
+
+  if (color)
+    a_strcat(markup_value,"</span>");
+  return a_strfinalize(markup_value);
+}
+
+void cardtree_create_markup_value(cardtree_t* ct, GtkTreeIter* iter)
+{
+  unsigned flags;
   char *value;
-  int i,len;
+  char *markup;
 
   gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
 		     C_VALUE, &value,
+		     C_FLAGS, &flags,
 		     -1);
 
   if (value)  
   {
-    markup_value   = a_strnew(NULL);
-    a_strcpy(markup_value,"<tt>");
-    i=0;
-    len=strlen(value);
-    while (i<len && i<256)
-    {
-      a_strpushback(markup_value,value[i++]);
-      if (((i%64)==0) && (i+1<len)) a_strpushback(markup_value,'\n');
-    }
-    a_strcat(markup_value,"</tt>");
-    if (len>256) a_strcat(markup_value,"<b>[...]</b>");
-
+    markup = cardtree_create_markup_text(value,flags&1,NULL);
     gtk_tree_store_set (ct->_store, iter,
-			C_MARKUP_VALUE, a_strval(markup_value),
+			C_MARKUP_VALUE, markup,
 			-1);
     g_free(value);
-    a_strfree(markup_value);
+    free(markup);
   }
   else
   {
@@ -163,16 +194,54 @@ void cardtree_create_markup_value(cardtree_t* ct, GtkTreeIter* iter)
   }
 }
 
+void cardtree_create_markup_alt_value(cardtree_t* ct, GtkTreeIter* iter)
+{
+  char *markup;
+  unsigned flags;
+  char *value;
+  char *color="#2F2F7F";
+
+  gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
+		     C_ALT_VALUE, &value,
+		     C_FLAGS, &flags,
+		     -1);
+
+  if (!value) /* fallback */
+  {
+    gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
+		       C_VALUE, &value,
+		       -1);
+    color=NULL;
+  }
+
+  if (value)  
+  {
+    markup = cardtree_create_markup_text(value,flags&1,color);
+    gtk_tree_store_set (ct->_store, iter,
+			C_MARKUP_ALT_VALUE, markup,
+			-1);
+    g_free(value);
+    free(markup);
+  }
+  else
+  {
+    gtk_tree_store_set (ct->_store, iter,
+                        C_MARKUP_ALT_VALUE, NULL,
+			-1);
+  }
+}
+
+
 const char* cardtree_add_node(cardtree_t* ct,
 			      const char* path,
 			      const char* name, 
 			      const char* id, 
-			      int length, 
-			      const char* comment)
+			      int size, 
+			      const char* type)
 {
   GtkTreeIter parent;
   GtkTreeIter child;
-  char length_string[12];
+  char size_string[12];
 
   if (path!=NULL && cardtree_is_empty(ct))
     return NULL;
@@ -203,11 +272,11 @@ const char* cardtree_add_node(cardtree_t* ct,
 		      C_NAME, name, 
 		      -1);
 
-  if (length>=0)
+  if (size>=0)
   {
-    sprintf(length_string,"%i",length);
+    sprintf(size_string,"%i",size);
     gtk_tree_store_set (ct->_store, &child,
-			C_LENGTH, length_string,
+			C_SIZE, size_string,
 			-1);
   }
 
@@ -215,15 +284,84 @@ const char* cardtree_add_node(cardtree_t* ct,
     gtk_tree_store_set (ct->_store, &child, 
 	  		C_ID, id, 
   			-1);
-  if (comment) 
+  if (type) 
     gtk_tree_store_set (ct->_store, &child, 
-	  		C_COMMENT, comment, 
+	  		C_TYPE, type, 
   			-1);
 
   cardtree_create_markup_name_id(ct,&child);
 
   return ct->_tmpstr;
 }
+
+gboolean cardtree_get_attribute(cardtree_t* ct,
+                                const char* path,
+                                char **attr_list)
+{
+  GtkTreeIter iter;
+  char *attr_name;
+  char *attr_value;
+  int i;
+
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  for (i=0;attr_list[i];i+=2)
+  {
+    attr_name=attr_list[i];
+    attr_value=attr_list[i+1];
+    if (strcmp(attr_name,"name")==0) 
+	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_NAME,&attr_value,-1);
+    else if (strcmp(attr_name,"id")==0)     
+       	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_ID,&attr_value,-1);
+    else if (strcmp(attr_name,"size")==0)     
+	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_SIZE,&attr_value,-1);
+    else if (strcmp(attr_name,"type")==0)     
+        gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_TYPE,&attr_value,-1);
+    else
+        /* FIXME: add other attributes with attributes.h */
+     	return FALSE;
+  }
+  cardtree_create_markup_name_id(ct,&iter);
+  return TRUE;
+}
+
+gboolean cardtree_set_attribute(cardtree_t* ct,
+                                const char* path,
+                                const char **attr_list)
+{
+  GtkTreeIter iter;
+  const char *attr_name;
+  const char *attr_value;
+  int i;
+
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  for (i=0;attr_list[i];i+=2)
+  {
+    attr_name=attr_list[i];
+    attr_value=attr_list[i+1];
+    if (strcmp(attr_name,"name")==0) 
+	gtk_tree_store_set(ct->_store,&iter,C_NAME,attr_value,-1);
+    else if (strcmp(attr_name,"id")==0)     
+       	gtk_tree_store_set(ct->_store,&iter,C_ID,attr_value,-1);
+    else if (strcmp(attr_name,"size")==0)     
+	gtk_tree_store_set(ct->_store,&iter,C_SIZE,attr_value,-1);
+    else if (strcmp(attr_name,"type")==0)
+        gtk_tree_store_set(ct->_store,&iter,C_TYPE,attr_value,-1);
+    else
+        /* FIXME: add other attributes with attributes.h */
+     	return FALSE;
+  }
+  return TRUE;
+}
+
+
 
 gboolean cardtree_set_value(cardtree_t* ct,
                             const char* path,
@@ -242,11 +380,38 @@ gboolean cardtree_set_value(cardtree_t* ct,
 
   gtk_tree_store_set (ct->_store, &iter, 
 		      C_VALUE, value, 
+		      C_FLAGS, 0,
 		      -1);
 
   cardtree_create_markup_value(ct,&iter);
+  cardtree_create_markup_alt_value(ct,&iter);
   return TRUE;
 }
+
+gboolean cardtree_set_alt_value(cardtree_t* ct,
+			      	const char* path,
+				const char* value)
+{
+  GtkTreeIter iter;
+
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL(ct->_store),&iter))
+    return FALSE;
+
+  gtk_tree_store_set (ct->_store, &iter, 
+		      C_ALT_VALUE, value, 
+		      -1);
+
+  cardtree_create_markup_alt_value(ct,&iter);
+  return TRUE;
+}
+
+
 
 gboolean cardtree_get_value(cardtree_t* ct,
                             const char* path,
@@ -265,16 +430,33 @@ gboolean cardtree_get_value(cardtree_t* ct,
   return TRUE;
 }
 
+gboolean cardtree_get_alt_value(cardtree_t* ct,
+			      	const char* path,
+				char** value)
+{
+  GtkTreeIter iter;
+  
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_ALT_VALUE,value,-1);
+
+  return TRUE;
+}
+
 
 gboolean cardtree_get_node(cardtree_t* ct, const char* path,
 			   char** name, 
 			   char** id, 
-			   int *length, 
-			   char** comment,
+			   int *size, 
+			   char** type,
 			   int *num_children)
 {
   GtkTreeIter iter;
-  char* length_string;
+  char* size_string;
 
   if (path==NULL || cardtree_is_empty(ct))
     return FALSE;
@@ -287,20 +469,20 @@ gboolean cardtree_get_node(cardtree_t* ct, const char* path,
   if (id!=NULL)
     gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_ID,id,-1);
 
-  if (length!=NULL)
+  if (size!=NULL)
   {
-    gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_LENGTH,&length_string,-1);
-    if (length_string)
+    gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_SIZE,&size_string,-1);
+    if (size_string)
     {
-      *length = atoi(length_string);
-      g_free(length_string);
+      *size = atoi(size_string);
+      g_free(size_string);
     }
     else
-      *length = -1;
+      *size = -1;
   }
 
-  if (comment!=NULL)
-    gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_COMMENT,comment,-1);
+  if (type!=NULL)
+    gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_TYPE,type,-1);
 
   if (num_children!=NULL)
     *num_children = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(ct->_store),&iter);
@@ -326,23 +508,60 @@ gboolean cardtree_delete_node(cardtree_t* ct, const char *path)
   return gtk_tree_store_remove(ct->_store,&iter);
 }
 
+gboolean cardtree_get_flags(cardtree_t* ct,
+                            const char* path,
+                            unsigned *flags)
+{
+  GtkTreeIter iter;
+
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_FLAGS,flags,-1);
+
+  return TRUE;
+}
+
+gboolean cardtree_set_flags(cardtree_t* ct,
+                            const char* path,
+                            unsigned flags)
+{
+  GtkTreeIter iter;
+
+  if (path==NULL || cardtree_is_empty(ct))
+    return FALSE;
+  if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
+    return FALSE;
+
+  gtk_tree_store_set (ct->_store, &iter, C_FLAGS, flags, -1);
+  cardtree_create_markup_value(ct,&iter);
+  cardtree_create_markup_alt_value(ct,&iter);
+
+  return TRUE;
+}
+
+
 gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, int depth)
 {
   int i;
   gchar* name;
   gchar* id;
-  gchar* length_string; 
-  gchar* comment;
+  gchar* size_string; 
+  gchar* type;
   gchar* value;
+  gchar* alt_value;
   GtkTreeIter child;
 
   do {
     gtk_tree_model_get(store,iter,
 	     	       C_NAME,&name,
 	     	       C_ID,&id,
-		       C_LENGTH,&length_string,
-	     	       C_COMMENT,&comment,
+		       C_SIZE,&size_string,
+	     	       C_TYPE,&type,
 		       C_VALUE,&value,
+		       C_ALT_VALUE,&alt_value,
 	     	       -1);
     for(i=0;i<depth;i++) a_strcat(res,"  ");
 
@@ -355,16 +574,16 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
       a_strcat(res,id);
       a_strcat(res,"\"");
     }
-    if (length_string)
+    if (size_string)
     {
-      a_strcat(res," length=\"");
-      a_strcat(res,length_string);
+      a_strcat(res," size=\"");
+      a_strcat(res,size_string);
       a_strcat(res,"\"");
     }
-    if (comment)
+    if (type)
     {
-      a_strcat(res," comment=\"");
-      a_strcat(res,comment);
+      a_strcat(res," type=\"");
+      a_strcat(res,type);
       a_strcat(res,"\"");
     }
     if (gtk_tree_model_iter_children(store,&child,iter))
@@ -378,8 +597,15 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
     {
       if (value)
       {
-	a_strcat(res,">");
+	a_strcat(res,"><value>");
 	a_strcat(res,value);
+	a_strcat(res,"</value>");
+	if (alt_value)
+	{
+	  a_strcat(res,"<alt>");
+	  a_strcat(res,alt_value);
+	  a_strcat(res,"</alt>");
+	}
 	a_strcat(res,"</node>\n");
       }
       else
@@ -388,9 +614,10 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
 
     if (name) g_free(name);
     if (id) g_free(id);
-    if (length_string) g_free(length_string);
-    if (comment) g_free(comment);
+    if (size_string) g_free(size_string);
+    if (type) g_free(type);
     if (value) g_free(value);
+    if (alt_value) g_free(alt_value);
   } while (gtk_tree_model_iter_next(store,iter));
   return TRUE;
 }
@@ -697,16 +924,16 @@ int internal_cardtree_from_xml_file(cardtree_t *ct, GtkTreeIter *parent, FILE* F
 			      C_ID, a_strval(atr),
 			      -1);
 	}
-	else if (a_strequal(elt,"length"))
+	else if (a_strequal(elt,"size"))
 	{
 	  gtk_tree_store_set (ct->_store, &child,
-			      C_LENGTH, a_strval(atr),
+			      C_SIZE, a_strval(atr),
 			      -1);
 	}
-	else if (a_strequal(elt,"comment"))
+	else if (a_strequal(elt,"type"))
 	{
 	  gtk_tree_store_set (ct->_store, &child,
-			      C_COMMENT, a_strval(atr),
+			      C_TYPE, a_strval(atr),
 			      -1);
 	}
 	else
@@ -874,7 +1101,6 @@ const char* cardtree_find_node(cardtree_t* ct,
 
 void cardtree_bind_to_treeview(cardtree_t* ct, GtkWidget *view)
 {
-  ct->_view=GTK_TREE_VIEW(view);
   gtk_tree_view_set_model(GTK_TREE_VIEW(view),GTK_TREE_MODEL(ct->_store));
 }
 

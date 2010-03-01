@@ -23,12 +23,15 @@
 #define SMARTCARD_H
 
 #include "bytestring.h"
+#include "emulator.h"
 
 #define PROTOCOL_T0 1
 #define PROTOCOL_T1 2
 
-#define SMARTCARD_ERROR 0
-#define SMARTCARD_OK 1
+enum {
+  SMARTCARD_ERROR,
+  SMARTCARD_OK
+};
 
 #define CARDPEEK_ERROR_SW 0x6FFF
 
@@ -55,6 +58,18 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm);
  * CARDREADER
  */
 
+enum {
+  CARDREADER_EVENT_CONNECT,
+  CARDREADER_EVENT_DISCONNECT,
+  CARDREADER_EVENT_RESET,
+  CARDREADER_EVENT_TRANSMIT,
+  CARDREADER_EVENT_FINALIZE,
+  CARDREADER_EVENT_CLEAR_LOG,
+  CARDREADER_EVENT_SAVE_LOG
+};
+
+typedef void (*cardreader_callback_t)(unsigned,const bytestring_t*,unsigned short, const bytestring_t*,void*);
+
 typedef struct _cardreader_t cardreader_t;
 
 struct _cardreader_t {
@@ -63,13 +78,17 @@ struct _cardreader_t {
   unsigned long  protocol;
   unsigned short sw;
   unsigned       command_interval;
+  bytestring_t   *atr;
   void           *extra_data;
+  cardreader_callback_t cb_func;
+  void           *cb_data;
+  cardemul_t     *cardlog;   
 
   int (*connect)(cardreader_t*, unsigned);
   int (*disconnect)(cardreader_t*);
   int (*reset)(cardreader_t*);
   unsigned short (*transmit)(cardreader_t*,const bytestring_t*, bytestring_t*);
-  bytestring_t* (*last_atr)(cardreader_t*);
+  const bytestring_t* (*last_atr)(cardreader_t*);
   char** (*get_info)(cardreader_t*,char**);
   int (*fail)(cardreader_t*);
   void (*finalize)(cardreader_t*);
@@ -90,7 +109,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
 unsigned short cardreader_get_sw(cardreader_t *reader);
 
-bytestring_t* cardreader_last_atr(cardreader_t *reader);
+const bytestring_t* cardreader_last_atr(cardreader_t *reader);
 
 char** cardreader_get_info(cardreader_t *reader);
 
@@ -100,18 +119,12 @@ void cardreader_free(cardreader_t *reader);
 
 void cardreader_set_command_interval(cardreader_t *reader, unsigned interval);
 
-/* cardlog */
+void cardreader_set_callback(cardreader_t *reader, cardreader_callback_t func, void *user_data);
 
-int cardlog_exists();
+void cardreader_log_clear(cardreader_t *reader);
 
-int cardlog_start();
+int cardreader_log_save(const cardreader_t *reader, const char *filename);
 
-int cardlog_stop();
-
-int cardlog_clear();
-
-int cardlog_save(char *filename);
-
-int cardlog_count_records();
+int cardreader_log_count_records(const cardreader_t *reader);
 
 #endif

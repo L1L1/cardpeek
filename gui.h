@@ -23,6 +23,7 @@
 #define GUI_H
 
 #include "cardtree.h"
+#include "bytestring.h"
 
 extern cardtree_t* CARDTREE;
 
@@ -53,5 +54,11 @@ char** gui_select_file(const char *title,
    		       const char *filename);
 
 void gui_about();
+
+void gui_reader_print_data(unsigned event,
+			   const bytestring_t *command,
+			   unsigned short sw,
+			   const bytestring_t *response,
+			   void *extra_data);
 
 #endif

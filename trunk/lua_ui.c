@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2010 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,13 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#include <lauxlib.h>
+#include "lua_ui.h"
+#include "gui.h"
+#include "cardtree.h"
+#include "misc.h"
+#include <string.h>
+#include <stdlib.h>
 
 /***********************************************************
  * USER INTERFACE FUNCTIONS
@@ -63,6 +70,54 @@ int subr_ui_tree_add_node(lua_State* L)
   return 1;
 }
 
+int subr_ui_tree_set_attribute(lua_State* L)
+{
+  const char *path;
+  const char *attr_list[33]; 
+  /* we will limit to 16 settable attributes (33=2*16+1) for the sake of simplicity for now */
+  int i;
+
+  path = lua_tostring(L,1);
+  
+  for (i=0;i<16;i++)
+  {
+    attr_list[2*i] = lua_tostring(L,2+i);
+    if (lua_isnoneornil(L,3+i))
+      attr_list[2*i+1] = NULL;
+    else
+      attr_list[2*i+1] = lua_tostring(L,3+i);
+  }
+  attr_list[2*i]=NULL;
+
+  if (cardtree_set_attribute(CARDTREE,path,attr_list))
+    lua_pushboolean(L,1);
+  else
+    lua_pushboolean(L,0);
+
+  return 1;
+}
+
+int subr_ui_tree_get_attribute(lua_State* L)
+{
+  const char *path;
+  char *attr_list[3];
+
+  path = lua_tostring(L,1);
+  attr_list[0] = (char *)lua_tostring(L,2);
+  attr_list[1] = NULL;
+  attr_list[2] = NULL;
+  
+  if (cardtree_get_attribute(CARDTREE,path,attr_list))
+  {
+    lua_pushstring(L,attr_list[1]);
+    g_free(attr_list[1]);
+  }
+  else
+    lua_pushnil(L);
+
+  return 1;
+}
+
 int subr_ui_tree_set_value(lua_State* L)
 {
   const char *path;
@@ -89,6 +144,42 @@ int subr_ui_tree_get_value(lua_State* L)
   path = lua_tostring(L,1);
   
   if (cardtree_get_value(CARDTREE,path,&value))
+  {
+    lua_pushstring(L,value);
+    g_free(value);
+  }
+  else
+    lua_pushnil(L);
+
+  return 1;
+}
+
+int subr_ui_tree_set_alt_value(lua_State* L)
+{
+  const char *path;
+  const char *value;
+
+  path = lua_tostring(L,1);
+  if (lua_isnoneornil(L,2))
+    value = NULL;
+  else
+    value = lua_tostring(L,2);
+
+  if (cardtree_set_alt_value(CARDTREE,path,value))
+    lua_pushboolean(L,1);
+  else
+    lua_pushboolean(L,0);
+  return 1;
+}
+
+int subr_ui_tree_get_alt_value(lua_State* L)
+{
+  const char *path;
+  char *value;
+
+  path = lua_tostring(L,1);
+  
+  if (cardtree_get_alt_value(CARDTREE,path,&value))
   {
     lua_pushstring(L,value);
     g_free(value);
@@ -355,8 +446,12 @@ int subr_ui_about(lua_State* L)
 
 static const struct luaL_reg uilib [] = {
   {"tree_add_node", subr_ui_tree_add_node },
+  {"tree_set_attribute", subr_ui_tree_set_attribute },
+  {"tree_get_attribute", subr_ui_tree_get_attribute },
   {"tree_set_value", subr_ui_tree_set_value },
   {"tree_get_value", subr_ui_tree_get_value },
+  {"tree_set_alt_value", subr_ui_tree_set_alt_value },
+  {"tree_get_alt_value", subr_ui_tree_get_alt_value },
   {"tree_get_node", subr_ui_tree_get_node },
   {"tree_delete_node", subr_ui_tree_delete_node },
   {"tree_find_node", subr_ui_find_node },

@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2010 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ CARD = 0
 card.CLA=0x94 -- Class for navigo cards
 
 require('lib.strict')
+require('lib.country_codes')
 
 LFI_LIST = {
   ["#0002"] = "Unknown",
@@ -50,79 +51,68 @@ en1543_DATE = 3
 en1543_TIME = 4
 en1543_NUMBER = 5
 en1543_REPEAT = 6
+en1543_NETWORKID = 7
 
 en1543_BestContracts = {
-  [0] = { en1543_REPEAT, 4, "Count", {
+  [0] = { en1543_REPEAT, 4, "BestContractCount", {
     [0] = { en1543_BITMAP, 3, "BestContractGeneralBitmap", {
-      [0] = { en1543_ITEM, 24, "NetworkId" },
-      [1] = { en1543_ITEM, 16, "Tariff" },
-      [2] = { en1543_ITEM, 5, "Pointer" }
+      [0] = { en1543_NETWORKID, 24, "BestContractsNetworkId" },
+      [1] = { en1543_ITEM, 16, "BestContractsTariff" },
+      [2] = { en1543_ITEM, 5, "BestContractsPointer" }
     }}
   }}
 }
 
 en1543_Env = {
-  [0] = { en1543_ITEM, 6, "VersionNumber" },
+  [0] = { en1543_ITEM, 6, "EnvVersionNumber" },
   [1] = { en1543_BITMAP, 7, "EnvGeneralBitmap",{
-    [0] = { en1543_ITEM, 24, "NetworkId" },
-    [1] = { en1543_ITEM, 8, "ApplicationIssuerId" },
-    [2] = { en1543_DATE, 14, "ApplicationValidityEndDate" },
-    [3] = { en1543_ITEM, 11, "PayMethod" },
-    [4] = { en1543_ITEM, 16, "Authenticator" },
-    [5] = { en1543_ITEM, 32, "SelectList" },
-    [6] = { en1543_ITEM, 2, "Data",
-      [0] = { en1543_ITEM, 1, "CardStatus" },
-      [1] = { en1543_ITEM, 0, "Extra" },
+    [0] = { en1543_NETWORKID, 24, "EnvNetworkId" },
+    [1] = { en1543_ITEM, 8, "EnvApplicationIssuerId" },
+    [2] = { en1543_DATE, 14, "EnvApplicationValidityEndDate" },
+    [3] = { en1543_ITEM, 11, "EnvPayMethod" },
+    [4] = { en1543_ITEM, 16, "EnvAuthenticator" },
+    [5] = { en1543_ITEM, 32, "EnvSelectList" },
+    [6] = { en1543_ITEM, 2, "EnvData",
+      [0] = { en1543_ITEM, 1, "EnvCardStatus" },
+      [1] = { en1543_ITEM, 0, "EnvExtra" },
     }}
   }
 }
 
 en1543_Holder = {
   [0] = { en1543_BITMAP, 8, "HolderGeneralBitmap", {
-    [0] = { en1543_BITMAP, 2, "NameBitmap", {
-      [0] = { en1543_ITEM, 85, "Surname" },
-      [1] = { en1543_ITEM, 85, "Forename" }
+    [0] = { en1543_BITMAP, 2, "HolderNameBitmap", {
+      [0] = { en1543_ITEM, 85, "HolderSurname" },
+      [1] = { en1543_ITEM, 85, "HolderForename" }
     }},
-    [1] = { en1543_BITMAP, 2, "BirthBitmap", {
-      [0] = { en1543_ITEM, 32, "BirthDate" },
-      [1] = { en1543_ITEM, 115, "BirthPlace"}
+    [1] = { en1543_BITMAP, 2, "HolderBirthBitmap", {
+      [0] = { en1543_ITEM, 32, "HolderBirthDate" },
+      [1] = { en1543_ITEM, 115, "HolderBirthPlace"}
     }},
-    [2] = { en1543_ITEM, 85, "BirthName" },
-    [3] = { en1543_ITEM, 32, "IdNumber" },
-    [4] = { en1543_ITEM, 24, "CountryAlpha" },
-    [5] = { en1543_ITEM, 32, "Company" },
-    [6] = { en1543_REPEAT, 4, "Profiles(0..4)", {
---[[
-      ProfileBitmap [0] 3 Bitmap Référ.
-      NetworkId [0] 24 Réseau Référ.
-      ProfileNumber [1] 8 Numéro du statut Référ.
-      ProfileDate [2] 14 Date de fin de validité du statut Référ.
-      ProfileBitmap [1] 3 Bitmap Référ.
-      NetworkId [0] 24 Réseau Référ.
-      ProfileNumber [1] 8 Numéro du statut Référ.
-      ProfileDate [2] 14 Date de fin de validité du statut Référ.
-      ProfileBitmap [2] 3 Bitmap Référ.
-      NetworkId [0] 24 Réseau Référ.
-      ProfileNumber [1] 8 Numéro du statut Référ.
-      ProfileDate [2] 14 Date de fin de validité du statut Référ.
-      ProfileBitmap [3] 3 Bitmap Référ.
-      NetworkId [0] 24 Réseau Référ.
-      ProfileNumber [1] 8 Numéro du statut Référ.
-      ProfileDate [2] 14 Date de fin de validité du statut Référ.
---]] }},
-    [7] = { en1543_BITMAP, 12, "DataBitmap", {
-      [0] = { en1543_ITEM, 4, "DataCardStatus" },
-      [1] = { en1543_ITEM, 4, "DataTeleReglement" },
-      [2] = { en1543_ITEM, 17, "DataResidence" },
-      [3] = { en1543_ITEM, 6, "DataCommercialID" },
-      [4] = { en1543_ITEM, 17, "DataWorkPlace" },
-      [5] = { en1543_ITEM, 17, "DataStudyPlace" },
-      [6] = { en1543_ITEM, 16, "DataSaleDevice" },
-      [7] = { en1543_ITEM, 16, "DataAuthenticator" },
-      [8] = { en1543_ITEM, 14, "DataProfileStartDate1" },
-      [9] = { en1543_ITEM, 14, "DataProfileStartDate2" },
-      [10] = { en1543_ITEM, 14, "DataProfileStartDate3" },
-      [11] = { en1543_ITEM, 14, "DataProfileStartDate4" }
+    [2] = { en1543_ITEM, 85, "HolderBirthName" },
+    [3] = { en1543_ITEM, 32, "HolderIdNumber" },
+    [4] = { en1543_ITEM, 24, "HolderCountryAlpha" },
+    [5] = { en1543_ITEM, 32, "HolderCompany" },
+    [6] = { en1543_REPEAT, 4, "HolderProfiles(0..4)", {
+      [0] = { en1543_BITMAP, 3, "ProfileBitmap", {
+      	[0] = { en1543_ITEM, 24, "NetworkId" },
+	[1] = { en1543_ITEM, 8, "ProfileNumber" },
+	[2] = { en1543_DATE, 14, "ProfileDate" }
+	}}
+    }},
+    [7] = { en1543_BITMAP, 12, "HolderDataBitmap", {
+      [0] = { en1543_ITEM, 4, "HolderDataCardStatus" },
+      [1] = { en1543_ITEM, 4, "HolderDataTeleReglement" },
+      [2] = { en1543_ITEM, 17, "HolderDataResidence" },
+      [3] = { en1543_ITEM, 6, "HolderDataCommercialID" },
+      [4] = { en1543_ITEM, 17, "HolderDataWorkPlace" },
+      [5] = { en1543_ITEM, 17, "HolderDataStudyPlace" },
+      [6] = { en1543_ITEM, 16, "HolderDataSaleDevice" },
+      [7] = { en1543_ITEM, 16, "HolderDataAuthenticator" },
+      [8] = { en1543_ITEM, 14, "HolderDataProfileStartDate1" },
+      [9] = { en1543_ITEM, 14, "HolderDataProfileStartDate2" },
+      [10] = { en1543_ITEM, 14, "HolderDataProfileStartDate3" },
+      [11] = { en1543_ITEM, 14, "HolderDataProfileStartDate4" }
     }}
   }}
 }
@@ -130,108 +120,108 @@ en1543_Holder = {
 en1543_Contract = {
   [0] = { en1543_BITMAP, 20, "ContractBitmap",
     {
-      [0] = { en1543_ITEM, 24, "NetworkId" },
-      [1] = { en1543_ITEM,  8, "Provider" },
-      [2] = { en1543_ITEM, 16, "Tariff" },
-      [3] = { en1543_ITEM, 32, "Serial Number" },
-      [4] = { en1543_BITMAP,  2, "CustomerInfo Bitmap", {
-	[0] = { en1543_ITEM,  6, "CustomerProfile" },
-	[1] = { en1543_ITEM, 32, "CustomerNumber" },
+      [0] = { en1543_NETWORKID, 24, "ContractNetworkId" },
+      [1] = { en1543_ITEM,  8, "ContractProvider" },
+      [2] = { en1543_ITEM, 16, "ContractTariff" },
+      [3] = { en1543_ITEM, 32, "ContractSerialNumber" },
+      [4] = { en1543_BITMAP,  2, "ContractCustomerInfoBitmap", {
+	[0] = { en1543_ITEM,  6, "ContractCustomerProfile" },
+	[1] = { en1543_ITEM, 32, "ContractCustomerNumber" },
       }},
-      [5] = { en1543_BITMAP,  2, "PassengerInfo Bitmap", {
-	[0] = { en1543_ITEM,  6, "PassengerClass" },
-	[1] = { en1543_ITEM, 32, "PassengerTotal" },
+      [5] = { en1543_BITMAP,  2, "ContractPassengerInfoBitmap", {
+	[0] = { en1543_ITEM,  6, "ContractPassengerClass" },
+	[1] = { en1543_ITEM, 32, "ContractPassengerTotal" },
       }},
-      [6] = { en1543_ITEM, 6, "VehiculeClassAllowed" },
-      [7] = { en1543_ITEM, 32, "PaymentPointer" },
-      [8] = { en1543_ITEM, 11, "PayMethod" },
-      [9] = { en1543_ITEM, 16, "Services" },
-      [10] = { en1543_NUMBER, 16, "PriceAmount" },
-      [11] = { en1543_ITEM, 16, "PriceUnit" },
-      [12] = { en1543_BITMAP, 7, "ContractRestrictionBitmap", {
-	[0] = { en1543_TIME, 11, "StartTime" },
-	[1] = { en1543_TIME, 11, "EndTime" },
-	[2] = { en1543_ITEM, 8, "RestrictDay" },
-	[3] = { en1543_ITEM, 8, "RestrictTimeCode" },
-	[4] = { en1543_ITEM, 8, "RestrictCode" },
-	[5] = { en1543_ITEM, 16, "RestrictProduct" },
-	[6] = { en1543_ITEM, 16, "RestrcitLocation" },
+      [6] = { en1543_ITEM, 6, "ContractVehiculeClassAllowed" },
+      [7] = { en1543_ITEM, 32, "ContractPaymentPointer" },
+      [8] = { en1543_ITEM, 11, "ContractPayMethod" },
+      [9] = { en1543_ITEM, 16, "ContractServices" },
+      [10] = { en1543_NUMBER, 16, "ContractPriceAmount" },
+      [11] = { en1543_ITEM, 16, "ContractPriceUnit" },
+      [12] = { en1543_BITMAP, 7, "ContractContractRestrictionBitmap", {
+	[0] = { en1543_TIME, 11, "ContractStartTime" },
+	[1] = { en1543_TIME, 11, "ContractEndTime" },
+	[2] = { en1543_ITEM, 8, "ContractRestrictDay" },
+	[3] = { en1543_ITEM, 8, "ContractRestrictTimeCode" },
+	[4] = { en1543_ITEM, 8, "ContractRestrictCode" },
+	[5] = { en1543_ITEM, 16, "ContractRestrictProduct" },
+	[6] = { en1543_ITEM, 16, "ContractRestrcitLocation" },
       }},
-      [13] = { en1543_BITMAP, 9, "ContractValidityInfoBitmap", {
-	[0] = { en1543_DATE, 14, "StartDate" },
-	[1] = { en1543_TIME, 11, "StartTime" },
-	[2] = { en1543_DATE, 14, "EndDate" },
-	[3] = { en1543_TIME, 11, "EndTime" },
-	[4] = { en1543_ITEM, 8, "Duration" },
-	[5] = { en1543_DATE, 14, "LimitDate" },
-	[6] = { en1543_ITEM, 8, "Zones" },
-	[7] = { en1543_ITEM, 16, "Journeys" },
-	[8] = { en1543_ITEM, 16, "PeriodJourneys" },
+      [13] = { en1543_BITMAP, 9, "ContractContractValidityInfoBitmap", {
+	[0] = { en1543_DATE, 14, "ContractStartDate" },
+	[1] = { en1543_TIME, 11, "ContractStartTime" },
+	[2] = { en1543_DATE, 14, "ContractEndDate" },
+	[3] = { en1543_TIME, 11, "ContractEndTime" },
+	[4] = { en1543_ITEM, 8, "ContractDuration" },
+	[5] = { en1543_DATE, 14, "ContractLimitDate" },
+	[6] = { en1543_ITEM, 8, "ContractZones" },
+	[7] = { en1543_ITEM, 16, "ContractJourneys" },
+	[8] = { en1543_ITEM, 16, "ContractPeriodJourneys" },
       }},
-      [14] = { en1543_BITMAP, 8, "ContractJourneyDataBitmap", {
-	[0] = { en1543_ITEM, 16, "Origin" },
-	[1] = { en1543_ITEM, 16, "Destination" },
-	[2] = { en1543_ITEM, 16, "RouteNumbers" },
-	[3] = { en1543_ITEM, 8, "RouteVariants" },
-	[4] = { en1543_ITEM, 16, "Run" },
-	[5] = { en1543_ITEM, 16, "Via" },
-	[6] = { en1543_ITEM, 16, "Distance" },
-	[7] = { en1543_ITEM, 8, "Interchange" },
+      [14] = { en1543_BITMAP, 8, "ContractContractJourneyDataBitmap", {
+	[0] = { en1543_ITEM, 16, "ContractOrigin" },
+	[1] = { en1543_ITEM, 16, "ContractDestination" },
+	[2] = { en1543_ITEM, 16, "ContractRouteNumbers" },
+	[3] = { en1543_ITEM, 8, "ContractRouteVariants" },
+	[4] = { en1543_ITEM, 16, "ContractRun" },
+	[5] = { en1543_ITEM, 16, "ContractVia" },
+	[6] = { en1543_ITEM, 16, "ContractDistance" },
+	[7] = { en1543_ITEM, 8, "ContractInterchange" },
       }},
-      [15] = { en1543_BITMAP, 4, "ContractSaleDataBitmap", {
-	[0] = { en1543_DATE, 14, "Date" },
-	[1] = { en1543_TIME, 11, "Time" },
-	[2] = { en1543_ITEM, 8, "Agent" },
-	[3] = { en1543_ITEM, 16, "Device" },
+      [15] = { en1543_BITMAP, 4, "ContractContractSaleDataBitmap", {
+	[0] = { en1543_DATE, 14, "ContractDate" },
+	[1] = { en1543_TIME, 11, "ContractTime" },
+	[2] = { en1543_ITEM, 8, "ContractAgent" },
+	[3] = { en1543_ITEM, 16, "ContractDevice" },
       }},
-      [16] = { en1543_ITEM, 8, "Status" },
-      [17] = { en1543_ITEM, 16, "LoyalityPoints" },
-      [18] = { en1543_ITEM, 16, "Authenticator" },
-      [19] = { en1543_ITEM, 0, ""},
+      [16] = { en1543_ITEM, 8, "ContractStatus" },
+      [17] = { en1543_ITEM, 16, "ContractLoyalityPoints" },
+      [18] = { en1543_ITEM, 16, "ContractAuthenticator" },
+      [19] = { en1543_ITEM, 0, "Contract"},
     }
   }
 }
 
 en1543_Event = {
-  [0] = { en1543_DATE, 14, "Date" },
-  [1] = { en1543_TIME, 11, "Time" },
-  [2] = { en1543_BITMAP, 28, "EventBitmap",
+  [0] = { en1543_DATE, 14, "EventDate" },
+  [1] = { en1543_TIME, 11, "EventTime" },
+  [2] = { en1543_BITMAP, 28, "EventEventBitmap",
     {
-      [0] = { en1543_ITEM,  8, "DisplayData" },
-      [1] = { en1543_ITEM, 24, "Network" },
-      [2] = { en1543_ITEM,  8, "Code" },
-      [3] = { en1543_ITEM,  8, "Result" },
-      [4] = { en1543_ITEM,  8, "ServiceProvider" },
-      [5] = { en1543_ITEM,  8, "NotOkCounter" },
-      [6] = { en1543_ITEM, 24, "SerialNumber" },
-      [7] = { en1543_ITEM, 16, "Destination" },
-      [8] = { en1543_ITEM, 16, "LocationId" },
-      [9] = { en1543_ITEM,  8, "LocationGate" },
-      [10] = { en1543_ITEM, 16, "Device" },
-      [11] = { en1543_NUMBER, 16, "RouteNumber" },
-      [12] = { en1543_ITEM,  8, "RouteVariant" },
-      [13] = { en1543_ITEM, 16, "JourneyRun" },
-      [14] = { en1543_ITEM, 16, "VehiculeId" },
-      [15] = { en1543_ITEM,  8, "VehiculeClass" },
-      [16] = { en1543_ITEM,  5, "LocationType" },
-      [17] = { en1543_ITEM,240, "Employee" },
-      [18] = { en1543_ITEM, 16, "LocationReference" },
-      [19] = { en1543_ITEM,  8, "JourneyInterchanges" },
-      [20] = { en1543_ITEM, 16, "PeriodJourneys" },
-      [21] = { en1543_ITEM, 16, "TotalJourneys" },
-      [22] = { en1543_ITEM, 16, "JourneyDistance" },
-      [23] = { en1543_NUMBER, 16, "PriceAmount" },
-      [24] = { en1543_ITEM, 16, "PriceUnit" },
-      [25] = { en1543_ITEM,  5, "ContractPointer" },
-      [26] = { en1543_ITEM, 16, "Authenticator" },
-      [27] = { en1543_ITEM,  5, "BitmapExtra" },
+      [0] = { en1543_ITEM,  8, "EventDisplayData" },
+      [1] = { en1543_NETWORKID, 24, "EventNetworkId" },
+      [2] = { en1543_ITEM,  8, "EventCode" },
+      [3] = { en1543_ITEM,  8, "EventResult" },
+      [4] = { en1543_ITEM,  8, "EventServiceProvider" },
+      [5] = { en1543_ITEM,  8, "EventNotOkCounter" },
+      [6] = { en1543_ITEM, 24, "EventSerialNumber" },
+      [7] = { en1543_ITEM, 16, "EventDestination" },
+      [8] = { en1543_ITEM, 16, "EventLocationId" },
+      [9] = { en1543_ITEM,  8, "EventLocationGate" },
+      [10] = { en1543_ITEM, 16, "EventDevice" },
+      [11] = { en1543_NUMBER, 16, "EventRouteNumber" },
+      [12] = { en1543_ITEM,  8, "EventRouteVariant" },
+      [13] = { en1543_ITEM, 16, "EventJourneyRun" },
+      [14] = { en1543_ITEM, 16, "EventVehiculeId" },
+      [15] = { en1543_ITEM,  8, "EventVehiculeClass" },
+      [16] = { en1543_ITEM,  5, "EventLocationType" },
+      [17] = { en1543_ITEM,240, "EventEmployee" },
+      [18] = { en1543_ITEM, 16, "EventLocationReference" },
+      [19] = { en1543_ITEM,  8, "EventJourneyInterchanges" },
+      [20] = { en1543_ITEM, 16, "EventPeriodJourneys" },
+      [21] = { en1543_ITEM, 16, "EventTotalJourneys" },
+      [22] = { en1543_ITEM, 16, "EventJourneyDistance" },
+      [23] = { en1543_NUMBER, 16, "EventPriceAmount" },
+      [24] = { en1543_ITEM, 16, "EventPriceUnit" },
+      [25] = { en1543_ITEM,  5, "EventContractPointer" },
+      [26] = { en1543_ITEM, 16, "EventAuthenticator" },
+      [27] = { en1543_ITEM,  5, "EventBitmapExtra" },
     }
   }
 }
 EPOCH = 852073200
 
+date_days = 0
 function en1543_date(source, position)
-	local date_days
 	local part =  bytes.sub(source, position, position+13) -- 14 bits
 	bytes.pad_left(part,32,0)
 	date_days = EPOCH+bytes.tonumber(part)*24*3600
@@ -242,9 +232,24 @@ function en1543_time(source, position)
 	local date_minutes
 	local part = bytes.sub(source, position, position+10) -- 11 bits
 	bytes.pad_left(part,32,0)
-	date_minutes = bytes.tonumber(part)*60
+	date_minutes = date_days + bytes.tonumber(part)*60
+	date_days = 0
 	return os.date("%X",date_minutes)
 end
+
+function en1543_networkid(source, position)
+	local country = bytes.sub(source, position, position+11)
+	local region  = bytes.sub(source, position+12, position+23)
+	local country_code
+	local region_code
+	
+	country_code = iso_country_code_name(tonumber(tostring(bytes.convert(4,country))))
+	region_code  = tonumber(tostring(bytes.convert(4,region)))
+	
+	return "country "..country_code.." / region "..region_code
+end
+
+
 
 function en1543_parse_item(ctx, format, data, position, reference_index)
 	local parsed = 0
@@ -260,8 +265,7 @@ function en1543_parse_item(ctx, format, data, position, reference_index)
 
 	parsed = format[2]
 	item = bytes.sub(data,position,position+parsed-1)
-      	NODE = ui.tree_add_node(ctx,format[3],reference_index,nil,
-     				string.format("%d bits: %s",parsed,tostring(item)))
+      	NODE = ui.tree_add_node(ctx,format[3],reference_index)
 
 	if format[1] == en1543_BITMAP then
 	   bitmap_size = parsed
@@ -272,19 +276,27 @@ function en1543_parse_item(ctx, format, data, position, reference_index)
 	       end
 	   end
 	elseif format[1] == en1543_DATE then
-	   ui.tree_set_value(NODE,en1543_date(item,0))
+	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_alt_value(NODE,en1543_date(item,0))
 	elseif format[1] == en1543_TIME then
-	   ui.tree_set_value(NODE,en1543_time(item,0)) 
+	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_alt_value(NODE,en1543_time(item,0)) 
 	elseif format[1] == en1543_NUMBER then
-	   ui.tree_set_value(NODE,bytes.tonumber(item))
+	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
+	elseif format[1] == en1543_NETWORKID then
+	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_alt_value(NODE,en1543_networkid(item,0))
         elseif format[1] == en1543_REPEAT then
-	   ui.tree_set_value(NODE,bytes.tonumber(item))
+	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
            for index=1,bytes.tonumber(item) do
 	       parsed = parsed + en1543_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
 	   end 
 	else 
+	   ui.tree_set_value(NODE,tostring(item));
            hex_info = bytes.convert(8,item)
-	   ui.tree_set_value(NODE,"0x"..tostring(hex_info))
+	   ui.tree_set_alt_value(NODE,"0x"..tostring(hex_info))
 	end
 	return parsed
 end
@@ -296,8 +308,6 @@ function en1543_parse(ctx, format, data)
 	for index=0,#format do
 	    parsed = parsed + en1543_parse_item(ctx,format[index],data,parsed,index)
 	end
-	--local REM = ui.tree_add_node(ctx,"Remaining unparsed data",nil,parsed,(parsed/8).."bytes");
-	--ui.tree_set_value(REM,tostring(bytes.sub(data,parsed,-1)))
 	return parsed
 end
 
@@ -402,7 +412,7 @@ function process_calypso(cardenv)
 
 	sw, resp = card.select("#315449432e494341")
 
-	APP = ui.tree_add_node(cardenv,"application",DF_NAME)
+	APP = ui.tree_add_node(cardenv,"Application",DF_NAME,nil,"application")
 	-- note: no real DF select here
  
 	for lfi,lfi_desc in pairs(LFI_LIST) do
@@ -413,13 +423,13 @@ function process_calypso(cardenv)
 		sw,resp = card.select(lfi)
 		if sw==0x9000 then
 	                local r
-			LFI = ui.tree_add_node(APP,"File "..lfi_desc,lfi)
+			LFI = ui.tree_add_node(APP,"File "..lfi_desc,lfi,nil,"file")
 			for r=1,255 do
 				sw,resp=card.read_record(0,r,0x1D)
 				if sw ~= 0x9000 then
 					break
 				end
-				REC = ui.tree_add_node(LFI,"record",r,#resp)
+				REC = ui.tree_add_node(LFI,"record",r,#resp,"record")
                                 NODE = ui.tree_add_node(REC,"raw data")
 	                        ui.tree_set_value(NODE,tostring(resp))
 			end
@@ -438,8 +448,9 @@ atr = card.last_atr();
 hex_card_num = bytes.sub(atr,-7,-4)
 card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
 
-local ref = ui.tree_add_node(CARD,"Card number",nil,4,"hex: "..tostring(hex_card_num))
-ui.tree_set_value(ref,card_num)
+local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
+ui.tree_set_value(ref,tostring(hex_card_num))
+ui.tree_set_alt_value(ref,card_num)
 
 process_calypso(CARD)
 

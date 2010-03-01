@@ -228,7 +228,7 @@ int cardemul_run_last_atr(const cardemul_t* ce, bytestring_t *atr)
   return CARDEMUL_OK;
 }
 
-int cardemul_save_to_file(const cardemul_t* ce, char *filename)
+int cardemul_save_to_file(const cardemul_t* ce, const char *filename)
 {
   FILE *f;
   emul_t cur;
@@ -262,7 +262,7 @@ int cardemul_save_to_file(const cardemul_t* ce, char *filename)
   return CARDEMUL_OK;
 }
 
-cardemul_t* cardemul_new_from_file(char *filename)
+cardemul_t* cardemul_new_from_file(const char *filename)
 {
   FILE* f;
   cardemul_t *ce;

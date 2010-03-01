@@ -307,7 +307,7 @@ int bs_convert_1_to_4(bytestring_t *bs,
 
   while (src_i<src->len)
   {
-    bs->data[dst_i]|=src->data[src_i++]<<3;
+    bs->data[dst_i] =src->data[src_i++]<<3;
     bs->data[dst_i]|=src->data[src_i++]<<2;
     bs->data[dst_i]|=src->data[src_i++]<<1;
     bs->data[dst_i]|=src->data[src_i++];
@@ -525,7 +525,7 @@ int bytestring_insert_element(bytestring_t *bs,
   if (pos>=bs->len)
     return bytestring_append_element(bs,len,c);
   bytestring_resize(bs,bs->len+len);
-  memmove(bs->data+pos+len,bs->data+pos,len);
+  memmove(bs->data+pos+len,bs->data+pos,bs->len-len-pos);
   for (u=0;u<len;u++)
     bs->data[pos+u]=c&bs->mask;
   return BYTESTRING_OK;
@@ -722,7 +722,7 @@ int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
   return BYTESTRING_OK;
 }
 
-char *bytestring_to_alloc_number(const bytestring_t *bs)
+char *bytestring_to_alloc_string_integer(const bytestring_t *bs)
 {
   bytestring_t *src;
   bytestring_t *b10;
@@ -749,6 +749,24 @@ char *bytestring_to_alloc_number(const bytestring_t *bs)
   bytestring_free(src);
   bytestring_free(b10);
   return ret;
+}
+
+double bytestring_to_number(const bytestring_t *bs)
+{
+  bytestring_t *src;
+  int i;
+  double res = 0;
+
+  if (bs->len==0)
+    return 0;
+  src = bytestring_new(8);
+  bytestring_convert(src,bs);
+    
+  for (i=0;i<src->len;i++)
+    res = (res*256)+src->data[i];
+
+  bytestring_free(src);
+  return res;
 }
 
 void bytestring_release(bytestring_t *bs)

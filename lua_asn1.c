@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2010 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,11 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#include <lauxlib.h>
+#include "lua_asn1.h"
+#include "asn1.h"
+#include "lua_bytes.h"
+#include "misc.h"
 
 int subr_asn1_split(lua_State* L)
 {
@@ -124,10 +129,10 @@ int subr_asn1_join(lua_State* L)
   unsigned tag;
   bytestring_t *value;
   bytestring_t *tail;
-  bytestring_t *tlv = luaL_newbytestring(L,8);
+  bytestring_t *tlv = bytestring_new(8);
   int clear_value=0;
   int clear_tail=0;
-  
+
   tag = (unsigned) lua_tointeger(L,1);
   if (lua_isnoneornil(L,2))
     value = NULL;
@@ -158,6 +163,7 @@ int subr_asn1_join(lua_State* L)
 
   if (clear_value) bytestring_free(value);
   if (clear_tail) bytestring_free(tail);
+  lua_pushbytestring(L,tlv);
   return 1;
 }
 

@@ -25,6 +25,8 @@
 #include "misc.h"
 #include <string.h>
 #include <stdlib.h>
+#include "bytestring.h"
+#include "lua_bytes.h"
 
 /***********************************************************
  * USER INTERFACE FUNCTIONS
@@ -121,18 +123,24 @@ int subr_ui_tree_get_attribute(lua_State* L)
 int subr_ui_tree_set_value(lua_State* L)
 {
   const char *path;
-  const char *value;
+  char *value;
+  bytestring_t *bs;
 
   path = lua_tostring(L,1);
   if (lua_isnoneornil(L,2))
     value = NULL;
   else
-    value = lua_tostring(L,2);
+  {
+    bs = luaL_checkbytestring(L,2);
+    value = bytestring_to_alloc_string(bs);
+  }
 
   if (cardtree_set_value(CARDTREE,path,value))
     lua_pushboolean(L,1);
   else
     lua_pushboolean(L,0);
+  if (value)
+    free(value);
   return 1;
 }
 
@@ -145,7 +153,7 @@ int subr_ui_tree_get_value(lua_State* L)
   
   if (cardtree_get_value(CARDTREE,path,&value))
   {
-    lua_pushstring(L,value);
+    lua_pushbytestring(L,bytestring_new_from_string(8,value));
     g_free(value);
   }
   else

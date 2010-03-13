@@ -276,25 +276,25 @@ function en1543_parse_item(ctx, format, data, position, reference_index)
 	       end
 	   end
 	elseif format[1] == en1543_DATE then
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
 	   ui.tree_set_alt_value(NODE,en1543_date(item,0))
 	elseif format[1] == en1543_TIME then
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
 	   ui.tree_set_alt_value(NODE,en1543_time(item,0)) 
 	elseif format[1] == en1543_NUMBER then
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
 	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
 	elseif format[1] == en1543_NETWORKID then
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
 	   ui.tree_set_alt_value(NODE,en1543_networkid(item,0))
         elseif format[1] == en1543_REPEAT then
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
 	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
            for index=1,bytes.tonumber(item) do
 	       parsed = parsed + en1543_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
 	   end 
 	else 
-	   ui.tree_set_value(NODE,tostring(item));
+	   ui.tree_set_value(NODE,item);
            hex_info = bytes.convert(8,item)
 	   ui.tree_set_alt_value(NODE,"0x"..tostring(hex_info))
 	end
@@ -431,7 +431,7 @@ function process_calypso(cardenv)
 				end
 				REC = ui.tree_add_node(LFI,"record",r,#resp,"record")
                                 NODE = ui.tree_add_node(REC,"raw data")
-	                        ui.tree_set_value(NODE,tostring(resp))
+	                        ui.tree_set_value(NODE,resp)
 			end
 		end
 	end
@@ -449,7 +449,7 @@ hex_card_num = bytes.sub(atr,-7,-4)
 card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
 
 local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
-ui.tree_set_value(ref,tostring(hex_card_num))
+ui.tree_set_value(ref,hex_card_num)
 ui.tree_set_alt_value(ref,card_num)
 
 process_calypso(CARD)

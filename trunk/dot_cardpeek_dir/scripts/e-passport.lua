@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2010 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -203,7 +203,7 @@ function ui_parse_version(node,data)
 	for i=1,(#data/2)-1 do
 		ver = ver .. "." .. bytes.toprintable(bytes.sub(data,i*2,i*2+1))
 	end
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,ver)
 	return true
 end
@@ -211,7 +211,7 @@ end
 
 
 function ui_parse_cstring(node,data)
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	if #data>1 then
         	ui.tree_set_alt_value(node,bytes.toprintable(bytes.sub(data,0,#data-2)))
 	end
@@ -354,7 +354,7 @@ function ui_parse_block(node,format,data,pos)
 			   end
 			elseif type(v[3])=="table" then
 			   index = bytes.tonumber(block)
-			   ui.tree_set_value(ITEM,tostring(block))
+			   ui.tree_set_value(ITEM,block)
 			   if v[3][index] then
 				ui.tree_set_alt_value(ITEM,v[3][index])
 			   else
@@ -364,7 +364,7 @@ function ui_parse_block(node,format,data,pos)
 			   return nil
 			end 
 		else
-			ui.tree_set_value(ITEM,tostring(block))
+			ui.tree_set_value(ITEM,block)
 		end
 		pos = pos + v[2]
 	end
@@ -433,7 +433,7 @@ function ui_parse_biometry_fac(node,data)
 		
 		image_len = block_length-(index-block_start)
 		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Image Data",image_len)
-		ui.tree_set_value(SUBSUBBLOCK,tostring(bytes.sub(data,index,index+image_len-1)))
+		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_len-1))
 		index = index + image_len
 	end
 	return true
@@ -474,7 +474,7 @@ function ui_parse_biometry_fir(node,data)
 
 		image_size = record_size-(index-record_start)
 		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Finger Image Data")
-		ui.tree_set_value(SUBSUBBLOCK,tostring(bytes.sub(data,index,index+image_size-1)))
+		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_size-1))
 		index = index + image_size
 	end
  
@@ -489,7 +489,7 @@ function ui_parse_biometry(node,data)
 	elseif tag==FIR_FORMAT_IDENTIFIER then
 		ui_parse_biometry_fir(node,data)
 	else
-		ui.tree_set_value(node,tostring(data))
+		ui.tree_set_value(node,data)
 	end
 	return true
 end
@@ -575,12 +575,12 @@ if epass_create_session_keys(ke,km)
 	  if r[0]==0x6D then
 	     tag_6D, value_6D = asn1.split(r)
 	     TAG6D = ui.tree_add_node(FID,"National specific data",nil,#value_6D)
-	     ui.tree_set_value(TAG6D,tostring(value_6D))
+	     ui.tree_set_value(TAG6D,value_6D)
 	  else
              tlv_parse(FID,r,MRP_REFERENCE)
 	  end
        else
-	  ui.tree_set_value(FID,string.format("data not accessible (code %04X)",sw))
+	  ui.tree_set_alt_value(FID,string.format("data not accessible (code %04X)",sw))
        end
      end
    end

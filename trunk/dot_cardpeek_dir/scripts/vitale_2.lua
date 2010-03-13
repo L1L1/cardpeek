@@ -24,7 +24,7 @@ function ui_parse_asciidate(node,data)
 	local t = os.time( { ['year']  = string.sub(d,1,4),
 	      	   	     ['month'] = string.sub(d,5,6),
 	      		     ['day']   = string.sub(d,7,8) } )
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,os.date("%x",t))
 	return true
 end
@@ -146,12 +146,12 @@ if map then
 	     CONTENT = ui.tree_add_node(EF,"content",nil,#resp)
 	     if sw==0x9000 then
 	        if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
-                  ui.tree_set_value(CONTENT,tostring(resp))
+                  ui.tree_set_value(CONTENT,resp)
 	        else
                   tlv_parse(CONTENT,resp,VITALE_IDO)
                 end
 	     else
-	        ui.tree_set_value(CONTENT,string.format("data not accessible (code %04X)",sw))
+	        ui.tree_set_alt_value(CONTENT,string.format("data not accessible (code %04X)",sw))
 	     end
 	  end
        end

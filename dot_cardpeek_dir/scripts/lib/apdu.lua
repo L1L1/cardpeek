@@ -32,7 +32,7 @@ function card.tree_startup(title)
 
 	mycard = ui.tree_add_node(nil,"card",title,nil,"card")
 	ref = ui.tree_add_node(mycard,"ATR","cold",#atr,"block")
-	ui.tree_set_value(ref,tostring(atr))
+	ui.tree_set_value(ref,atr)
 	return mycard
 end
 

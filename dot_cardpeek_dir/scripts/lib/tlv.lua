@@ -38,7 +38,7 @@ end
 -- otherwise.
 
 function ui_parse_number(node,data)
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,bytes.tonumber(data))
 end
 
@@ -55,14 +55,14 @@ function ui_parse_YYMMDD(node,data)
 	end
 	t = os.time(d_table)
 
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,os.date("%x",t))
 end
 
 function ui_parse_country_code(node,data)
         local cc_name = iso_country_code_name(tonumber(tostring(data)))
 
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,cc_name)
 	return true
 end
@@ -70,13 +70,13 @@ end
 function ui_parse_currency_code(node,data)
         local cc_name = iso_currency_code_name(tonumber(tostring(data)))
 
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,cc_name)
 	return true
 end
 
 function ui_parse_printable(node,data)
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	if bytes.is_printable(data) then
 		ui.tree_set_alt_value(node,bytes.toprintable(data))
 	end
@@ -99,7 +99,7 @@ function ui_parse_oid(node,data)
 		end
 	end
 	ret = ret .. " }"
-	ui.tree_set_value(node,tostring(data))
+	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,ret)
 	return true
 end
@@ -240,7 +240,7 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
 	       if tlv_ui_func then
 	          tlv_ui_func(ref,tlv_value)
                else
-                  ui.tree_set_value(ref,tostring(tlv_value))
+                  ui.tree_set_value(ref,tlv_value)
                end--if
             end--if
 	    tlv = tlv_tail

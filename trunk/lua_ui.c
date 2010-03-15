@@ -72,26 +72,28 @@ int subr_ui_tree_add_node(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_set_attribute(lua_State* L)
+int subr_ui_tree_set_attributes(lua_State* L)
 {
   const char *path;
-  const char *attr_list[33]; 
-  /* we will limit to 16 settable attributes (33=2*16+1) for the sake of simplicity for now */
   int i;
+  int attribute_count = (lua_gettop(L)-1)/2;
+  const char **attribute_names;
+  const char **attribute_values;
 
   path = lua_tostring(L,1);
-  
-  for (i=0;i<16;i++)
-  {
-    attr_list[2*i] = lua_tostring(L,2+i);
-    if (lua_isnoneornil(L,3+i))
-      attr_list[2*i+1] = NULL;
-    else
-      attr_list[2*i+1] = lua_tostring(L,3+i);
-  }
-  attr_list[2*i]=NULL;
 
-  if (cardtree_set_attribute(CARDTREE,path,attr_list))
+  attribute_names  = malloc(sizeof(char *)*(attribute_count+1));
+  attribute_values = malloc(sizeof(char *)*(attribute_count+1));
+
+  for (i=0;i<attribute_count;i++)
+  {
+    attribute_names[i]  = lua_tostring(L,2+2*i);
+    attribute_values[i] = lua_tostring(L,2+2*i+1);
+  }
+  attribute_names[i]  = NULL;
+  attribute_values[i] = NULL;
+
+  if (cardtree_set_attributes(CARDTREE,path,attribute_names,attribute_values))
     lua_pushboolean(L,1);
   else
     lua_pushboolean(L,0);
@@ -99,25 +101,35 @@ int subr_ui_tree_set_attribute(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_get_attribute(lua_State* L)
+int subr_ui_tree_get_attributes(lua_State* L)
 {
   const char *path;
-  char *attr_list[3];
+  int i;
+  int attribute_count = lua_gettop(L)-1;
+  const char **attribute_names;
+  char **attribute_values;
 
   path = lua_tostring(L,1);
-  attr_list[0] = (char *)lua_tostring(L,2);
-  attr_list[1] = NULL;
-  attr_list[2] = NULL;
-  
-  if (cardtree_get_attribute(CARDTREE,path,attr_list))
+  attribute_names  = malloc(sizeof(char *)*(attribute_count+1));
+  attribute_values = malloc(sizeof(char *)*(attribute_count+1));
+
+  for (i=0;i<attribute_count;i++)
+    attribute_names[i]=lua_tostring(L,2+i);
+  attribute_names[i]=NULL;
+
+  if (cardtree_get_attributes(CARDTREE,path,attribute_names,attribute_values))
   {
-    lua_pushstring(L,attr_list[1]);
-    g_free(attr_list[1]);
+    for (i=0;i<attribute_count;i++)
+    {
+      lua_pushstring(L,attribute_values[i]);
+      g_free(attribute_values[i]);
+    }
   }
   else
     lua_pushnil(L);
-
-  return 1;
+  free(attribute_names);
+  free(attribute_values);
+  return attribute_count;
 }
 
 int subr_ui_tree_set_value(lua_State* L)
@@ -454,8 +466,8 @@ int subr_ui_about(lua_State* L)
 
 static const struct luaL_reg uilib [] = {
   {"tree_add_node", subr_ui_tree_add_node },
-  {"tree_set_attribute", subr_ui_tree_set_attribute },
-  {"tree_get_attribute", subr_ui_tree_get_attribute },
+  {"tree_set_attributes", subr_ui_tree_set_attributes },
+  {"tree_get_attributes", subr_ui_tree_get_attributes },
   {"tree_set_value", subr_ui_tree_set_value },
   {"tree_get_value", subr_ui_tree_get_value },
   {"tree_set_alt_value", subr_ui_tree_set_alt_value },

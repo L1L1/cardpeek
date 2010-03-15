@@ -36,13 +36,14 @@ require('lib.strict')
 require('lib.country_codes')
 
 LFI_LIST = {
-  ["#0002"] = "Unknown",
-  ["#2001"] = "Environment",
-  ["#2010"] = "Event logs",
-  ["#2020"] = "Contracts",
-  ["#2040"] = "Special events",
-  ["#2050"] = "Contract list",
-  ["#2069"] = "Counters"
+  ["/0002"] = "ICC",
+  ["/0003"] = "ID",
+  ["/2001"] = "Environment",
+  ["/2010"] = "Event logs",
+  ["/2020"] = "Contracts",
+  ["/2040"] = "Special events",
+  ["/2050"] = "Contract list",
+  ["/2069"] = "Counters"
 }
 
 en1543_BITMAP = 1
@@ -416,7 +417,7 @@ function process_calypso(cardenv)
 	-- note: no real DF select here
  
 	for lfi,lfi_desc in pairs(LFI_LIST) do
-	        sw,resp = card.select("#2000")
+	        sw,resp = card.select("/2000")
 		if sw~=0x9000 then 
 		        break
 		end

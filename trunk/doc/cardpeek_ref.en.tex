@@ -1,8 +1,9 @@
 \documentclass[11pt]{report}
+
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{pmboxdraw}
-\title{\texttt{Cardpeek} Reference Manual - v0.5}
+\title{\huge{\Cardpeek{} Reference Manual - v0.5}}
 \author{Copyright 2009-2010, L1L1@gmx.com}
 %\date{March 2010}
 \addtolength{\textwidth}{2cm}
@@ -10,31 +11,32 @@
 
 \newcommand{\mansection}[1]{\vspace{0.5em}\par\noindent\textsc{#1}\vspace{0.5em}\par}
 \newcommand{\syn}[1]{\texttt{#1}}
+\newcommand{\Cardpeek}{\textsc{Cardpeek}}
 
 \begin{document}
 \maketitle
 
 \chapter*{Presentation}
 
-\texttt{Cardpeek} is a program that reads the contents of smartcards. 
+\Cardpeek{} is a program that reads the contents of smart cards. 
 This GNU/Linux tool has a GTK GUI and can be extended with the LUA programming language. 
-It requires a PCSC card-reader to communicate with a smartcard.
+It requires a PCSC card reader to communicate with a smart card.
 
 Smartcards are becoming ubiquitous in our everyday life. 
 We use them for payment, transport, in mobile telephones and many other applications.
 These cards often contain a lot of personal information such as, for example, our last purchases or 
 our last journeys in public transport.
 
-\texttt{Cardpeek}'s goal is to allow you to access all this personal information. As such, you 
+\Cardpeek's goal is to allow you to access all this personal information. As such, you 
 can be better informed about the data that is collected about you.
 
-\texttt{Cardpeek} explores ISO 7816 compliant smartcards and represents their content in an organized 
+\Cardpeek{} explores ISO 7816 compliant smart cards and represents their content in an organized 
 tree format that roughly follows the structure it has inside the card, which is also similar to a 
 classical file-system structure.
 
 In this version, this tool is capable of reading the contents of the following types of cards:
 \begin{itemize}
-\item{EMV "chip and PIN" bank cards used in many countries throughout the worldi;}
+\item{EMV "chip and PIN" bank cards used in many countries throughout the world;}
 \item{Electronic/Biometric passports, which have an embedded contacless chip (a contactless reader is required);}
 \item{\textit{Navigo} transport cards used in Paris and other \textit{Calypso} cards used in France and elsewhere;}
 \item{Moneo, the French electronic purse (with limited data interpretation);}
@@ -43,11 +45,12 @@ In this version, this tool is capable of reading the contents of the following t
 
 Some important card types are missing such as the SIM card used in mobile phones.
 However, this application can be modified and extended easily to your needs with the embedded LUA scripting language.
+
 For more information on the LUA project see \url{http://www.lua.org/}.
 
-This software has been tested with traditional PCSC card-readers (such as the Gemalto\texttrademark PC TWIN) 
+This software has been tested with traditional PCSC card readers (such as the Gemalto\texttrademark PC TWIN) 
 as well as contactless or dual-interface PCSC readers (such as the Omnikey\texttrademark 5321). 
-Support for the ACG\texttrademark Multi-ISO contactless card-reader is still experimental but has been 
+Support for the ACG\texttrademark Multi-ISO contactless card reader is still experimental but has been 
 reported to work well for traditional ISO 7816 compliant cards.
 
 \tableofcontents
@@ -56,13 +59,13 @@ reported to work well for traditional ISO 7816 compliant cards.
 \chapter{Installation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{Cardpeek} can be compiled from source using the provided \texttt{Makefile}.
+\Cardpeek{} can be compiled from source using the provided \texttt{Makefile}.
 It has currently been tested under \emph{Linux Debian version 5} (both i386 and amd64).
 
 It has been reported to compile and work under \emph{FreeBSD} as well, with a minor tweak.
 
 Note that, in most cases, cryptography export control restrictions do not apply to the source code
-of \texttt{Cardpeek}: all cryptographic operations are implemented in the external \texttt{openssl} 
+of \Cardpeek: all cryptographic operations are implemented in the external \texttt{openssl} 
 library.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -82,22 +85,22 @@ Instructions:
 \item{Type\footnote{Note for FreeBSD: before executing \texttt{make}, 
 you will need to make a small change in the Makefile included in the source, 
 as described in the comments included in that file.} `\texttt{make}'}
-\item{The binary executable is `\texttt{cardtree}', use it directly or copy it to the desired location.}
+\item{The binary executable is `\texttt{cardpeek}', use it directly or copy it to the desired location.}
 \end{enumerate}
 
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Related files and initial setup}
-The first time \texttt{Cardpeek} is run, it will attempt to create the
+The first time \Cardpeek{} is run, it will attempt to create the
 \texttt{.cardpeek/} directory in your home directory. This is normal.
 
 The \texttt{.cardpeek/} directory will contain two elements: \texttt{config.lua} and the \texttt{scripts/} directory.
 The \texttt{config.lua} allows you to run commands automatically when the program starts 
 (it should become a full fledged `config file' in the future).
-The \texttt{scripts/} directory contains all the scripts that allow to explore smartcards. 
-Currently it contains five LUA files: ``\texttt{emv.lua}'', ``\texttt{navigo.lua}'', ``\texttt{calypso.lua}'', 
+The \texttt{scripts/} directory contains all the scripts that allow to explore smart cards. 
+Currently it contains 7 LUA files: ``\texttt{emv.lua}'', ``\texttt{navigo.lua}'', ``\texttt{calypso.lua}'', 
 ``\texttt{moneo.lua}'', ``\texttt{vitale\_2.lua}'', ``\texttt{e-passport.lua}'' and ``\texttt{atr.lua}''.
-These files all show up in the `analyzer' menu of \texttt{Cardpeek} (without their extension `.lua').
+These files all show up in the `analyzer' menu of \Cardpeek{} (without their extension `.lua').
 If you add any LUA file to this directory, it will thus also appear in the menu.
 The \texttt{scripts/} directory contains a subdirectory \texttt{lib/} that holds a few LUA files containing 
 frequently used commands that are shared among the card processing scripts.
@@ -112,12 +115,12 @@ This file contains a copy of the messages displayed in the ``log'' tab of the ap
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Quick start}
 
-To experiment with \texttt{Cardpeek}, your may start with your EMV ``PIN and chip'' smartcard for example, 
+To experiment with \Cardpeek, your may start with your EMV ``PIN and chip'' smart card for example, 
 by following these steps:
 \begin{enumerate}
 \item{Start \texttt{cardpeek}.}
-\item{Select your PCSC card-reader in the first dialog box.}
-\item{Insert your EMV ``PIN and chip'' card in the card-reader.}
+\item{Select your PCSC card reader in the first dialog box.}
+\item{Insert your EMV ``PIN and chip'' card in the card reader.}
 \item{Select \emph{emv} in the \emph{analyzer} menu. This will run the default \emph{emv} script.}
 \item{View the results in the ``card data'' tab.}
 \end{enumerate}
@@ -128,62 +131,126 @@ in the displayed card data).
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{User interface}
 
-The user interface is divided in four parts: the top menu bar, the ``card view'' tab, the ``log'' tab and 
-a one-line command input form.
+The user interface is divided in four main parts: 3 tabs and a one-line command input field.
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{graphics/sample-blank.jpg}
 \end{center}
 
-The top menu bar holds 3 menus:
-\begin{itemize}
-\item{A \emph{data} menu that allows to clear, load or save data in the card tree browser.}  
-\item{A \emph{analyzer} menu that allows to load a script or to run one of the predefined scripts.}
-\item{A \emph{reader} menu that allows to :
-  \begin{itemize} 
-  \item{connect, reset and disconnect a smartcard inserted in a card-reader.}
-  \item{log and save raw APDU's exchanged between the card and the card-reader. 
-	The saved APDU's can later be ``replayed'' to emulate a card.}
-  \end{itemize}}
-\end{itemize}
+Each one of the 3 tabs proposes a different view of card related information:
+\begin{description}
+\item[`card view']{shows card data extracted from a card in a structured \emph{tree} form.}  
+\item[`reader']{shows raw binary data exchanged between the host PC and the card reader.}
+\item[`log']{displays a journal of application events, mainly usefull for debugging purposes.}  
+\end{description}
 
-The \emph{card view} tab represents the data extracted from a card in a structured \emph{tree} from.
+\subsection{card view}
+
+The \emph{card view} tab is the central user interface component of \Cardpeek. 
+
+It represents the data extracted from a card in a structured \emph{tree} from.
 This tree structure is initially blank and is entirely constructed by the LUA scripts that are executed (see next chapter).
-This tree can be saved and loaded in XML format using the commands in the \emph{data} menu.
+This tree can be saved and loaded in XML format (see \ref{section:xmlformat}) using the commands in the \emph{data} menu.
 
-The XML format is quite straightforward, as shown in the following example:
-\begin{verbatim}
-<?xml version="1.0"?>
-<cardtree>
-  <node name="card" id="ATR">
-    <node name="ATR" id="cold">3B6F0000805A0803040002002531F405909000</node>
-  </node>
-</cardtree>
-\end{verbatim}
+The \emph{card view} tab offers the following action buttons:
+
+\vspace{1em}\noindent
+\begin{tabular}{l|p{12cm}}
+\hline
+\emph{Analyse}    & Clicking on this button spawns a menu from which an card analysis script can be chosen (see next chapter). \\  
+\hline
+\emph{Clear}      & This button clears the card tree view.\\
+\hline
+\emph{Open}       & This button allows to load a previously saved card tree representation from an XML file.\\
+\hline
+\emph{Save As}    & This button allows to save the current card tree representation into an XML file. \\
+\hline
+\emph{About}      & This button displays a very brief message about \Cardpeek. \\
+\hline
+\emph{Quit}       & This button quits the application. \\
+\hline
+\end{tabular}
+\vspace{2em}
+
+The \emph{card view} data is represented in 3 columns. The first column displays the nodes of the card tree view
+in a hierarchical structure similar to a typical file directory tree browser. The second column displays the size
+of the node data (most frequently expressed in bytes). Finally, the third column displays the node data itself.
+The node data can either be represented in ``raw'' (hexadecimal) form or in a more user friendly ``alternative'' form
+(such as a text, or a date).
+By default, the tree view will display node data in a user friendly ``alternative'' format if it exists. 
+By clicking on the column title, it is possible to switch between both ``raw'' and ``alternative'' data representations.
+
+When node data is over 128 bytes in size, it is truncated for display in the card view window. 
+This indicated by appending \textbf{[...]} to the truncated data. By double-clicking on the data, it is possible
+to switch to the full representation of the node data.
+
+\subsection{The reader tab}
+
+The reader tab displays the raw binary data exchanges between the card reader and the card itself. 
+This data is mainly composed of command APDUs and card responses. Command APDUs are represented by a single
+block of data, while card responses contain two elements: a card status word and card response data.
+
+One interesting feature of the card reader tab is the ability to save the APDU/response exchanges between the card reader and
+the card in a file that can later be used to emulate the card. Once card this data is saved in a file (with the .clf
+extension) and placed in the \syn{.cardpeek/log/} folder, it will appear as a choice in the card reader selection
+window that appear when \texttt{cardpeek} is launched. The name of the file will be prefixed by 
+``\url{emulator://}'' in the card selection window. Selecting such a card data file allows to re-run the script
+on the previously recorded APDU/response data instead of a real card inserted in the card reader. This is very useful for
+testing and debugging card scripts without relying on a real card inserted in the card reader.
+
+The \emph{reader} tab offers the following action buttons:
+
+\vspace{1em}\noindent
+\begin{tabular}{l|p{12cm}}
+\hline
+\emph{Connect}    & This button establishes a connexion between the card and the card reader. \\  
+\hline
+\emph{Reset}      & This button performs a warm reset of the card.\\
+\hline
+\emph{Disconnect} & This button closes the connexion between the card and the card reader.\\
+\hline
+\emph{Clear}      & This button clears the APDU/response data displayed in the window. \\
+\hline
+\emph{Save as}     & This button allows to save the displayed APDU/response data, either for future examination or
+		     to be replayed as an emulation of a real card. \\
+\hline
+\end{tabular}
+\vspace{2em}
+
+``Connect'', ``Reset'' and ``Disconnect'' operations are usually automatically done by the card scripts.
+However, it is occasionally practical to manually force the execution of these commands.
+
+\subsection{The log tab}
 
 The \emph{log} tab keeps track of \emph{messages} emitted by the application or the script being run.
 These messages are useful for monitoring and for debugging purposes. 
 The last message also appears at the bottom of the screen in the status bar.
 
-The one-line \emph{command} input form at the bottom allows to type single LUA commands that will be 
+\subsection{The one-line command input field}
+
+The one-line \emph{command} input field at the bottom of the window allows to type single LUA commands that will be 
 directly executed by the application.
-This is useful for testing some ideas quickly or debugging purposes.
+This is useful for testing some ideas quickly or for debugging purposes.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Card-reader selection}
 
-When the program starts, you'll be asked to choose a card-reader. 
+When the program starts, you'll be asked to choose a card reader. 
 This will give you 3 main choices :
 \begin{enumerate}
-\item{\emph{Select a PCSC card-reader to use:}
-  You may have several of PCSC card-readers attached to your computer.
+\item{\emph{Select a PCSC card reader to use:}
+  You may have several of PCSC card readers attached to your computer.
       	  Card-readers are usually identified by their name, preceded by \url{pcsc://}.}
-\item{\emph{Select a file containing previously recorded card APDU's:}
-  This allows to emulate a smart-card that was previously in the reader, and is quite convenient for script debugging purposes.
-	  Each time a query is send to the emulated card, \texttt{Cardpeek} will answer with the previously recorded data (or return an error if the query is new).
-	  Files containing previously recorded APDU's are identified by a file name, preceded by \url{emulator://}.}
+\item{\emph{Select a file containing previously recorded card APDU/response data:}
+  This allows to emulate a smart card that was previously in the reader, and is quite convenient
+  for script debugging purposes.
+  Each time an APDU is sent to the emulated card, \Cardpeek{} will answer with the previously 
+  recorded response data (or return an error if the query is new).
+  Files containing previously recorded APDU/response data are identified by a file name, preceded by 
+  \url{emulator://}.}
 \item{\emph{Select ``none'':}
-  Selecting \texttt{none} is useful if you do not wish to use a card-reader at all, for example if you only want to load and examine card data that was previously saved in XML format.}
+  Selecting \texttt{none} is useful if you do not wish to use a card reader at all, for example if 
+  you only want to load and examine card data that was previously saved in XML format.}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -191,11 +258,12 @@ This will give you 3 main choices :
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{center}
-\includegraphics[width=.25\textwidth]{graphics/sample-menu-analyzer.jpg}
+\includegraphics[width=.25\textwidth]{graphics/sample-menu-analyzer.png}
 \end{center}
 
-Cardpeek provides with several card analysis tools, which all appear in the "Analyzer" menu. 
-These tools are actually ``scripts'' written in the LUA language, and \texttt{Cardpeek} allows you to add your own scripts easily.
+Cardpeek provides several card analysis tools, which all appear in the "Analyzer" menu. 
+These tools are actually ``scripts'' written in the LUA language, and \Cardpeek{} allows you to 
+add your own scripts easily.
 As described in chapter \ref{chapter:licence}, these scripts are provided WITHOUT ANY WARRANTY.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -221,7 +289,7 @@ This ``event log'', which could pose a privacy risk, is not protected by any acc
 \section{emv}
 
 \begin{center}
-\includegraphics[width=.75\textwidth]{graphics/sample-emv.jpg}
+\includegraphics[width=1\textwidth]{graphics/sample-emv.jpg}
 \end{center}
 
 \paragraph{Overview:}
@@ -239,6 +307,10 @@ Some banks cards keep way over a hundred transactions that are freely readable, 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{e-passport}
 
+\begin{center}
+\includegraphics[width=1\textwidth]{graphics/sample-epassport.jpg}
+\end{center}
+
 \paragraph{Overview:}
 This script provides an analysis of data in a electronic/biometric passport, through a contactless interface.
 
@@ -248,7 +320,7 @@ It will not be able to access data protected with the EAC (Enhances Access Contr
 When the script starts, you will be required to input the lower part of the MRZ (Machine Readable Zone) data on the passport. 
 This data is needed to compute the cryptographic keys used in the BAC algorithm.
 
-This scripts attemps to parse biometric facial and fingerprint image data.
+This scripts attempts to parse biometric facial and fingerprint image data.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{moneo}
@@ -263,7 +335,7 @@ The provided output is very "raw".
 \section{navigo}
 
 \begin{center}
-\includegraphics[width=.75\textwidth]{graphics/sample-navigo.jpg}
+\includegraphics[width=1\textwidth]{graphics/sample-navigo.jpg}
 \end{center}
 
 \paragraph{Overview:}
@@ -272,7 +344,8 @@ It provides enhanced ``event log'' analysis notably with subway/train station na
 It has been successfully tested on \emph{Navigo D\'ecouverte}, \emph{Navigo} and \emph{Navigo Int\'egrale} cards.
 
 \paragraph{Notes:}
-You must use the contact interface to read a Navigo card, because they cannot be read with a normal conctactless card-reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B).
+You must use the contact interface to read a Navigo card, because they cannot be read with a normal contactless 
+card reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B).
 See the section about \emph{calypso} for other information.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -287,23 +360,23 @@ Some zones, notably the one containing the cardholder's photography, seem protec
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Adding your own scripts to Cardpeek}
-Adding or modifying a script in \texttt{Cardpeek} is easy: simply add or modify a script in the \texttt{\$HOME/.cardpeek/scripts/} directory.
+Adding or modifying a script in \Cardpeek{} is easy: simply add or modify a script in the \texttt{\$HOME/.cardpeek/scripts/} directory.
 
-If you want to go further and make a script permanently part of the source code of \texttt{Cardpeek}, you should follow these additional steps:
+If you want to go further and make a script permanently part of the source code of \Cardpeek, you should follow these additional steps:
 \begin{enumerate}
-\item{Go to the directory containing the source code of \texttt{Cardpeek}.}
+\item{Go to the directory containing the source code of \Cardpeek.}
 \item{Execute the \texttt{update\_dot\_cardpeek\_dir.sh} script (e.g. type ``\texttt{. update\_do\_cardpeek.sh}'')}
-\item{Run \texttt{make} to rebuild \texttt{Cardpeek}.}
+\item{Run \texttt{make} to rebuild \Cardpeek.}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Script language description}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The individual scripts that allow to process different types of smartcards are located in your 
+The individual scripts that allow to process different types of smart cards are located in your 
 \texttt{\$HOME/.cardpeek/scripts/} directory.
 These scripts are written in LUA, a programming language which shares some similarities with Pascal and Javascript.
-To allow LUA scripts to communicate with smartcards and to manipulate card data, the LUA language was extended with custom libraries.
+To allow LUA scripts to communicate with smart cards and to manipulate card data, the LUA language was extended with custom libraries.
 This section first starts with a brief example of the script language and then describes the library extensions.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -317,7 +390,7 @@ Here's a short LUA script that demonstrates how to get and print the ATR (Answer
      card.disconnect()
 \end{verbatim}
 
-Next, here's (a slightly longer) script that performs a similar task, while presenting the results using \texttt{Cardpeek}'s user interface instead of the console. 
+Next, here's (a slightly longer) script that performs a similar task, while presenting the results using \Cardpeek's user interface instead of the console. 
 
 \begin{verbatim}
      card.connect()
@@ -327,18 +400,18 @@ Next, here's (a slightly longer) script that performs a similar task, while pres
      if atr then
         mycard = ui.tree_add_node(nil,"card")
         ref = ui.tree_add_node(mycard,"ATR","cold")
-        ui.tree_set_value(ref,tostring(atr))
+        ui.tree_set_value(ref,atr)
      end
 
      card.diconnect()
 \end{verbatim}
 
-The fist command \syn{card.connect()} powers-up the card in the card-reader and prepares the card for communication. 
+The fist command \syn{card.connect()} powers-up the card in the card reader and prepares the card for communication. 
 Next \syn{card.last\_atr()} returns the ATR of the card. 
 If the value of the ATR is non-nil, the script creates a node called ``card'' (with \syn{ui.tree\_add\_node()}). 
 This node will appear at the root of the card data tree-view.
 A child node called ``ATR'' is added to the root ``card'' node. 
-The hexadecimal value of the ATR ---obtained by converting the \texttt{atr} variable to a string---  is associated with the child node.
+The hexadecimal value of the ATR is associated with the child node.
 Finally, the card is powered down with the \syn{card.disconnect()} function.
 
 The final output of the script should have roughly the following structure:
@@ -350,7 +423,7 @@ $\triangleright$ \textbf{card}&\\
 \end{tabular}
 \vspace{2ex}
 
-The example above is equivalent to the ``atr'' script provided with \texttt{Cardpeek}.
+The example above is equivalent to the ``atr'' script provided with \Cardpeek.
 The LUA language is easy to learn and we refer the reader to \url{http://www.lua.org/} for more information.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -408,11 +481,11 @@ Compute the binary operation \syn{A} \textit{or} \syn{B}.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{bytes} library}
 
-The \syn{bytes} provides a new opaque type to LUA: a \textit{bytestring}, 
+The \syn{bytes} library provides a new opaque type to LUA: a \textit{bytestring}, 
 which is used to represent an array of binary elements. 
 
 Bytestrings are mainly used to represent binary data exchanged with
-the card-reader in the application.
+the card reader in the application.
 
 The elements in the array are most commonly (8 bit) bytes, but
 it is also possible to construct arrays of (4 bit) half-bytes or
@@ -420,7 +493,7 @@ arrays of individual bits. All elements in a bytestring have the same
 size (8, 4 or 1), which is referred as the ``\emph{width}'' of the bytestring.
 The width of each element is specified when the array is created 
 with the function \syn{bytes.new()} described in this section. 
-A function to convert between bytestrings of differents widths 
+A function to convert between bytestrings of different widths 
 is also provided.
 
 Individual elements in a bytestring array can be accessed the same 
@@ -441,7 +514,7 @@ Bytestrings cannot be copied like arrays with a simple assignment
 using the ``\syn{=}'' operator, the \syn{bytes.assign()} function
 or the \syn{bytes.clone()} function must be used instead.  
 
-The functions of the \syn{bytes} library are:
+The functions of the \syn{bytes} library are next described.
 
 %------------------------------------------------
 \subsection{Operators on bytestrings}
@@ -515,10 +588,10 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
 
   If \syn{value$_i$} is a string, it is interpreted as a text representation of
   a bytestring (as returned by the \syn{tostring()} operator). This string
-  representation is interpreted by taking into consideration the element width 
-  of \syn{BS} and is appended to \syn{BS}.
+  representation is interpreted by taking into consideration the width 
+  of elements of \syn{BS} and is appended to \syn{BS}.
 
-  If \syn{value$_i$} is a number, it converted into a single bytestring element and 
+  If \syn{value$_i$} is a number, it is converted into a single bytestring element and 
   appended to \syn{BS}.
 
   This function modifies its main argument \syn{BS}.
@@ -718,7 +791,8 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
   \syn{BS[end+2]} becomes \syn{BS[start+1]}, and so forth.
 
   If \syn{end} is not specified it will default to the last index of \syn{BS}.
-  \syn{start} and \syn{end} may be negative as described in \syn{bytes.sub()}.
+  \syn{start} and \syn{end} may be negative to refer to the position of an element by 
+  starting from the end of the bytetring as described in \syn{bytes.sub()}.
 
   This function modifies its main argument \syn{BS}.
   
@@ -799,8 +873,8 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{asn1} library}
 
-The ASN1 library allows to manipulate ASN1 TLV bytestrings following the DER 
-encoding (Distinguished Encoding Rules).
+The ASN1 library allows to manipulate ASN1 TLV bytestrings following the DER/BER 
+encoding rules (Distinguished/Basic Encoding Rules).
 These bytestrings must be 8 bit wide.
 
 The library provides the following functions.
@@ -813,7 +887,7 @@ The library provides the following functions.
 \syn{asn1.enable\_single\_byte\_length(enable)}
 
 \mansection{Description}
-  This function is only used in rare cases with erroneous card implementation.
+  This function is only used in rare cases with erroneous card implementations.
   
   If $\syn{enable}=true$ the behavior of TLV decoding functions 
   (such as \syn{bytes.tlv\_split()}) are modified by forcing the ASN1 
@@ -833,7 +907,7 @@ The library provides the following functions.
 
 \mansection{Description}
   Performs the opposite of \syn{bytes.tlv\_split}: creates a bytestring 
-  representing the ASN1 DER encoding of the TLV $\{tag,len,val\}$ where $len=\#val$ 
+  representing the ASN1 DER encoding of the TLV \{\syn{tag}, \textit{len} , \syn{val}\} where \textit{len}=\syn{\#val} 
   and appends \syn{extra} to the result.
 
   \syn{tag} is positive integer number, \syn{val} is a bytestring and 
@@ -853,8 +927,8 @@ The library provides the following functions.
   TLV encoding rules, and extracts a tag \syn{T} and a bytestring value \syn{V}.
 
 \mansection{Return value}
-  The function returns 3 elements $(T, V, extra)$, 
-  where \syn{extra} is an optional bytestring representing the remaining part of 
+  The function returns 3 elements \{\syn{T}, \syn{V}, \textit{extra}\}, 
+  where \textit{extra} is an optional bytestring representing the remaining part of 
   \syn{str} that was not parsed or \syn{nil} if no data remains.
 
   If this function fails it returns a triplet of \syn{nil} values.
@@ -871,7 +945,7 @@ The library provides the following functions.
   and extracts a length \syn{L}. 
 
 \mansection{Return value}
-  The function returns $(L, extra)$, where \syn{extra} is an optional bytestring 
+  The function returns \{\syn{L}, \textit{extra}\}, where \textit{extra} is an optional bytestring 
   representing the remaining part of \syn{str} that was not parsed or \syn{nil} 
   if no data remains.
 
@@ -889,7 +963,7 @@ The library provides the following functions.
   and extracts a tag \syn{T}. 
 
 \mansection{Return value}
-  The function returns $(T, extra)$, where \syn{extra} is an optional bytestring 
+  The function returns  \{\syn{L}, \textit{extra}\}, where \textit{extra} is an optional bytestring 
   representing the remaining part of \syn{str} that was not parsed or 
   \syn{nil} if no data remains.
 
@@ -899,7 +973,7 @@ The library provides the following functions.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{card} library}
 
-The \syn{card} library is used to communicate with a smartcard in a card-reader.
+The \syn{card} library is used to communicate with a smart card in a card reader.
 
 Cardpeek internally defines a minimal set of card functions in the \syn{card} 
 library.
@@ -917,12 +991,12 @@ This library contains the following functions.
 \syn{card.connect()}
 
 \mansection{Description}
-  Connect to the card currently inserted in the selected smartcard-reader. 
+  Connect to the card currently inserted in the selected smart card reader. 
 
-  This command is used at the start of most smartcard scripts.
+  This command is used at the start of most smart card scripts.
 
 \mansection{Return value}
-   This function returns \syn{true} on success, and \syn{false} otherwise.
+   This function returns \syn{true} upon success, and \syn{false} otherwise.
 
 
 %------------------------------------------------
@@ -932,12 +1006,12 @@ This library contains the following functions.
 \syn{card.disconnect()}
 
 \mansection{Description}
-  Disconnect the card currently inserted in the selected smartcard-reader.
+  Disconnect the card currently inserted in the selected smart card reader.
 	  
-  This command concludes most smartcard scripts.
+  This command concludes most smart card scripts.
 
 \mansection{Return value}
-  This function returns \syn{true} on success, and \syn{false} otherwise.
+  This function returns \syn{true} upon success, and \syn{false} otherwise.
 
 %------------------------------------------------
 \subsection{card.get\_data}
@@ -953,12 +1027,12 @@ This library contains the following functions.
   \item{\syn{length\_expected} is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
   \end{itemize}
 
-  The value of ``CLA'' in the command send to the card is defined by by the variable \syn{card.CLA}.
+  The value of ``CLA'' in the command sent to the card is defined by by the variable \syn{card.CLA}.
 
   This function is implemented in \syn{apdu.lua}.
 
 \mansection{Return value}
-  See \syn{card.send} (section \ref{sec:card_send}).
+  The card status word and response data, as described in \syn{card.send} (section \ref{sec:card_send}).
 
 
 %------------------------------------------------
@@ -983,9 +1057,9 @@ This library contains the following functions.
   This function is designed to be a helper function for the implementation of \syn{card.select}.
 
   It converts a human readable path string (representing a file location in
-  a smartcard) into a format that is compatible with the SELECT\_FILE command from ISO 7816-4.
+  a smart card) into a format that is compatible with the SELECT\_FILE command from ISO 7816-4.
 
-  This function parses the string \syn{path} and returns a pair of values $path\_binary, path\_type$ 
+  This function parses the string \syn{path} and returns a pair of values \{\syn{path\_binary}, \syn{path\_type}\}
   where:
   \begin{itemize}
   \item{\syn{path\_binary} is a bytestring representing the encoded binary value of \syn{path}, and}
@@ -1008,7 +1082,7 @@ This library contains the following functions.
   \end{itemize}
 
   The next table describes the format of the string \syn{path} and how it is interpreted more precisely. 
-  In this table, as a convention, hexadecimal characters are written with the character `\texttt{h}' 
+  In this table, as a convention, hexadecimal characters are represented with the character `\texttt{h}' 
   and repeated elements are summarized by writing ``[\ldots ]''.
 
 %  \begin{table}[!hbp]
@@ -1086,12 +1160,12 @@ This library contains the following functions.
   \item{\syn{length\_expected} is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
   \end{itemize}
 
-  The value of ``CLA'' in the command send to the card is defined by the LUA variable \syn{card.CLA}.
+  The value of ``CLA'' in the command sent to the card is defined by the LUA variable \syn{card.CLA}.
 
   This function is implemented in \syn{apdu.lua}.
 
 \mansection{Return value}
-  See \syn{card.send} (section \ref{sec:card_send}).
+  The card status word and response data, as described in \syn{card.send} (section \ref{sec:card_send}).
 
 
 %------------------------------------------------
@@ -1109,12 +1183,12 @@ This library contains the following functions.
   \item{\syn{length\_expected} is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
   \end{itemize}
 
-  The value of ``CLA'' in the command send to the card is defined by the LUA variable \syn{card.CLA}.
+  The value of ``CLA'' in the command sent to the card is defined by the LUA variable \syn{card.CLA}.
 
   This function is implemented in \syn{apdu.lua}.
 
 \mansection{Return value}
-  See \syn{card.send} (section \ref{sec:card_send}).
+  The card status word and response data, as described in \syn{card.send} (section \ref{sec:card_send}).
 
 
 %------------------------------------------------
@@ -1128,7 +1202,7 @@ This library contains the following functions.
   \begin{itemize}
   \item{\syn{file\_path} is string describing the file to select, according to the format described in \syn{card.make\_file\_path}.}
   \item{\syn{return\_what} is an optional value describing the expected result, as described in the table below (defaults to 0).}
-  \item{\syn{length} is an optional value specifying the length of the resulting expected result (defaults to 0, which means 256 bytes).}
+  \item{\syn{length} is an optional value specifying the length of the resulting expected result (defaults to nil).}
   \end{itemize}
 
   The following constants have been defined for \syn{return\_what} (some can be combined together by addition):
@@ -1151,14 +1225,14 @@ This library contains the following functions.
   \vspace{2em}
 %  \end{table}
 
-  The value of ``CLA'' in the command send to the card is defined by by the variable \syn{card.CLA}.
-  The value of ``P1'' in the command send to the card corresponds to the file type computed by \syn{card.make\_file\_path}.
-  The value of ``P2'' in the command send to the card corresponds to \syn{return\_what}.
+  The value of ``CLA'' in the command sent to the card is defined by by the variable \syn{card.CLA}.
+  The value of ``P1'' in the command sent to the card corresponds to the file type computed by \syn{card.make\_file\_path}.
+  The value of ``P2'' in the command sent to the card corresponds to \syn{return\_what}.
 
   This function is implemented in \syn{apdu.lua}.
 
 \mansection{Return value}
-  See \syn{card.send} (section \ref{sec:card_send}).
+  The card status word and response data, as described in \syn{card.send} (section \ref{sec:card_send}).
 
 
 %------------------------------------------------
@@ -1186,7 +1260,7 @@ This library contains the following functions.
 \syn{card.info()}
 
 \mansection{Description}
-  Return detailed information about the state of the card-reader.
+  Return detailed information about the state of the card reader.
 
 \mansection{Return value}
   This function returns an associative array of $(name \Rightarrow value)$ pairs.
@@ -1200,7 +1274,7 @@ This library contains the following functions.
 
 \mansection{Description}
   Performs a warm reset of the card 
-  (reconnects the card currently inserted in the selected smartcard-reader).
+  (reconnects the card currently inserted in the selected smart card reader).
 
 \mansection{Return value}
   None
@@ -1208,7 +1282,7 @@ This library contains the following functions.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{crypto} library}
 
-This library proposed cryptographic functions.
+This library proposes a limited number of cryptographic functions.
 Currently these functions offer mainly DES, Triple-DES, and SHA1 based transformations.
 
 %------------------------------------------------
@@ -1240,7 +1314,7 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
   \hline
   \syn{crypto.ALG\_DES2\_EDE\_CBC}  & Triple DES with a double length 112 bit key in CBC mode.  \\
   \hline
-  \syn{crypto.ALG\_ISO9797\_M3}     & ISO 9797 MAC method 3 with a 112 bit key, 
+  \syn{crypto.ALG\_ISO9797\_M3}     & ISO 9797 MAC method 3 with a 112 bit key: 
                                       a simple DES CBC MAC iteration with triple DES on the final block.\\
   \hline
   \syn{crypto.ALG\_SHA1}            & The SHA1 digest algorithm. \\
@@ -1249,7 +1323,7 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
   \vspace{2em}
 
   Some of the previous algorithms only operate on data that has been padded
-  to a reach a proper size, that is usually a multiple of a certain ``block size''.
+  to a reach a proper size, that is usually a multiple of a defined ``block size''.
   The value of \syn{algorithm} can be used to specify the padding method that is used, 
   by combining (with the `+' operator) one of the following values to the algorithm 
   previously specified:
@@ -1262,7 +1336,7 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
   \hline
   \syn{crypto.PAD\_ZERO}            & Add 0's if needed to reach block size. \\
   \hline
-  \syn{crypto.PAD\_OPT\_80\_ZERO}   & If the size of cleartext is not already a multiple of block size
+  \syn{crypto.PAD\_OPT\_80\_ZERO}   & If the size of cleartext is not already a multiple of block size then
                                       add one byte \texttt{0x80} and then 0's, if needed, to reach block 
                                       size. \\
   \hline
@@ -1272,7 +1346,7 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
   \end{tabular}
   \vspace{2em}
 
-  The optional \syn{key} bytestring must be used to specify the value of the cryptographic key used for 
+  The optional bytestring \syn{key} must be used to specify the value of the cryptographic key used for 
   encryption or MAC algorithms. 
 
 \mansection{Return value}
@@ -1286,9 +1360,14 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
 \syn{crypto.decrypt(context, data [, iv])}
 
 \mansection{Description}
+Decrypt the bytestring \syn{data}, using the key and algorithm provided in \syn{context}. 
+
+When the decryption algorithm requires a initial vector, it must be specified in \syn{iv}.
+
+All parameters and the return value are 8 bit wide bytestrings.
 
 \mansection{Return value}
-  None
+This function returns the decrypted data as a bytestring.  
 
 %------------------------------------------------
 \subsection{crypto.digest}
@@ -1297,9 +1376,12 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
 \syn{crypto.digest(context, data)}
 
 \mansection{Description}
+Compute the digest (also often called a hash) of \syn{data}, using the algorithm provided in \syn{context}.
+
+All parameters and the return value are 8 bit wide bytestrings.
 
 \mansection{Return value}
-  None
+This function returns the digest value as a bytestring.
 
 %------------------------------------------------
 \subsection{crypto.encrypt}
@@ -1308,9 +1390,14 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
 \syn{crypto.encrypt(context, data [, iv])}
 
 \mansection{Description}
+Encrypt the bytestring \syn{data}, using the key and algorithm provided in \syn{context}. 
+
+When the encryption algorithm requires a initial vector, it must be specified in \syn{iv}.
+
+All parameters and the return value are 8 bit wide bytestrings.
 
 \mansection{Return value}
-  None
+This function returns the encrypted data as a bytestring.
 
 %------------------------------------------------
 \subsection{crypto.mac}
@@ -1319,16 +1406,19 @@ Currently these functions offer mainly DES, Triple-DES, and SHA1 based transform
 \syn{crypto.mac(context, data)}
 
 \mansection{Description}
+Computes the MAC (Message Authentication Code) of \syn{data}, using the key and algorithm provided in \syn{context}.
+
+All parameters and the return value are 8 bit wide bytestrings.
 
 \mansection{Return value}
-  None
+This function returns the (untruncated) MAC as a bytestring.
 
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{ui} library}
 
 The \syn{ui} library allows to control some elements of the user interface of 
-\texttt{Cardpeek}, and in particular the tree structure representing the data 
+\Cardpeek, and in particular the tree structure representing the data 
 extracted from the card.
 
 The functions in this library rely on a value called a `\emph{path}' to identify 
@@ -1342,168 +1432,7 @@ node of the first top node, and ``0'' simply represents the first top node.
 The detailed value of a \emph{path} is usually not important for the programmer, 
 who normally manipulates it as an opaque value. 
 
-The \syn{ui} library functions are the following:
-
-
-%------------------------------------------------
-\subsection{ui.tree\_add\_node}
-
-\mansection{Synopsis}
-\syn{ui.tree\_add\_node(path\_to\_parent, name, [\syn{id} [, \syn{length} [,\syn{comment}]]])}
-
-\mansection{Description}
-  Adds a node in the card tree structure. 
-
-  The new node will be appended to the children of the node identified by the 
-  \emph{path} \syn{path\_to\_parent}.
-  If \syn{path\_to\_parent} is \syn{nil} the new node will be added at 
-  the top level.
-
-  \syn{name} describes the type of data that is represented by the node 
-  (such as a ``file'' or a ``record'' for example). 
-
-  \syn{id} is an optional identifier that identifies the node uniquely within 
-  a context (such as an application ``AID'' or a ``record number'').
-
-  \syn{length} is an optional value number describing the length of the 
-  data element associated to the node.
-
-  \syn{comment} is an optional informative string that provides additional 
-  information related to the node.
-  
-\mansection{Return value}
-  Upon success the node returns a string representing the \emph{path} to the 
-  newly created node. 
-  If the function fails, it returns \syn{nil}.
-  Once the node is created with this function, data can be associated to it with the \syn{ui.tree\_set\_value} function.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_set\_value}
-
-\mansection{Synopsis}
-\syn{ui.tree\_set\_value(path\_to\_node, val)}
-
-\mansection{Description}
-  Associate the data \syn{val} to the node identified by the \emph{path} 
-  \syn{path\_to\_node}.
-
-  The value \syn{val} is generally a bytestring, 
-  as constructed by the \syn{bytes} module functions.
-
-  Once a value \syn{val} is associated to a node \syn{path\_to\_node} 
-  it is not possible to add a child node with the function \syn{ui.tree\_add\_node}.
-	  
-\mansection{Return value}
-  The function returns \syn{true} on success and \syn{false} otherwise.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_get\_value}
-
-\mansection{Synopsis}
-\syn{ui.tree\_get\_value(path\_to\_node)}
-
-\mansection{Description}
-  Returns the value associated with the node identified by \syn{path\_to\_parent}, 
-  or \syn{nil} if no value is associated with the node or if the function fails.
-
-\mansection{Return value}
-  This function returns a string.
- 
-
-%------------------------------------------------
-\subsection{ui.tree\_get\_node}
-
-\mansection{Synopsis}
-\syn{ui.tree\_get\_node(path\_to\_node)}
-
-\mansection{Description}
-  Returns an array of 5 elements associated to the node identified by 
-  \syn{path\_to\_node}.
- 
-  These elements are: ${name, id, length, comment, num\_children}$. 
-  The first 4 elements are the same as the syneters of the function 
-  \syn{ui.tree\_add\_node}, and the last syneter describes the number of 
-  children attached to that node in the tree (0 means none).
-
-\mansection{Return value}
-  Upon success, this function returns an array.
-  If the function fails, it returns \syn{nil}.
-
-%------------------------------------------------
-\subsection{ui.tree\_delete\_node}
-
-\mansection{Synopsis}
-\syn{ui.tree\_delete\_node(path\_to\_node)}
-
-\mansection{Description}
-  Deletes the node identified by \syn{path\_to\_node} as well as all its 
-  children.
-
-\mansection{Return value}
-  The function returns \syn{true} on success and \syn{false} otherwise.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_to\_xml}
-
-\mansection{Synopsis}
-\syn{ui.tree\_to\_xml(path\_to\_node)}
-
-\mansection{Description}
-  Returns an XML representation of the sub-tree that has \syn{path\_to\_node} 
-  as a root.
-	  
-  If \syn{path\_to\_node} is \syn{nil} the representation of the whole 
-  tree is returned.
-  
-\mansection{Return value}
-  This function returns a string upon success.
-  If the function fails, it returns \syn{nil}.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_find\_node}
-
-\mansection{Synopsis}
-\syn{ui.tree\_find\_node(origin, name, id)}
-
-\mansection{Description}
-  Searches inside the sub-tree of root \syn{origin} for the first node that has 
-  name \syn{name} and/or the id \syn{id}.
-
-  If \syn{name=nil} or \syn{id=nil} they are ignored in the search.
-
-\mansection{Return value}
-  If a node is found, the function returns the path to that node otherwise 
-  it returns \syn{nil}.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_save}
-
-\mansection{Synopsis}
-\syn{ui.tree\_save(file\_name)}
-
-\mansection{Description}
-  Saves the tree in XML format inside the file \syn{file\_name}.
-
-\mansection{Return value}
-  The function returns \syn{true} on success and \syn{false} otherwise.
-
-
-%------------------------------------------------
-\subsection{ui.tree\_load}
-
-\mansection{Synopsis}
-\syn{ui.tree\_load(file\_name)}
-
-\mansection{Description}
-  Loads the tree from the XML file \syn{file\_name}.
-
-\mansection{Return value}
-  The function returns \syn{true} on success and \syn{false} otherwise.
+The \syn{ui} library functions are described in the following paragraphs.
 
 
 %------------------------------------------------
@@ -1543,11 +1472,208 @@ The \syn{ui} library functions are the following:
   The function returns the user's input upon success and \syn{false} otherwise.
 
 
+%------------------------------------------------
+\subsection{ui.tree\_add\_node}
+
+\mansection{Synopsis}
+\syn{ui.tree\_add\_node(path\_to\_parent, name, [\syn{id} [, \syn{length} [,\syn{type}]]])}
+
+\mansection{Description}
+  Adds a node in the card tree structure. 
+
+  The new node will be appended to the children of the node identified by the 
+  \emph{path} \syn{path\_to\_parent}.
+  If \syn{path\_to\_parent} is \syn{nil} the new node will be added at 
+  the top level.
+
+  \syn{name} describes the type of data that is represented by the node 
+  (such as a ``file'' or a ``date of birth'' for example). 
+
+  \syn{id} is an optional identifier that identifies the node uniquely within 
+  a context (such as an application ``AID'' or a ``record number'').
+
+  \syn{length} is an optional value number describing the length of the 
+  data element associated to the node.
+
+  \syn{type} is an optional informative string that provides additional 
+  information describing the type of data represented by the node. This value
+  will affect the choice of the icon that is associated with the node in the 
+  displayed card tree structure. 
+
+  The following \syn{type} values are associated with a distinct icon: ``application'', ``block'', ``card'', ``file'' and ``record''.
+  
+\mansection{Return value}
+  Upon success the node returns a string representing the \emph{path} to the 
+  newly created node. 
+  If the function fails, it returns \syn{nil}.
+  Once the node is created with this function, data can be associated to it with the \syn{ui.tree\_set\_value} function.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_delete\_node}
+
+\mansection{Synopsis}
+\syn{ui.tree\_delete\_node(path\_to\_node)}
+
+\mansection{Description}
+  Deletes the node identified by \syn{path\_to\_node} as well as all its 
+  children.
+
+\mansection{Return value}
+  The function returns \syn{true} upon success and \syn{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_find\_node}
+
+\mansection{Synopsis}
+\syn{ui.tree\_find\_node(origin, name, id)}
+
+\mansection{Description}
+  Searches inside the sub-tree of root \syn{origin} for the first node that has 
+  name \syn{name} and/or the id \syn{id}.
+
+  If \syn{name=nil} or \syn{id=nil} they are ignored in the search.
+
+\mansection{Return value}
+  If a node is found, the function returns the path to that node otherwise 
+  it returns \syn{nil}.
+
+%------------------------------------------------
+\subsection{ui.tree\_get\_alt\_value}
+
+\mansection{Synopsis}
+\syn{ui.tree\_get\_alt\_value(path\_to\_node)}
+
+\mansection{Description}
+  Returns the alternative value associated with the node identified by \syn{path\_to\_parent}, 
+  or \syn{nil} if no value is associated with the node or if the function fails.
+
+\mansection{Return value}
+  This function returns a string.
+ 
+
+%------------------------------------------------
+\subsection{ui.tree\_get\_node}
+
+\mansection{Synopsis}
+\syn{ui.tree\_get\_node(path\_to\_node)}
+
+\mansection{Description}
+  Returns an array of 5 elements associated to the node identified by 
+  \syn{path\_to\_node}.
+ 
+  These elements are: ${name, id, length, comment, num\_children}$. 
+  The first 4 elements are the same as the parameters of the function 
+  \syn{ui.tree\_add\_node}, and the last parameter describes the number of 
+  children attached to that node in the tree (0 means none).
+
+\mansection{Return value}
+  Upon success, this function returns an array.
+  If the function fails, it returns \syn{nil}.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_get\_value}
+
+\mansection{Synopsis}
+\syn{ui.tree\_get\_value(path\_to\_node)}
+
+\mansection{Description}
+  Returns the value associated with the node identified by \syn{path\_to\_parent}, 
+  or \syn{nil} if no value is associated with the node or if the function fails.
+
+\mansection{Return value}
+  This function returns a bytestring.
+ 
+
+%------------------------------------------------
+\subsection{ui.tree\_load}
+
+\mansection{Synopsis}
+\syn{ui.tree\_load(file\_name)}
+
+\mansection{Description}
+  Loads the tree from the XML file \syn{file\_name}.
+
+\mansection{Return value}
+  The function returns \syn{true} upon success and \syn{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_save}
+
+\mansection{Synopsis}
+\syn{ui.tree\_save(file\_name)}
+
+\mansection{Description}
+  Saves the tree in XML format inside the file \syn{file\_name}.
+
+\mansection{Return value}
+  The function returns \syn{true} upon success and \syn{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_set\_alt\_value}
+
+\mansection{Synopsis}
+\syn{ui.tree\_set\_alt\_value(path\_to\_node, val)}
+
+\mansection{Description}
+  Associate the alternative string data \syn{val} to the node identified by the \emph{path} 
+  \syn{path\_to\_node}. 
+
+  The value \syn{val} is a string (not a bytestring) and should be used to provide a more 
+  ``human friendly'' representation of data associated with the node.
+
+\mansection{Return value}
+  The function returns \syn{true} upon success and \syn{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_set\_value}
+
+\mansection{Synopsis}
+\syn{ui.tree\_set\_value(path\_to\_node, val)}
+
+\mansection{Description}
+  Associate the bytestring data \syn{val} to the node identified by the \emph{path} 
+  \syn{path\_to\_node}.
+
+  The value \syn{val} is a bytestring as constructed by the \syn{bytes} library functions.
+
+  Once a value \syn{val} is associated to a node \syn{path\_to\_node} 
+  it is not possible to add a child node with the function \syn{ui.tree\_add\_node}.
+
+  Calling \syn{ui.tree\_set\_value()} automatically resets to \syn{nil} any alternative value
+  associated with the node that was previously set with \syn{ui.tree\_set\_alt\_value()}.
+
+\mansection{Return value}
+  The function returns \syn{true} upon success and \syn{false} otherwise.
+
+
+%------------------------------------------------
+\subsection{ui.tree\_to\_xml}
+
+\mansection{Synopsis}
+\syn{ui.tree\_to\_xml(path\_to\_node)}
+
+\mansection{Description}
+  Returns an XML representation of the sub-tree that has \syn{path\_to\_node} 
+  as a root.
+	  
+  If \syn{path\_to\_node} is \syn{nil} the representation of the whole 
+  tree is returned.
+  
+\mansection{Return value}
+  This function returns a string upon success.
+  If the function fails, it returns \syn{nil}.
+
+
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{log} library}
 
 The \syn{log} library contains just one function described below, which allows to print messages in the ``log'' tab of the application.
-
 
 %------------------------------------------------
 \subsection{log.print}
@@ -1568,6 +1694,35 @@ The \syn{log} library contains just one function described below, which allows t
   None.
 
 
+%--------------------------------------------------
+\section{XML tree view format}
+\label{section:xmlformat}
+
+The XML format is quite straightforward, as shown in the following example:
+\begin{verbatim}
+<?xml version="1.0"?>
+<cardtree>
+  <node name="card" id="ATR">
+    <node name="ATR" id="cold">
+       <val>3B6F0000805A0803040002002531F405909000</val>
+    </node>
+  </node>
+</cardtree>
+\end{verbatim}
+
+\noindent
+The format of the XML tree view file is constructed according to the following rules:
+\begin{itemize}
+\item{The root element of the XML structure is \syn{<cardtree>}, which contains one or more \syn{<node>} elements.}
+\item{A \syn{<node>} element may either contain one or several \syn{<node>} elements or a single \syn{<val>} element (but not both).}
+\item{A \syn{<val>} element may be optionally followed by a \syn{<alt>} element within an node.}
+\item{A \syn{<val>} element or a \syn{<alt>} element can only contain text.}
+\item{A \syn{<node>} element can have the following attributes: \syn{name}, \syn{id}, \syn{size} and \syn{type}.}
+\end{itemize}
+
+\noindent
+\textit{todo: a more formal description of the XML file structure should be inserted in this document.}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Future developments}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1583,12 +1738,12 @@ The short term development `road map' is:
 \chapter{Licence}
 \label{chapter:licence}
 
-\texttt{Cardpeek} is free software: you can redistribute it and/or modify
+\Cardpeek{} is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-\texttt{Cardpeek} is distributed in the hope that it will be useful,
+\Cardpeek{} is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

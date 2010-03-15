@@ -138,7 +138,7 @@ int iso7816_make_file_path(bytestring_t* file_path,
     }
     else if (path[1]=='/')
     {
-      *path_type=9; /* 8 => SELECT FROM CURRENT DF */
+      *path_type=9; /* 9 => SELECT FROM CURRENT DF */
       bytestring_assign_from_string(file_path,path+2);
       return ISO7816_OK;
     }
@@ -180,7 +180,7 @@ int iso7816_make_file_path(bytestring_t* file_path,
   }
   else if (path[0]=='/' && is_hex4(path+1)) 
   {
-    *path_type=9; /* 9 => SELECT FROM MF */
+    *path_type=8; /* 8 => SELECT FROM MF */
     bytestring_assign_from_string(file_path,path+1);
     return ISO7816_OK;
   }

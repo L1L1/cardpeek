@@ -24,6 +24,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/types.h> 
+#include <sys/stat.h> 
+#include <fcntl.h>
+#include <unistd.h>
 #include "misc.h"
 #include "cardtree.h"
 
@@ -294,13 +298,13 @@ const char* cardtree_add_node(cardtree_t* ct,
   return ct->_tmpstr;
 }
 
-gboolean cardtree_get_attribute(cardtree_t* ct,
-                                const char* path,
-                                char **attr_list)
+
+gboolean cardtree_get_attributes(cardtree_t* ct,
+                                 const char* path,
+                                 const char **attribute_names,
+				 char **attribute_values)
 {
   GtkTreeIter iter;
-  char *attr_name;
-  char *attr_value;
   int i;
 
   if (path==NULL || cardtree_is_empty(ct))
@@ -308,33 +312,47 @@ gboolean cardtree_get_attribute(cardtree_t* ct,
   if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
     return FALSE;
 
-  for (i=0;attr_list[i];i+=2)
+  for (i=0;attribute_names[i];i++)
   {
-    attr_name=attr_list[i];
-    attr_value=attr_list[i+1];
-    if (strcmp(attr_name,"name")==0) 
-	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_NAME,&attr_value,-1);
-    else if (strcmp(attr_name,"id")==0)     
-       	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_ID,&attr_value,-1);
-    else if (strcmp(attr_name,"size")==0)     
-	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_SIZE,&attr_value,-1);
-    else if (strcmp(attr_name,"type")==0)     
-        gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_TYPE,&attr_value,-1);
+    if (strcmp(attribute_names[i],"name")==0) 
+	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_NAME,&(attribute_values[i]),-1);
+    else if (strcmp(attribute_names[i],"id")==0)     
+       	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_ID,&(attribute_values[i]),-1);
+    else if (strcmp(attribute_names[i],"size")==0)     
+	gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_SIZE,&(attribute_values[i]),-1);
+    else if (strcmp(attribute_names[i],"type")==0)     
+        gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),&iter,C_TYPE,&(attribute_values[i]),-1);
     else
         /* FIXME: add other attributes with attributes.h */
      	return FALSE;
   }
-  cardtree_create_markup_name_id(ct,&iter);
+  attribute_values[i]=NULL;
   return TRUE;
 }
 
-gboolean cardtree_set_attribute(cardtree_t* ct,
-                                const char* path,
-                                const char **attr_list)
+gboolean internal_cardtree_set_single_attribute(GtkTreeStore *store, GtkTreeIter *iter, 
+						const char *attr_name, const char *attr_value)
+{
+  if (strcmp(attr_name,"name")==0) 
+    gtk_tree_store_set(store,iter,C_NAME,attr_value,-1);
+  else if (strcmp(attr_name,"id")==0)     
+    gtk_tree_store_set(store,iter,C_ID,attr_value,-1);
+  else if (strcmp(attr_name,"size")==0)     
+    gtk_tree_store_set(store,iter,C_SIZE,attr_value,-1);
+  else if (strcmp(attr_name,"type")==0)
+    gtk_tree_store_set(store,iter,C_TYPE,attr_value,-1);
+  else
+    /* FIXME: add other attributes with attributes.h */
+    return FALSE;
+  return TRUE;
+}
+
+gboolean cardtree_set_attributes(cardtree_t* ct,
+                                 const char* path,
+                                 const char **attribute_names,
+				 const char **attribute_values)
 {
   GtkTreeIter iter;
-  const char *attr_name;
-  const char *attr_value;
   int i;
 
   if (path==NULL || cardtree_is_empty(ct))
@@ -342,22 +360,13 @@ gboolean cardtree_set_attribute(cardtree_t* ct,
   if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,path)==FALSE)
     return FALSE;
 
-  for (i=0;attr_list[i];i+=2)
+  for (i=0;attribute_names[i];i++)
   {
-    attr_name=attr_list[i];
-    attr_value=attr_list[i+1];
-    if (strcmp(attr_name,"name")==0) 
-	gtk_tree_store_set(ct->_store,&iter,C_NAME,attr_value,-1);
-    else if (strcmp(attr_name,"id")==0)     
-       	gtk_tree_store_set(ct->_store,&iter,C_ID,attr_value,-1);
-    else if (strcmp(attr_name,"size")==0)     
-	gtk_tree_store_set(ct->_store,&iter,C_SIZE,attr_value,-1);
-    else if (strcmp(attr_name,"type")==0)
-        gtk_tree_store_set(ct->_store,&iter,C_TYPE,attr_value,-1);
-    else
-        /* FIXME: add other attributes with attributes.h */
-     	return FALSE;
+    if (internal_cardtree_set_single_attribute(ct->_store,&iter,
+					       attribute_names[i],attribute_values[i])==FALSE)
+      return FALSE;
   }
+  cardtree_create_markup_name_id(ct,&iter);
   return TRUE;
 }
 
@@ -553,6 +562,7 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
   gchar* value;
   gchar* alt_value;
   GtkTreeIter child;
+  gchar* esc_alt_value;
 
   do {
     gtk_tree_model_get(store,iter,
@@ -597,13 +607,15 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
     {
       if (value)
       {
-	a_strcat(res,"><value>");
+	a_strcat(res,"><val>");
 	a_strcat(res,value);
-	a_strcat(res,"</value>");
+	a_strcat(res,"</val>");
 	if (alt_value)
 	{
 	  a_strcat(res,"<alt>");
-	  a_strcat(res,alt_value);
+	  esc_alt_value = g_markup_escape_text(alt_value,-1);
+	  a_strcat(res,esc_alt_value);
+	  g_free(esc_alt_value);
 	  a_strcat(res,"</alt>");
 	}
 	a_strcat(res,"</node>\n");
@@ -643,396 +655,292 @@ char* cardtree_to_xml(cardtree_t* ct, const char *path)
   return a_strfinalize(res);
 }
 
-int cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* path)
+gboolean cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* path)
 {
   FILE *save;
   char *xml;
-  int retval;
+  gboolean retval;
 
   if ((save=fopen(fname,"w"))==NULL)
   {
     log_printf(LOG_ERROR,"Could not open '%s' for output (%s)",fname,strerror(errno));
-    return 0;
+    return FALSE;
   }
   xml = cardtree_to_xml(ct,path);
 
   if (fwrite(xml,strlen(xml),1,save)!=1)
   {
     log_printf(LOG_ERROR,"Output error on '%s' (%s)",fname,strerror(errno));
-    retval = 0;
+    retval = FALSE;
   }
   else
-    retval = 1;
+    retval = TRUE;
   free(xml);
   fclose(save);
   return retval;
 }
+ 
+enum {
+  ND_NONE,
+  ND_CARDPEEK,
+  ND_NODE,
+  ND_VAL,
+  ND_ALT
+};
 
-int fpeek(FILE* F)
-{
-  int c = fgetc(F);
-  if (c!=EOF) ungetc(c,F);
-  return c;
-}
+char *ND_STATE[5] = {
+  "root",
+  "<cardpeek>",
+  "<node>",
+  "<val>",
+  "<alt>"
+};
 
-int lineno;
-int linepos;
-int xfgetc(FILE *F)
+
+typedef struct {
+  cardtree_t   *ctx_tree;
+  GtkTreeIter   ctx_node;
+  int           ctx_state;
+} xml_context_data_t;
+
+void xml_start_element_cb  (GMarkupParseContext *context,
+			    const gchar         *element_name,
+		 	    const gchar        **attribute_names,
+			    const gchar        **attribute_values,
+			    gpointer             user_data,
+			    GError             **error)
 {
-  int c = fgetc(F);
-  linepos++;
-  if (c=='\n')
+  xml_context_data_t *ctx = (xml_context_data_t *)user_data;
+  GtkTreeIter child;
+  int i;
+  int line_number;
+  int char_number;
+
+  g_markup_parse_context_get_position(context,&line_number,&char_number);
+ 
+  if (strcmp(element_name,"node")==0)
   {
-    lineno++;
-    linepos=0;
+    if (ctx->ctx_state==ND_CARDPEEK)
+      gtk_tree_store_append ((ctx->ctx_tree)->_store, &child, NULL);
+    else if (ctx->ctx_state==ND_NODE)
+      gtk_tree_store_append ((ctx->ctx_tree)->_store, &child, &ctx->ctx_node);
+    else
+    {
+      g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+		  "Error on line %i[%i]: unexpected <node> in %s",
+		  line_number,char_number,ND_STATE[ctx->ctx_state]);
+      return;
+    }
+
+    for (i=0;attribute_names[i]!=NULL;i++)
+    {
+      internal_cardtree_set_single_attribute((ctx->ctx_tree)->_store,&child,
+					     attribute_names[i],
+					     attribute_values[i]);
+    }
+    cardtree_create_markup_name_id(ctx->ctx_tree,&child);
+    ctx->ctx_node = child;
+    ctx->ctx_state=ND_NODE;
   }
-  return c;
-}
-
-int isvalid(int c)
-{
-  if (c>='a' && c<='z') return 1;
-  if (c>='A' && c<='Z') return 1;
-  return 0;
-}
-
-enum {
-  XML_ERROR = -1,
-  XML_END = 0,
-  XML_OK = 1
-};
-
-enum {
-  TOK_TEXT,
-  TOK_INSTRUCTION,
-  TOK_SLASH_GTE,
-  TOK_GTE,
-  TOK_END,
-  TOK_BEGIN,
-  TOK_ATTRIBUTE,
-  TOK_EQUAL,
-  TOK_STRING
-};
-
-int get_next_xml_token(FILE* F, a_string_t *tok, int *in_element)
-{
-  int c,marker;
-  
-  while (isspace(c = fpeek(F))) xfgetc(F);
-  
-  a_strcpy(tok,"");
-
-  c = xfgetc(F);
-
-  if (*in_element>=TOK_BEGIN)
+  else if (strcmp(element_name,"val")==0)
   {
-    if (c=='\'' || c=='"')
+    if (ctx->ctx_state!=ND_NODE)
     {
-      marker = c;
-      *in_element =  TOK_STRING;
-      for (;;)
+      g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+		  "Error on line %i[%i]: unexpected <val> in %s",
+		  line_number,char_number,ND_STATE[ctx->ctx_state]);
+      return;
+    }
+    ctx->ctx_state=ND_VAL;
+  }
+  else if (strcmp(element_name,"alt")==0)
+  {
+    if (ctx->ctx_state!=ND_NODE)
+    {
+      g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+		  "Error on line %i[%i]: unexpected <alt> in %s",
+		  line_number,char_number,ND_STATE[ctx->ctx_state]);
+      return;
+    }
+    ctx->ctx_state=ND_ALT;
+  }
+  else if (strcmp(element_name,"cardtree")==0)
+  {
+    if (ctx->ctx_state!=ND_NONE)
+    {
+      g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+		  "Error on line %i[%i]: unexpected <cardtree> in %s",
+		  line_number,char_number,ND_STATE[ctx->ctx_state]);
+      return;
+    }
+    ctx->ctx_state=ND_CARDPEEK;
+  }
+  else /* error */
+  {
+    g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+		"Error on line %i[%i]: unrecognized element <%s> in %s",
+		line_number,char_number,element_name,ND_STATE[ctx->ctx_state]);
+  }
+}
+
+void xml_end_element_cb  (GMarkupParseContext *context,
+			  const gchar         *element_name,
+			  gpointer             user_data,
+			  GError             **error)
+{
+  xml_context_data_t *ctx = (xml_context_data_t *)user_data;
+  GtkTreeIter parent;
+
+  switch (ctx->ctx_state) {
+    case ND_NODE:
+      if (gtk_tree_model_iter_parent(GTK_TREE_MODEL((ctx->ctx_tree)->_store),&parent,&(ctx->ctx_node))==TRUE)
       {
-	c = xfgetc(F);
-	if (c==marker) return XML_OK;
-	if (c==EOF) {
-	  log_printf(LOG_ERROR,"unterminated quoted value");
-	  return XML_ERROR;
-	}
-	a_strpushback(tok,c);
+	ctx->ctx_state=ND_NODE;
+        ctx->ctx_node = parent;
       }
-    }
+      else
+	ctx->ctx_state=ND_CARDPEEK;
+      break;
+    case ND_VAL:
+      ctx->ctx_state=ND_NODE;
+      break;
+    case ND_ALT:
+      ctx->ctx_state=ND_NODE;
+      break;
+    case ND_CARDPEEK:
+      ctx->ctx_state=ND_NONE;
+      break;
+  }
+}
 
-    if (c=='=')
-    {
-      *in_element = TOK_EQUAL;
-      a_strcpy(tok,"=");
-      return XML_OK;
-    }
+void xml_text_cb  (GMarkupParseContext *context,
+		   const gchar         *text,
+		   gsize                text_len,  
+		   gpointer             user_data,
+		   GError             **error)
+{
+  xml_context_data_t *ctx = (xml_context_data_t *)user_data;
+  char *value;
+  int i;
+  int line_number;
+  int char_number;
 
-    if (c=='>')
-    {
-      a_strcpy(tok,">");
-      *in_element=TOK_GTE;
-      return XML_OK;
-    }
-
-    if (c=='/')
-    {
-      c = xfgetc(F);
-      if (c!='>') {
-	log_printf(LOG_ERROR,"Expected '>'");
-	return XML_ERROR;
+  g_markup_parse_context_get_position(context,&line_number,&char_number);
+ 
+  value = malloc(text_len+1);
+  memcpy(value,text,text_len);
+  value[text_len]=0;
+ 
+  if (ctx->ctx_state==ND_VAL)
+  {
+   gtk_tree_store_set ((ctx->ctx_tree)->_store, &(ctx->ctx_node),
+			C_VALUE, value,
+			C_FLAGS, 0,
+			-1);
+    cardtree_create_markup_value(ctx->ctx_tree,&(ctx->ctx_node));
+    cardtree_create_markup_alt_value(ctx->ctx_tree,&(ctx->ctx_node));
+  }
+  else if (ctx->ctx_state==ND_ALT)
+  {
+    gtk_tree_store_set ((ctx->ctx_tree)->_store, &(ctx->ctx_node),
+			C_ALT_VALUE, value,    
+			-1);                                        
+    cardtree_create_markup_alt_value(ctx->ctx_tree,&(ctx->ctx_node));
+  }
+  else 
+  {
+    for (i=0;i<text_len;i++)
+      if (text[i]>' ') 
+      {
+	g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+		    "Error on line %i[%i]: unexpected text '%s'",line_number,char_number,value);
+        break;
       }
-      a_strcpy(tok,"/>");
-      *in_element=TOK_SLASH_GTE;
-      return XML_OK;
-    }
+  }
+  free(value);
+}
 
-    *in_element=TOK_ATTRIBUTE;
-    if (!isvalid(c)) return XML_ERROR;
-    a_strpushback(tok,c);
+void xml_error_cb  (GMarkupParseContext *context,
+		    GError              *error,
+		    gpointer             user_data)
+{
+ log_printf(LOG_ERROR,"XML %s",error->message);
+}
 
-    for (;;)
+static GMarkupParser cardtree_parser = 
+{
+  xml_start_element_cb,
+  xml_end_element_cb,
+  xml_text_cb,
+  NULL,
+  xml_error_cb
+};
+
+
+gboolean cardtree_from_xml(cardtree_t *ct, unsigned source_len, const char *source_text)
+{
+  xml_context_data_t ctx;
+  GMarkupParseContext *markup_ctx;
+  GError *err = NULL;
+
+  ctx.ctx_tree  = ct;
+  ctx.ctx_state = ND_NONE;
+
+  markup_ctx = g_markup_parse_context_new(&cardtree_parser,0,&ctx,NULL);
+  if (g_markup_parse_context_parse(markup_ctx,source_text,source_len,&err)==TRUE)
+  {
+    g_markup_parse_context_end_parse(markup_ctx,&err);
+  }
+  
+  g_markup_parse_context_free(markup_ctx);
+
+  if (err!=NULL) {
+    g_error_free(err);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+gboolean cardtree_from_xml_file(cardtree_t *ct, const char *fname)
+{
+  char *buf_val;
+  int  buf_len;
+  int  rd_len;
+  struct stat st;
+  gboolean retval;
+  int input;
+
+  gtk_tree_store_clear(ct->_store);
+  if (stat(fname,&st)!=0)
+  {
+    log_printf(LOG_ERROR,"Could not stat '%s' (%s)",fname,strerror(errno));
+    return FALSE;
+  } 
+  if ((input=open(fname,O_RDONLY))<0)
+  {
+    log_printf(LOG_ERROR,"Could not open '%s' for input (%s)",fname,strerror(errno));
+    return FALSE;
+  }
+  buf_len = st.st_size;
+  buf_val = malloc(buf_len);
+  if ((rd_len=read(input,buf_val,buf_len))==buf_len)
+  {
+    if (cardtree_from_xml(ct,buf_len,buf_val)==FALSE)
     {
-      c = fpeek(F);
-      if (c==EOF) {
-	log_printf(LOG_ERROR,"Unterminated attribute '%s...'",a_strval(tok));
-	return XML_ERROR;
-      }
-      if (!isvalid(c)) return XML_OK;
-      a_strpushback(tok,xfgetc(F));
+      retval = FALSE;
+      gtk_tree_store_clear(ct->_store);
     }
-    return XML_OK;
+    else
+      retval = TRUE;
   }
   else
   {
-    if (c=='<')
-    {
-      a_strpushback(tok,c);
-      c = fgetc(F);
-
-      if (c=='?' || c=='!' || c=='/')
-      {
-	if (c=='/')
-	  *in_element=TOK_END;
-	else
-	  *in_element=TOK_INSTRUCTION;
-
-	a_strpushback(tok,c);
-	for (;;)
-	{
-	  c = xfgetc(F);
-	  if (c==EOF) {
-	    log_printf(LOG_ERROR,"Unterminated '%s...'",a_strval(tok));
-	    return XML_ERROR;
-	  }
-	  if (c=='>') {
-	    a_strpushback(tok,'>');
-	    return XML_OK;
-	  }
-	}
-      }
-
-      *in_element=TOK_BEGIN;
-      if (!isvalid(c)) return XML_ERROR;
-      a_strpushback(tok,c);
-
-      for (;;)
-      {
-	c = fpeek(F);
-	if (c==EOF) {
-	  log_printf(LOG_ERROR,"Unterminated element '%s...'",a_strval(tok));
-	  return XML_ERROR;
-	}
-	if (!isvalid(c)) return XML_OK;
-	a_strpushback(tok,xfgetc(F));
-      }
-    }
-    else /* if c=='<' */
-    {
-      *in_element=TOK_TEXT;
-
-      a_strpushback(tok,c);
-      for (;;)
-      {
-	c = fpeek(F);
-	if (c==EOF) {
-	  log_printf(LOG_ERROR,"Unterminated data '%s...'",a_strval(tok));
-	  return XML_ERROR;
-	}
-	if (c=='<') return XML_OK;
-	a_strpushback(tok,xfgetc(F));
-      }
-    } /* else not c=='<' */
-  } /* else not in_element */
-  log_printf(LOG_ERROR,"Syntax error (should not happen)");
-  return XML_ERROR;
-}
-
-int assert_next_xml_token(FILE *F, a_string_t *tok, int *in_element, const char *match)
-{
-  int retval = get_next_xml_token(F,tok,in_element);
-  if (retval!=XML_OK)
-    return retval;
-  if (a_strequal(tok,match))
-    return XML_OK;
-  log_printf(LOG_ERROR,"Expected %s",match);
-  return XML_ERROR;
-}
-
-int internal_cardtree_from_xml_file(cardtree_t *ct, GtkTreeIter *parent, FILE* F)
-{
-  /* quick and dirty, absolutely no checking ! */
-  GtkTreeIter child;
-  a_string_t *atr;
-  a_string_t *elt;
-  int retval = XML_ERROR;
-  char *debug_msg;
-  int in_element;
-    
-  elt = a_strnew(NULL);
-  atr = a_strnew(NULL);
-
-  while (!ferror(F))
-  {
-    in_element = TOK_TEXT;
-    if (get_next_xml_token(F,elt,&in_element)!=XML_OK) goto clean_up;
-
-    if (in_element==TOK_END)
-    {
-      retval = XML_OK;
-      goto clean_up;
-    }
-    else if (in_element==TOK_TEXT)
-    {
-      if (parent==NULL)
-      {
-	log_printf(LOG_ERROR,"Unexpected string value in XML: %s",a_strval(elt));
-      	retval = XML_ERROR;
-    	goto clean_up;
-      }
-
-      gtk_tree_store_set (ct->_store, parent,
-                          C_VALUE, a_strval(elt),
-                          -1);
-
-      cardtree_create_markup_value(ct,parent);
-    }
-    else if (in_element==TOK_BEGIN && a_strequal(elt,"<node"))
-    {
-      gtk_tree_store_append (ct->_store, &child, parent);
-      for (;;)
-      {
-	if (get_next_xml_token(F,elt,&in_element)!=XML_OK) goto clean_up;
-
-	if (in_element != TOK_ATTRIBUTE) break;
-
-	if (assert_next_xml_token(F,atr,&in_element,"=")!=XML_OK) goto clean_up;
-
-	if (get_next_xml_token(F,atr,&in_element)!=XML_OK) goto clean_up;
-	if (in_element != TOK_STRING) goto clean_up;
-
-	if (a_strequal(elt,"name"))
-	{
-	  gtk_tree_store_set (ct->_store, &child,
-			      C_NAME, a_strval(atr),
-			      -1);
-	}
-	else if (a_strequal(elt,"id")) 
-	{
-	  gtk_tree_store_set (ct->_store, &child,
-			      C_ID, a_strval(atr),
-			      -1);
-	}
-	else if (a_strequal(elt,"size"))
-	{
-	  gtk_tree_store_set (ct->_store, &child,
-			      C_SIZE, a_strval(atr),
-			      -1);
-	}
-	else if (a_strequal(elt,"type"))
-	{
-	  gtk_tree_store_set (ct->_store, &child,
-			      C_TYPE, a_strval(atr),
-			      -1);
-	}
-	else
-	{
-	  log_printf(LOG_ERROR,"Unexpected XML attribute '%s'",a_strval(elt));
-	  retval = XML_ERROR;
-	  goto clean_up;
-	}
-      }
-
-      cardtree_create_markup_name_id(ct,&child);
-
-      if (!a_strequal(elt,"/>")) 
-      {
-	if (!a_strequal(elt,">"))
-	{
-	  log_printf(LOG_ERROR,"Expected '>' or '/>' in XML");
-	  goto clean_up;
-	}
-	retval = internal_cardtree_from_xml_file(ct,&child,F);
-	if (retval!=XML_OK) goto clean_up;
-	/*if (assert_next_xml_token(F,elt,&in_element,"</node>")!=XML_OK) goto clean_up;*/
-      }
-    }
-    else if (in_element==TOK_BEGIN && a_strequal(elt,"<cardtree"))
-    {
-      if (parent!=NULL)
-      {
-	log_printf(LOG_ERROR,"XML ERROR - cardtree must be root element");
-	goto clean_up;
-      }
-      if (get_next_xml_token(F,elt,&in_element)!=XML_OK) goto clean_up;
-      if (a_strequal(elt,"/>"))
-      {
-	retval = XML_OK;
-	goto clean_up;
-      }
-      if (!a_strequal(elt,">"))
-      {
-	log_printf(LOG_ERROR,"Expected '>' or '/>' in XML");
-	goto clean_up;
-      }
-      retval = internal_cardtree_from_xml_file(ct,NULL,F);
-      if (retval!=XML_OK) goto clean_up;
-      /*retval = assert_next_xml_token(F,elt,&in_element,"</cardtree>");*/
-      goto clean_up;
-    }
-    else if (in_element==TOK_INSTRUCTION)
-    {
-      /* NOP */
-    }
-    else
-    {
-      log_printf(LOG_ERROR,"XML syntax error : %s",a_strval(elt));
-      retval = XML_ERROR;
-      goto clean_up;
-    }
+    log_printf(LOG_ERROR,"Could not read all data (%i bytes) from %s (%s)",
+	       buf_len,fname,strerror(errno));
+    retval = FALSE;
   }
-  
-  log_printf(LOG_ERROR,"Unexpected end-of-file or error in XML");
-  retval = XML_ERROR;
-
-clean_up:
-  if (retval==XML_ERROR)
-  {
-    if (parent)
-    {
-      debug_msg = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(ct->_store),parent);
-      log_printf(LOG_ERROR,"XML error in path '%s'",debug_msg);
-      g_free(debug_msg);
-    }
-    else
-      log_printf(LOG_ERROR,"XML error in root");
-  }
-  a_strfree(atr);
-  a_strfree(elt);
-  return retval;
-}
-
-int cardtree_from_xml_file(cardtree_t *ct, const char *fname)
-{
-  FILE *input;
-  int retval;
-
-  lineno=1;
-  linepos=0;
-  gtk_tree_store_clear(ct->_store);
-  if ((input=fopen(fname,"r"))==NULL)
-  {
-    log_printf(LOG_ERROR,"Could not open '%s' for input (%s)",fname,strerror(errno));
-    return 0;
-  }
-  retval = internal_cardtree_from_xml_file(ct,NULL,input);
-  if (retval==XML_ERROR)
-  {
-    log_printf(LOG_ERROR,"Error on line %i[%i], while processing XML file '%s'",lineno,linepos,fname);
-    gtk_tree_store_clear(ct->_store);
-  }
-  fclose(input);
+  free(buf_val);
+  close(input);
   return retval;
 }
 

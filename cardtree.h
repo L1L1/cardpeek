@@ -61,13 +61,15 @@ const char* cardtree_add_node(cardtree_t* ct,
 			      int length, 
 			      const char* comment);
 
-gboolean cardtree_get_attribute(cardtree_t* ct,
-			        const char* path,
-				char **attr_list);
+gboolean cardtree_get_attributes(cardtree_t* ct,
+			         const char* path,
+				 const char **attribute_names,
+				 char **attribute_values);
 
-gboolean cardtree_set_attribute(cardtree_t* ct,
-			        const char* path,
-				const char **attr_list);
+gboolean cardtree_set_attributes(cardtree_t* ct,
+			         const char* path,
+				 const char **attribute_names,
+				 const char **attribute_values);
 
 gboolean cardtree_set_value(cardtree_t* ct,
 			    const char* path,
@@ -109,9 +111,11 @@ const char* cardtree_find_node(cardtree_t* ct,
 
 char* cardtree_to_xml(cardtree_t* ct, const char *path);
 
-int cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* path);
+gboolean cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* path);
 
-int cardtree_from_xml_file(cardtree_t *ct, const char *fname);
+gboolean cardtree_from_xml(cardtree_t *ct, unsigned source_len, const char *source_val);
+
+gboolean cardtree_from_xml_file(cardtree_t *ct, const char *fname);
 
 void cardtree_bind_to_treeview(cardtree_t* ct, GtkWidget *view);
 

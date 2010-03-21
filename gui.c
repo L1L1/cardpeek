@@ -1172,7 +1172,7 @@ const char* hex_pretty_print(int indent, const bytestring_t *bs,int add_ascii)
   unsigned char e;
 
   if (sizebs==0)
-    return NULL;
+    return "(nil)";
 
   for (i=0;i<sizebs;i++)
   {

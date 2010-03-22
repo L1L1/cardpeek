@@ -38,7 +38,7 @@ In this version, this tool is capable of reading the contents of the following t
 \begin{itemize}
 \item{EMV "chip and PIN" bank cards used in many countries throughout the world;}
 \item{Electronic/Biometric passports, which have an embedded contacless chip (a contactless reader is required);}
-\item{\textit{Navigo} transport cards used in Paris and other \textit{Calypso} cards used in France and elsewhere;}
+\item{\textit{Navigo} transport cards used in Paris and other \textit{Calypso} cards used elsewhere;}
 \item{Moneo, the French electronic purse (with limited data interpretation);}
 \item{Vitale 2, the French health card.}
 \end{itemize}
@@ -150,9 +150,9 @@ The \emph{card view} tab is the central user interface component of \Cardpeek.
 
 It represents the data extracted from a card in a structured \emph{tree} from.
 This tree structure is initially blank and is entirely constructed by the LUA scripts that are executed (see next chapter).
-This tree can be saved and loaded in XML format (see \ref{section:xmlformat}) using the commands in the \emph{data} menu.
+This tree can be saved and loaded in XML format (see \ref{section:xmlformat}) using the commands in the toolbar.
 
-The \emph{card view} tab offers the following action buttons:
+The \emph{card view} tab offers the following toolbar buttons:
 
 \vspace{1em}\noindent
 \begin{tabular}{l|p{12cm}}
@@ -198,7 +198,7 @@ window that appear when \texttt{cardpeek} is launched. The name of the file will
 on the previously recorded APDU/response data instead of a real card inserted in the card reader. This is very useful for
 testing and debugging card scripts without relying on a real card inserted in the card reader.
 
-The \emph{reader} tab offers the following action buttons:
+The \emph{reader} tab offers the following toolbar buttons:
 
 \vspace{1em}\noindent
 \begin{tabular}{l|p{12cm}}
@@ -282,8 +282,14 @@ In the future this script will be enhanced with a detailed analysis of the ATR.
 This script provides an analysis of Calypso public transport cards used in many cities.
 
 \paragraph{Notes:}
-You will notice that many of these transport cards keep a ``event log'' describing at least 3 of the last stations/stops you have been through.
-This ``event log'', which could pose a privacy risk, is not protected by any access control means and is freely readable.
+The following calypso cards have been reported to work with this script: Navigo/Paris,
+MOBIB/Brussels (partial support), and Korrigo/Rennes. The Navigo card has a seperate dedicated
+script which provides more information.
+
+You will notice that these transport cards keep a ``event log'' describing at 
+least 3 of the last stations/stops you have been through.
+This ``event log'', which could pose a privacy risk, is not protected by any access 
+control means and is freely readable.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{emv}
@@ -827,16 +833,13 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
 \syn{bytes.tonumber(BS)}
 
 \mansection{Description}
-  Converts the bytestring \syn{BS} to a string representing the unsigned 
-  decimal value of \syn{BS}.
+  Converts the bytestring \syn{BS} to a the unsigned decimal value of \syn{BS}.
 
   This conversion considers \syn{BS[0]} as the most significant element of \syn{BS}, 
   and \syn{BS[\#BS-1]} as the least significant. 
   
 \mansection{Return value}
-  This function returns a string.
-  If needed LUA will automatically convert the resulting string to a number.
-
+  This function returns a number.
 
 %------------------------------------------------
 \subsection{bytes.toprintable}

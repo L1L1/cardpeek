@@ -31,19 +31,20 @@
 
 CARD = 0
 card.CLA=0x94 -- Class for navigo cards
+sel_method = "."
 
 require('lib.strict')
 require('lib.country_codes')
 
 LFI_LIST = {
-  ["/0002"] = "ICC",
-  ["/0003"] = "ID",
-  ["/2001"] = "Environment",
-  ["/2010"] = "Event logs",
-  ["/2020"] = "Contracts",
-  ["/2040"] = "Special events",
-  ["/2050"] = "Contract list",
-  ["/2069"] = "Counters"
+  ["0002"] = "ICC",
+  ["0003"] = "ID",
+  ["2001"] = "Environment",
+  ["2010"] = "Event logs",
+  ["2020"] = "Contracts",
+  ["2040"] = "Special events",
+  ["2050"] = "Contract list",
+  ["2069"] = "Counters"
 }
 
 en1543_BITMAP = 1
@@ -56,7 +57,7 @@ en1543_NETWORKID = 7
 
 en1543_BestContracts = {
   [0] = { en1543_REPEAT, 4, "BestContractCount", {
-    [0] = { en1543_BITMAP, 3, "BestContractGeneralBitmap", {
+    [0] = { en1543_BITMAP, 3, "BestContract", {
       [0] = { en1543_NETWORKID, 24, "BestContractsNetworkId" },
       [1] = { en1543_ITEM, 16, "BestContractsTariff" },
       [2] = { en1543_ITEM, 5, "BestContractsPointer" }
@@ -66,7 +67,7 @@ en1543_BestContracts = {
 
 en1543_Env = {
   [0] = { en1543_ITEM, 6, "EnvVersionNumber" },
-  [1] = { en1543_BITMAP, 7, "EnvGeneralBitmap",{
+  [1] = { en1543_BITMAP, 7, "Env",{
     [0] = { en1543_NETWORKID, 24, "EnvNetworkId" },
     [1] = { en1543_ITEM, 8, "EnvApplicationIssuerId" },
     [2] = { en1543_DATE, 14, "EnvApplicationValidityEndDate" },
@@ -81,12 +82,12 @@ en1543_Env = {
 }
 
 en1543_Holder = {
-  [0] = { en1543_BITMAP, 8, "HolderGeneralBitmap", {
-    [0] = { en1543_BITMAP, 2, "HolderNameBitmap", {
+  [0] = { en1543_BITMAP, 8, "Holder", {
+    [0] = { en1543_BITMAP, 2, "HolderName", {
       [0] = { en1543_ITEM, 85, "HolderSurname" },
       [1] = { en1543_ITEM, 85, "HolderForename" }
     }},
-    [1] = { en1543_BITMAP, 2, "HolderBirthBitmap", {
+    [1] = { en1543_BITMAP, 2, "HolderBirth", {
       [0] = { en1543_ITEM, 32, "HolderBirthDate" },
       [1] = { en1543_ITEM, 115, "HolderBirthPlace"}
     }},
@@ -95,13 +96,13 @@ en1543_Holder = {
     [4] = { en1543_ITEM, 24, "HolderCountryAlpha" },
     [5] = { en1543_ITEM, 32, "HolderCompany" },
     [6] = { en1543_REPEAT, 4, "HolderProfiles(0..4)", {
-      [0] = { en1543_BITMAP, 3, "ProfileBitmap", {
+      [0] = { en1543_BITMAP, 3, "Profile", {
       	[0] = { en1543_ITEM, 24, "NetworkId" },
 	[1] = { en1543_ITEM, 8, "ProfileNumber" },
 	[2] = { en1543_DATE, 14, "ProfileDate" }
 	}}
     }},
-    [7] = { en1543_BITMAP, 12, "HolderDataBitmap", {
+    [7] = { en1543_BITMAP, 12, "HolderData", {
       [0] = { en1543_ITEM, 4, "HolderDataCardStatus" },
       [1] = { en1543_ITEM, 4, "HolderDataTeleReglement" },
       [2] = { en1543_ITEM, 17, "HolderDataResidence" },
@@ -119,17 +120,17 @@ en1543_Holder = {
 }
 
 en1543_Contract = {
-  [0] = { en1543_BITMAP, 20, "ContractBitmap",
+  [0] = { en1543_BITMAP, 20, "Contract",
     {
       [0] = { en1543_NETWORKID, 24, "ContractNetworkId" },
       [1] = { en1543_ITEM,  8, "ContractProvider" },
       [2] = { en1543_ITEM, 16, "ContractTariff" },
       [3] = { en1543_ITEM, 32, "ContractSerialNumber" },
-      [4] = { en1543_BITMAP,  2, "ContractCustomerInfoBitmap", {
+      [4] = { en1543_BITMAP,  2, "ContractCustomerInfo", {
 	[0] = { en1543_ITEM,  6, "ContractCustomerProfile" },
 	[1] = { en1543_ITEM, 32, "ContractCustomerNumber" },
       }},
-      [5] = { en1543_BITMAP,  2, "ContractPassengerInfoBitmap", {
+      [5] = { en1543_BITMAP,  2, "ContractPassengerInfo", {
 	[0] = { en1543_ITEM,  6, "ContractPassengerClass" },
 	[1] = { en1543_ITEM, 32, "ContractPassengerTotal" },
       }},
@@ -139,7 +140,7 @@ en1543_Contract = {
       [9] = { en1543_ITEM, 16, "ContractServices" },
       [10] = { en1543_NUMBER, 16, "ContractPriceAmount" },
       [11] = { en1543_ITEM, 16, "ContractPriceUnit" },
-      [12] = { en1543_BITMAP, 7, "ContractContractRestrictionBitmap", {
+      [12] = { en1543_BITMAP, 7, "ContractContractRestriction", {
 	[0] = { en1543_TIME, 11, "ContractStartTime" },
 	[1] = { en1543_TIME, 11, "ContractEndTime" },
 	[2] = { en1543_ITEM, 8, "ContractRestrictDay" },
@@ -148,7 +149,7 @@ en1543_Contract = {
 	[5] = { en1543_ITEM, 16, "ContractRestrictProduct" },
 	[6] = { en1543_ITEM, 16, "ContractRestrcitLocation" },
       }},
-      [13] = { en1543_BITMAP, 9, "ContractContractValidityInfoBitmap", {
+      [13] = { en1543_BITMAP, 9, "ContractContractValidityInfo", {
 	[0] = { en1543_DATE, 14, "ContractStartDate" },
 	[1] = { en1543_TIME, 11, "ContractStartTime" },
 	[2] = { en1543_DATE, 14, "ContractEndDate" },
@@ -159,7 +160,7 @@ en1543_Contract = {
 	[7] = { en1543_ITEM, 16, "ContractJourneys" },
 	[8] = { en1543_ITEM, 16, "ContractPeriodJourneys" },
       }},
-      [14] = { en1543_BITMAP, 8, "ContractContractJourneyDataBitmap", {
+      [14] = { en1543_BITMAP, 8, "ContractContractJourneyData", {
 	[0] = { en1543_ITEM, 16, "ContractOrigin" },
 	[1] = { en1543_ITEM, 16, "ContractDestination" },
 	[2] = { en1543_ITEM, 16, "ContractRouteNumbers" },
@@ -169,7 +170,7 @@ en1543_Contract = {
 	[6] = { en1543_ITEM, 16, "ContractDistance" },
 	[7] = { en1543_ITEM, 8, "ContractInterchange" },
       }},
-      [15] = { en1543_BITMAP, 4, "ContractContractSaleDataBitmap", {
+      [15] = { en1543_BITMAP, 4, "ContractContractSaleData", {
 	[0] = { en1543_DATE, 14, "ContractDate" },
 	[1] = { en1543_TIME, 11, "ContractTime" },
 	[2] = { en1543_ITEM, 8, "ContractAgent" },
@@ -186,7 +187,7 @@ en1543_Contract = {
 en1543_Event = {
   [0] = { en1543_DATE, 14, "EventDate" },
   [1] = { en1543_TIME, 11, "EventTime" },
-  [2] = { en1543_BITMAP, 28, "EventEventBitmap",
+  [2] = { en1543_BITMAP, 28, "Event",
     {
       [0] = { en1543_ITEM,  8, "EventDisplayData" },
       [1] = { en1543_NETWORKID, 24, "EventNetworkId" },
@@ -246,16 +247,18 @@ function en1543_networkid(source, position)
 	
 	country_code = iso_country_code_name(tonumber(tostring(bytes.convert(4,country))))
 	region_code  = tonumber(tostring(bytes.convert(4,region)))
-	
-	return "country "..country_code.." / region "..region_code
+	if region_code then
+	  return "country "..country_code.." / region "..region_code
+	end
+	return "country "..country_code
 end
-
 
 
 function en1543_parse_item(ctx, format, data, position, reference_index)
 	local parsed = 0
 	local index
 	local NODE
+	local BITMAP_NODE
 	local bitmap_size
 	local hex_info
 	local item
@@ -271,6 +274,8 @@ function en1543_parse_item(ctx, format, data, position, reference_index)
 	if format[1] == en1543_BITMAP then
 	   bitmap_size = parsed
 	   parsed = bitmap_size 
+           BITMAP_NODE = ui.tree_add_node(NODE,"("..format[3].."Bitmap)",nil,parsed)
+	   ui.tree_set_value(BITMAP_NODE,item);
 	   for index=0,format[2]-1 do
 	       if data[position+bitmap_size-index-1]~=0 then
 	          parsed = parsed + en1543_parse_item(NODE, format[4][index], data, position+parsed, index)
@@ -312,6 +317,14 @@ function en1543_parse(ctx, format, data)
 	return parsed
 end
 
+function en1543_unparsed(ctx, data)
+	local NODE
+	if bytes.tonumber(data)>0 then
+		NODE = ui.tree_add_node(ctx,"(remaining unparsed data)");
+		ui.tree_set_value(NODE,data)
+	end
+end
+
 function en1543_process(ctx)
 	local DATA_REF
 	local RECORD_REF
@@ -328,9 +341,10 @@ function en1543_process(ctx)
 	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
 	      if RECORD_REF==nil then break end
 	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = bytes.new(8,ui.tree_get_value(DATA_REF))
+	      data = ui.tree_get_value(DATA_REF)
 	      bits = bytes.convert(1,data)
-	      en1543_parse(RECORD_REF,en1543_Event,bits)
+	      parsed = en1543_parse(RECORD_REF,en1543_Event,bits)
+	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
 	   end
 	else
 	   log.print(log.DEBUG,"No event logs")
@@ -343,9 +357,10 @@ function en1543_process(ctx)
 	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
 	      if RECORD_REF==nil then break end
 	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = bytes.new(8,ui.tree_get_value(DATA_REF))
+	      data = ui.tree_get_value(DATA_REF)
 	      bits = bytes.convert(1,data)
-	      en1543_parse(RECORD_REF,en1543_Event,bits)
+	      parsed = en1543_parse(RECORD_REF,en1543_Event,bits)
+	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
 	   end
 	else
 	   log.print(log.DEBUG,"No special events")
@@ -356,10 +371,11 @@ function en1543_process(ctx)
 	if NODE_REF then
 	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
 	   DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	   data = bytes.new(8,ui.tree_get_value(DATA_REF))
+	   data = ui.tree_get_value(DATA_REF)
 	   bits = bytes.convert(1,data)
 	   parsed = en1543_parse(RECORD_REF,en1543_Env,bits)
 	   parsed = en1543_parse(RECORD_REF,en1543_Holder,bytes.sub(bits,parsed))
+	   parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
 	else
 	   log.print(log.DEBUG,"No environment") 
 	end
@@ -369,10 +385,11 @@ function en1543_process(ctx)
 	if NODE_REF then
 	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
 	   DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	   data = bytes.new(8,ui.tree_get_value(DATA_REF))
+	   data = ui.tree_get_value(DATA_REF)
 	   bits = bytes.convert(1,data)
-	   en1543_parse(RECORD_REF,en1543_BestContracts,bits)
-	
+	   parsed = en1543_parse(RECORD_REF,en1543_BestContracts,bits)
+	   parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
+
            --
       	   -- FIXME: here we should parse the contracts according to "Tariff"
 	   --        but for now we will assume that contract format is 'FF'
@@ -388,9 +405,10 @@ function en1543_process(ctx)
 	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
 	      if RECORD_REF==nil then break end
 	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = bytes.new(8,ui.tree_get_value(DATA_REF))
+	      data = ui.tree_get_value(DATA_REF)
 	      bits = bytes.convert(1,data)
-	      en1543_parse(RECORD_REF,en1543_Contract,bits)
+	      parsed = en1543_parse(RECORD_REF,en1543_Contract,bits)
+	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
 	   end
 	else
 	   log.print(log.DEBUG,"No contracts")
@@ -421,7 +439,7 @@ function process_calypso(cardenv)
 		if sw~=0x9000 then 
 		        break
 		end
-		sw,resp = card.select(lfi)
+		sw,resp = card.select(sel_method..lfi)
 		if sw==0x9000 then
 	                local r
 			LFI = ui.tree_add_node(APP,"File "..lfi_desc,lfi,nil,"file")
@@ -452,6 +470,21 @@ card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num
 local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
 ui.tree_set_value(ref,hex_card_num)
 ui.tree_set_alt_value(ref,card_num)
+
+sw = card.select("/2000")
+sw = card.select(".2010")
+if sw==0x9000 then
+   sel_method = "."
+else
+   sw = card.select("/2000")
+   sw = card.select("/2010")
+   if sw == 0x9000 then
+      sel_method = "/"
+   else
+      sel_method = ""
+      ui.question("This script may not work : this card doesn't seem to react to file selection commands.",{"OK"})
+   end
+end
 
 process_calypso(CARD)
 

@@ -1,3 +1,12 @@
+cardpeek-0.5: L1L1@gmx.com
+22 March 2010
+- Complete rework of the GUI, for better clarity and ease of use.
+- Added basic crypto support based on OPENSSL (for BAC e-passport ops).
+- Added preliminary support for e-passport analysis in BAC security mode.
+- Extended the documentation.
+- Moved to "autotools" for compilation purposes.
+- Confirmed support for Debian i386, Debian amd64, and FreeBSD 8.0
+
 cardpeek-0.4: L1L1@gmx.com
 03 February 2010
 - Added preliminary Vitale 2 health card analysis.

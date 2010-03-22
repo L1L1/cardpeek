@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS = gnu
 
-AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @OPENSSL_CFLAGS@ @GTK_CFLAGS@
+AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
 
-AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @OPENSSL_LIBS@ @GTK_LIBS@
+AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
 bin_PROGRAMS= cardpeek
 
@@ -16,9 +16,9 @@ dist_man_MANS=cardpeek.1
 
 DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 
-CLEANFILES=icons.c doc/*.log doc/*.aux
+CLEANFILES=icons.c doc/*.log doc/*.aux dot_cardpeek.tar.gz
 
-EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir/ doc/*.tex doc/*.pdf doc/Makefile doc/graphics/ update_dot_cardpeek_dir.sh script_version.h
+EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics/ update_dot_cardpeek_dir.sh script_version.h
 
 GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
 
@@ -26,11 +26,11 @@ dist-hook:
 			rm -rf `find $(distdir)/ -name .svn`
 
 dot_cardpeek.$(OBJEXT):	dot_cardpeek_dir
+			rm -rf .cardpeek
 			cp -R dot_cardpeek_dir .cardpeek
 			tar cvzf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
 			rm -rf .cardpeek
 			$(COMPILE) -c script.S -o $@
-			rm -f dot_cardpeek.tar.gz
 
 icons.c:		icons/
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        icons/item.png > icons.c

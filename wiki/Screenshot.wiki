@@ -1,7 +1,0 @@
-#summary Cardpeek screenshot
-
-= Cardpeek Screenshots =
-== EMV ==
-http://cardpeek.googlecode.com/files/Cardpeek-screenshot2.jpg
-== Navigo ==
-http://cardpeek.googlecode.com/files/Cardpeek-screenshot.jpg

@@ -19,7 +19,7 @@
 *
 */
 
-#include "config.h"
+#include "pathconfig.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>

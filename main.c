@@ -28,7 +28,7 @@
 #include "smartcard.h"
 #include "misc.h"
 #include "gui.h"
-#include "config.h"
+#include "pathconfig.h"
 #include "lua_ext.h"
 #include "script_version.h"
 #include <sys/wait.h>

@@ -22,7 +22,7 @@
 #include "gui.h"
 #include <dirent.h>
 #include "misc.h"
-#include "config.h"
+#include "pathconfig.h"
 #include "smartcard.h"
 #include <string.h>
 #include <stdlib.h>

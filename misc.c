@@ -21,7 +21,7 @@
 
 #include <time.h>
 #include "misc.h"
-#include "config.h"
+#include "pathconfig.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>

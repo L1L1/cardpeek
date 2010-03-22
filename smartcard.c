@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
-#include "config.h"
+#include "pathconfig.h"
 #include "lua_ext.h"
 #include "iso7816.h"
 

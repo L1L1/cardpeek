@@ -697,8 +697,6 @@ PCSC_CFLAGS
 PCSC_LIBS
 LUA_CFLAGS
 LUA_LIBS
-OPENSSL_CFLAGS
-OPENSSL_LIBS
 GDK_PIXBUF_CSOURCE
 CPP
 GREP
@@ -3664,7 +3662,7 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 
 
 
-  if test x$PKG_CONFIG == x ; then
+  if test x$PKG_CONFIG = x ; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3711,7 +3709,7 @@ fi
   { echo "$as_me:$LINENO: checking for libpcsclite libraries" >&5
 echo $ECHO_N "checking for libpcsclite libraries... $ECHO_C" >&6; }
 
-  if test x$PKG_CONFIG == xno ; then
+  if test x$PKG_CONFIG = xno ; then
      echo "*** pkg_config is missing ***"
      { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -3731,7 +3729,7 @@ echo "${ECHO_T}no" >&6; }
      fi
   fi
 
-   if test x$has_package == xyes ; then
+   if test x$has_package = xyes ; then
     :
   else
     { { echo "$as_me:$LINENO: error:
@@ -3749,7 +3747,7 @@ Please install the libpcsclite library first." >&2;}
 
 
 
-  if test x$PKG_CONFIG == x ; then
+  if test x$PKG_CONFIG = x ; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3796,7 +3794,7 @@ fi
   { echo "$as_me:$LINENO: checking for lua-5.1 libraries" >&5
 echo $ECHO_N "checking for lua-5.1 libraries... $ECHO_C" >&6; }
 
-  if test x$PKG_CONFIG == xno ; then
+  if test x$PKG_CONFIG = xno ; then
      echo "*** pkg_config is missing ***"
      { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -3816,12 +3814,12 @@ echo "${ECHO_T}no" >&6; }
      fi
   fi
 
-   if test x$has_package == xyes ; then
+   if test x$has_package = xyes ; then
     :
   else
 
 
-  if test x$PKG_CONFIG == x ; then
+  if test x$PKG_CONFIG = x ; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3868,7 +3866,7 @@ fi
   { echo "$as_me:$LINENO: checking for lua5.1 libraries" >&5
 echo $ECHO_N "checking for lua5.1 libraries... $ECHO_C" >&6; }
 
-  if test x$PKG_CONFIG == xno ; then
+  if test x$PKG_CONFIG = xno ; then
      echo "*** pkg_config is missing ***"
      { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -3888,7 +3886,7 @@ echo "${ECHO_T}no" >&6; }
      fi
   fi
 
-   if test x$has_package == xyes ; then
+   if test x$has_package = xyes ; then
     :
   else
 
@@ -3910,87 +3908,168 @@ Please install the lua 5.1 library first." >&2;}
 
 
 
+##AM_PATH_PACKAGE([openssl],[OPENSSL],,AC_MSG_ERROR([Could not find openssl-dev.
+##This program requires the openssl dev. library.
+##Please install it first.]))
 
-  if test x$PKG_CONFIG == x ; then
-    # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+
+{ echo "$as_me:$LINENO: checking for SSL_free in -lssl" >&5
+echo $ECHO_N "checking for SSL_free in -lssl... $ECHO_C" >&6; }
+if test "${ac_cv_lib_ssl_SSL_free+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_free ();
+int
+main ()
+{
+return SSL_free ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
 esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
-echo "${ECHO_T}$PKG_CONFIG" >&6; }
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_ssl_SSL_free=yes
 else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_ssl_SSL_free=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_ssl_SSL_free" >&5
+echo "${ECHO_T}$ac_cv_lib_ssl_SSL_free" >&6; }
+if test $ac_cv_lib_ssl_SSL_free = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSSL 1
+_ACEOF
+
+  LIBS="-lssl $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: Could not find openssl-dev.
+			   This program requires the openssl dev. library.
+			   Please install it first." >&5
+echo "$as_me: error: Could not find openssl-dev.
+			   This program requires the openssl dev. library.
+			   Please install it first." >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 
-  fi
 
-  { echo "$as_me:$LINENO: checking for openssl libraries" >&5
-echo $ECHO_N "checking for openssl libraries... $ECHO_C" >&6; }
+{ echo "$as_me:$LINENO: checking for CRYPTO_free in -lcrypto" >&5
+echo $ECHO_N "checking for CRYPTO_free in -lcrypto... $ECHO_C" >&6; }
+if test "${ac_cv_lib_crypto_CRYPTO_free+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-  if test x$PKG_CONFIG == xno ; then
-     echo "*** pkg_config is missing ***"
-     { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-  fi
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char CRYPTO_free ();
+int
+main ()
+{
+return CRYPTO_free ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_crypto_CRYPTO_free=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
 
-  if test x$PKG_CONFIG != xno ; then
-     if `$PKG_CONFIG --exists openssl` ; then
-      OPENSSL_CFLAGS=`$PKG_CONFIG --cflags openssl`
-      OPENSSL_LIBS=`$PKG_CONFIG --libs openssl`
-      has_package=yes
-      { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-     else
-      has_package=no
-      { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-     fi
-  fi
+	ac_cv_lib_crypto_CRYPTO_free=no
+fi
 
-   if test x$has_package == xyes ; then
-    :
-  else
-    { { echo "$as_me:$LINENO: error: Could not find openssl-dev.
-This program requires the openssl dev. library.
-Please install it first." >&5
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_crypto_CRYPTO_free" >&5
+echo "${ECHO_T}$ac_cv_lib_crypto_CRYPTO_free" >&6; }
+if test $ac_cv_lib_crypto_CRYPTO_free = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCRYPTO 1
+_ACEOF
+
+  LIBS="-lcrypto $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: Could not find openssl-dev.
+			  This program requires the openssl dev. library.
+			  Please install it first." >&5
 echo "$as_me: error: Could not find openssl-dev.
-This program requires the openssl dev. library.
-Please install it first." >&2;}
+			  This program requires the openssl dev. library.
+			  Please install it first." >&2;}
    { (exit 1); exit 1; }; }
-  fi
-
-
+fi
 
 
 # Extract the first word of "gdk-pixbuf-csource", so it can be a program name with args.
@@ -4035,7 +4114,7 @@ fi
 
 
 
-if test x$GDK_PIXBUF_CSOURCE == xno ; then
+if test x$GDK_PIXBUF_CSOURCE = xno ; then
 { { echo "$as_me:$LINENO: error: gdk-pixbuf-csource cannot be found in PATH.
 It is usually included with GTK 2.0 dev. libraries.
 Please install this tool first.
@@ -6726,7 +6805,7 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-if test x$PDFLATEX=xno ; then
+if test x$PDFLATEX = xno ; then
 { echo "$as_me:$LINENO: WARNING: The pdflatex program could not be found.
 	This is only a problem if you wish to rebuild the pdf documentation
 	from the LaTeX source in the doc/ sub-directory.
@@ -7464,8 +7543,6 @@ PCSC_CFLAGS!$PCSC_CFLAGS$ac_delim
 PCSC_LIBS!$PCSC_LIBS$ac_delim
 LUA_CFLAGS!$LUA_CFLAGS$ac_delim
 LUA_LIBS!$LUA_LIBS$ac_delim
-OPENSSL_CFLAGS!$OPENSSL_CFLAGS$ac_delim
-OPENSSL_LIBS!$OPENSSL_LIBS$ac_delim
 GDK_PIXBUF_CSOURCE!$GDK_PIXBUF_CSOURCE$ac_delim
 CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
@@ -7475,7 +7552,7 @@ PDFLATEX!$PDFLATEX$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

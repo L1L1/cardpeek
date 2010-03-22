@@ -21,13 +21,13 @@ AC_DEFUN([AM_PATH_PACKAGE],
 dnl
 dnl AM_PATH_PACKAGE(packagename,make packagename,[what to do if found[, what to do if not found]])
 dnl
-  if test x$PKG_CONFIG == x ; then
+  if test x$PKG_CONFIG = x ; then
     AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
   fi
 
   AC_MSG_CHECKING(for $1 libraries)
 
-  if test x$PKG_CONFIG == xno ; then
+  if test x$PKG_CONFIG = xno ; then
      echo "*** pkg_config is missing ***"
      AC_MSG_RESULT(no)
   fi
@@ -44,7 +44,7 @@ dnl
      fi
   fi
 
-   if test x$has_package == xyes ; then
+   if test x$has_package = xyes ; then
     ifelse([$3], , :, [$3])
   else
     ifelse([$4], , :, [$4])
@@ -66,13 +66,23 @@ Please install the lua 5.1 library first.])
 ])
 ])
 
-AM_PATH_PACKAGE([openssl],[OPENSSL],,AC_MSG_ERROR([Could not find openssl-dev.
-This program requires the openssl dev. library.
-Please install it first.]))
+##AM_PATH_PACKAGE([openssl],[OPENSSL],,AC_MSG_ERROR([Could not find openssl-dev.
+##This program requires the openssl dev. library.
+##Please install it first.]))
+
+AC_CHECK_LIB([ssl],[SSL_free],,
+	     AC_MSG_ERROR([Could not find openssl-dev.
+			   This program requires the openssl dev. library.
+			   Please install it first.]))
+
+AC_CHECK_LIB([crypto],[CRYPTO_free],,
+	     AC_MSG_ERROR([Could not find openssl-dev.
+			  This program requires the openssl dev. library.
+			  Please install it first.]))
 
 AC_PATH_PROG(GDK_PIXBUF_CSOURCE,[gdk-pixbuf-csource],no)
 
-if test x$GDK_PIXBUF_CSOURCE == xno ; then
+if test x$GDK_PIXBUF_CSOURCE = xno ; then
 AC_MSG_ERROR([gdk-pixbuf-csource cannot be found in PATH. 
 It is usually included with GTK 2.0 dev. libraries.
 Please install this tool first.
@@ -105,7 +115,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero getcwd memmove memset select strcasecmp strdup strerror strncasecmp strrchr strtol])
 
 AC_PATH_PROG(PDFLATEX,[pdflatex],no)
-if test x$PDFLATEX=xno ; then
+if test x$PDFLATEX = xno ; then
 AC_MSG_WARN([The pdflatex program could not be found. 
 	This is only a problem if you wish to rebuild the pdf documentation 
 	from the LaTeX source in the doc/ sub-directory.

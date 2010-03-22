@@ -11,7 +11,7 @@ devices.
 
 The tool currently reads the contents of : 
     * EMV cards 
-    * Navigo public transport cards 
+    * Calypso public transport cards (such as Navigo)
     * Moneo ePurse cards 
     * Vitale 2 French health cards.
 

@@ -109,7 +109,7 @@ int install_dot_file()
     return 0;
   fclose(f);
   log_printf(LOG_INFO,"Created dot_cardpeek.tar.gz");
-  printf("Creating files:\n");
+  printf("Creating files in %s :\n", home_dir);
   status = system("tar xzvf dot_cardpeek.tar.gz");
   if (status!=0)
     printf("Failed\n");

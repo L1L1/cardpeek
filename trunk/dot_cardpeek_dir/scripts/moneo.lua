@@ -63,7 +63,7 @@ function process_moneo(card_ctx)
                    break
 		end
 		REC = ui.tree_add_node(SFI,"record",r,#resp,"record")
-		ui.tree_set_value(REC,tostring(resp))
+		ui.tree_set_value(REC,resp)
 	    end
 	end
 end

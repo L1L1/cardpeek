@@ -19,8 +19,8 @@
 *
 */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef PATH_CONFIG_H
+#define PATH_CONFIG_H
 
 enum {
   CONFIG_FOLDER_CARDTREES,

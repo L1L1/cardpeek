@@ -27,7 +27,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "config.h"
+#include "pathconfig.h"
 #include "iso7816.h"
 #include "misc.h"
 

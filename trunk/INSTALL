@@ -10,14 +10,11 @@ UTF-8 English/Français
       apt/aptitude.)
    2. Unpack the source if needed and change directory to the source 
       directory.
-   3. Type 'make'
-   4. The binary executable is 'cardtree', use it directly or copy it to 
-      the desired location.
+   3. Type './configure' (see './configure --help' for more options)
+   4. Type 'make'
+   5. As root, type 'make install' (or do 'sudo make install')
 
 See doc/carpeek_ref.en.pdf for more details
-
-(For FreeBSD, you must edit the Makefile as described in the comments 
-included in that file.)
 
 [FR] Instructions:
    1. Vérifier que les outils de développement suivants sont intallés:
@@ -29,12 +26,9 @@ included in that file.)
       apt/aptitude.)
    2. Dépaqueter le code source si nécessaire et se placer dans le répertoire
       contenant le code source.
-   3. Taper 'make'
-   4. L'exécutable est 'cardtree'. Il peut être utilisé tel quel ou copié
-      dans un autre répertoire
+   3. Taper './configure' (voir './configure --help' pour plus d'options)
+   4. Taper 'make'
+   5. En tant que root, taper 'make install' (ou faire 'sudo make install')
 
 Voir doc/cardpeek_ref.fr.pdf pour plus de détails. 
-
-Pour FreeBSD, il faut faire un modificiation légère du Makefile, en suivant 
-les indications contenues dans ce fichier.
 

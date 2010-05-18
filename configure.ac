@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([cardpeek], [0.5], [L1L1@gmx.com])
-AM_INIT_AUTOMAKE([cardpeek], [0.5])
+AC_INIT([cardpeek], [0.5.1], [L1L1@gmx.com])
+AM_INIT_AUTOMAKE([cardpeek], [0.5.1])
 
 AC_CONFIG_SRCDIR([main.c])
 AM_CONFIG_HEADER([config.h])
@@ -60,9 +60,11 @@ Please install the libpcsclite library first.]))
 
 AM_PATH_PACKAGE([lua-5.1],[LUA],,[
   AM_PATH_PACKAGE([lua5.1],[LUA],,[
+    AM_PATH_PACKAGE(['lua >= 5.1'],[LUA],,[
 AC_MSG_ERROR([Could not find lua 5.1-dev. 
 This program requires the lua 5.1 library. 
 Please install the lua 5.1 library first.])
+])
 ])
 ])
 

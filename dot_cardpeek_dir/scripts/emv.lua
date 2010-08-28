@@ -16,6 +16,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- History:
+-- Aug 07 2010: Corrected bug in GPO command.
+-- Aug 08 2010: Corrected bug in AFL data processing
 
 require('lib.tlv')
 require('lib.strict')
@@ -25,7 +28,12 @@ require('lib.strict')
 --------------------------------------------------------------------------
 
 function card.get_processing_options(pdol)
-	local command = bytes.new(8,"80 A8 00 00",#pdol+1,0x83,pdol)
+	local command;
+        if pdol and #pdol>0 then
+	   command = bytes.new(8,"80 A8 00 00",#pdol+2,0x83,#pdol,pdol)
+	else
+	   command = bytes.new(8,"80 A8 00 00 02 83 00")
+	end
 	return card.send(command)
 end
 
@@ -353,7 +361,7 @@ function emv_process_application(cardenv,aid)
 	if (ref) then
 	   pdol = ui.tree_get_value(ref)
 	else
-	   pdol = bytes.new(8,0);
+	   pdol = nil;
 	end
 
 
@@ -395,40 +403,51 @@ function emv_process_application(cardenv,aid)
 	end
 
 
-	if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
-	-- Get processing options
-	log.print(log.INFO,"Attempting GPO")
-	sw,resp = card.get_processing_options(pdol)
-	if sw ~=0x9000 then
-	   log.print(log.ERROR,"GPO Failed")
-	   return false
-	end
-	GPO = ui.tree_add_node(APP,"processing_options");
-	emv_parse(GPO,resp)
+        if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
+            -- Get processing options
+            log.print(log.INFO,"Attempting GPO")
+            sw,resp = card.get_processing_options(pdol)
+            if sw ~=0x9000 then
+                if pdol then
+                    -- try empty GPO just in case the card is blocking some stuff
+                    log.print(log.WARNING,
+                              string.format("GPO with data failed with code %X, retrying GPO without data",sw))
+                    sw,resp = card.get_processing_options(nil)	
+                end
+                if sw ~=0x9000 then
+                    log.print(log.ERROR,"GPO Failed")
+                    return false
+                end
+            end
+	    GPO = ui.tree_add_node(APP,"processing_options");
+	    emv_parse(GPO,resp)
 
 
-	-- find AFL
-	ref = ui.tree_find_node(GPO,nil,"80")
-	AFL = ui.tree_get_value(ref)
+	    -- find AFL
+	    ref = ui.tree_find_node(GPO,nil,"80")
+	    AFL = ui.tree_get_value(ref)
 
-
-	-- Read all the application data
-	for i=2,#AFL-1,4 do
-	    local sfi
-	    local rec
-	    log.print(log.INFO,string.format("Reading SFI %i",bit.SHR(AFL[i],3)))
-	    sfi = ui.tree_add_node(APP,"file",bit.SHR(AFL[i],3),nil,"file")
-	    for j=AFL[i+1],AFL[i+2] do
-		log.print(log.INFO,string.format("Reading record %i",j))
-		sw,resp = card.read_record(bit.SHR(AFL[i],3),j)
-	        if sw ~= 0x9000 then
-		   log.print(log.ERROR,"Read record failed")
-		else
-		   rec = ui.tree_add_node(sfi,"record",j,nil,"record")
-		   emv_parse(rec,resp)
-		end
-	    end
-	end
+            if AFL then
+	        -- Read all the application data
+	        for i=2,#AFL-1,4 do
+	            local sfi
+	            local rec
+	            log.print(log.INFO,string.format("Reading SFI %i",bit.SHR(AFL[i],3)))
+	            sfi = ui.tree_add_node(APP,"file",bit.SHR(AFL[i],3),nil,"file")
+	            for j=AFL[i+1],AFL[i+2] do
+		        log.print(log.INFO,string.format("Reading record %i",j))
+		        sw,resp = card.read_record(bit.SHR(AFL[i],3),j)
+	                if sw ~= 0x9000 then
+		            log.print(log.ERROR,"Read record failed")
+		        else
+		            rec = ui.tree_add_node(sfi,"record",j,nil,"record")
+		            emv_parse(rec,resp)
+		        end
+	            end -- for
+	        end -- for
+            else
+                log.print(log.LOG_WARNING,"No AFL (Application File Locator) found in GPO data.")
+            end -- AFL
 	end -- GPO
 
 	-- Read logs if they exist

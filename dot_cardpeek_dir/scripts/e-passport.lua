@@ -198,10 +198,10 @@ function epass_read_file()
 end
 
 function ui_parse_version(node,data)
-	local ver = bytes.toprintable(bytes.sub(data,0,1))
+	local ver = bytes.format("%P",bytes.sub(data,0,1))
 	local i
 	for i=1,(#data/2)-1 do
-		ver = ver .. "." .. bytes.toprintable(bytes.sub(data,i*2,i*2+1))
+		ver = ver .. "." .. bytes.format("%P",bytes.sub(data,i*2,i*2+1))
 	end
 	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,ver)
@@ -213,7 +213,7 @@ end
 function ui_parse_cstring(node,data)
 	ui.tree_set_value(node,data)
 	if #data>1 then
-        	ui.tree_set_alt_value(node,bytes.toprintable(bytes.sub(data,0,#data-2)))
+        	ui.tree_set_alt_value(node,bytes.format("%P",bytes.sub(data,0,#data-2)))
 	end
 end
 

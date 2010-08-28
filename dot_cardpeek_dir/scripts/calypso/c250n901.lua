@@ -23,8 +23,6 @@
 -- data from 'Aurélien Baro'.
 ---------------------------------------------------------------------
 
-dofile('calypso.lua')
-
 require('lib.strict')
 require('etc.paris-metro')
 require('etc.paris-rer')
@@ -68,7 +66,7 @@ function navigo_process_events(ctx)
 	local station_id
 	local location_string
 
-	EVENTS = ui.tree_find_node(ctx,"File Event logs");
+	EVENTS = ui.tree_find_node(ctx,"Event logs, parsed");
 	if EVENTS==nil then 
 	   log.print(log.WARNING,"No event found in card")
 	   return 0 
@@ -79,11 +77,11 @@ function navigo_process_events(ctx)
 	    if RECORD==nil then break end
 	    
 	    REF = ui.tree_find_node(RECORD,"EventServiceProvider")
-	    service_provider_value = tonumber(ui.tree_get_alt_value(REF))
+	    service_provider_value = bytes.tonumber(ui.tree_get_value(REF))
 	    ui.tree_set_alt_value(REF,SERVICE_PROVIDERS[service_provider_value])
 	    
 	    REF = ui.tree_find_node(RECORD,"EventCode")
-	    code_value = tonumber(ui.tree_get_alt_value(REF))
+	    code_value = bytes.tonumber(ui.tree_get_value(REF))
 
 	    code_transport = bit.SHR(code_value,4)
 	    code_transport_string  = TRANSPORT_LIST[code_transport]
@@ -97,7 +95,7 @@ function navigo_process_events(ctx)
 
 	    if service_provider_value == 3 and code_transport >= 3 and code_transport <=5 then
 	       REF = ui.tree_find_node(RECORD,"EventLocationId")
-	       location_id_value = tonumber(ui.tree_get_alt_value(REF))
+	       location_id_value = bytes.tonumber(ui.tree_get_value(REF))
 	       sector_id = bit.SHR(location_id_value,9)
 	       station_id = bit.AND(bit.SHR(location_id_value,4),0x1F)
 

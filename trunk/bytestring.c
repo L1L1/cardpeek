@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "misc.h"
 
 int bytestring_init(bytestring_t *bs, unsigned element_width)
 {
@@ -70,14 +71,30 @@ unsigned hex_nibble(const char nibble)
   return BYTESTRING_NPOS;
 }
 
-bytestring_t* bytestring_new_from_string(unsigned element_width, const char *str)
+bytestring_t* bytestring_new_from_string(const char *str)
 {
-  bytestring_t *dat=bytestring_new(element_width);
-  if (bytestring_assign_from_string(dat,str)==BYTESTRING_OK)
-    return dat; 
-  bytestring_free(dat);
-  return NULL;
+  unsigned width;
+  bytestring_t *dat;
+  
+  if (str==NULL)
+    return NULL;
+
+  switch (*str) {
+    case '8': width=8; break;
+    case '4': width=4; break;
+    case '1': width=1; break;
+    default: return NULL;
+  }
+  str++;
+
+  if (*str!=':')
+    return NULL;
+  
+  dat=bytestring_new(width);
+  bytestring_assign_digit_string(dat,++str);	  
+  return dat;
 }
+
 
 bytestring_t* bytestring_duplicate(const bytestring_t *bs)
 {
@@ -104,20 +121,23 @@ int bytestring_assign_element(bytestring_t* bs,
   return BYTESTRING_OK;
 }
 
-int bytestring_assign_from_string(bytestring_t* bs,
-				  const char *str)
+int bytestring_assign_digit_string(bytestring_t* bs,
+				   const char *str)
 {
-  unsigned str_len=strlen(str);
-  unsigned c;
+  unsigned str_len;
   unsigned value;
   unsigned state;
-  size_t i=0;
+  unsigned i;
+  unsigned c;
+
+  if (str==NULL)
+    return BYTESTRING_ERROR;
+
+  str_len = strlen(str);
 
   bytestring_clear(bs);
-
   if (bs->width==8)
   {
-    /*bytestring_resize(dat,str_len/2);*/
     state=0;
     value=0;
     for (i=0;i<str_len;i++)
@@ -139,7 +159,6 @@ int bytestring_assign_from_string(bytestring_t* bs,
   }
   else
   {
-    /*testring_resize(dat,str_len);*/
     for (i=0;i<str_len;i++)
     {
       value=hex_nibble(str[i]);
@@ -157,6 +176,7 @@ int bytestring_copy(bytestring_t *bs,
   if (bs!=src)
   {
     bs->width=src->width;
+    bs->mask=src->mask;
     return bytestring_assign_data(bs,src->len,src->data);
   }
   return BYTESTRING_OK;
@@ -627,48 +647,38 @@ int bytestring_substr(bytestring_t* dst,
   return bytestring_assign_data(dst,len,src->data+pos);
 }
 
-char *bytestring_to_alloc_printable(const bytestring_t *bs)
+void x_bytestring_append_as_printable(a_string_t* dest, const bytestring_t *bs)
 {
-  char *str=(char *)malloc(bs->len+1);
   unsigned u;
+
   for (u=0;u<bs->len;u++)
   {
     if (!isprint((char)(bs->data[u])))
-      str[u]='?';
+      a_strpushback(dest,'?');
     else
-      str[u]=(char)(bs->data[u]);
+      a_strpushback(dest,(char)(bs->data[u]));
   }
-  str[u]=0;
-  return str;
 }
 
 const char HEXA[]="0123456789ABCDEF";
 
-char *bytestring_to_alloc_string(const bytestring_t *bs)
+void x_bytestring_append_as_digits(a_string_t* dest, const bytestring_t *bs)
 {
-  char *str;
   unsigned i;
 
   if (bs->width==8)
   {
-    str=(char *)malloc(bs->len*2+1);
-
     for (i=0;i<bs->len;i++)
     {
-      str[i<<1]=HEXA[(bs->data[i]>>4)&0xF];
-      str[(i<<1)+1]=HEXA[bs->data[i]&0xF];
+      a_strpushback(dest,HEXA[(bs->data[i]>>4)&0xF]);
+      a_strpushback(dest,HEXA[bs->data[i]&0xF]);
     }
-    str[i<<1]=0;
   }
   else
   {
-    str=(char *)malloc(bs->len+1);
-
     for (i=0;i<bs->len;i++)
-      str[i]=HEXA[bs->data[i]&0xF];
-    str[i]=0;
+      a_strpushback(dest,HEXA[bs->data[i]&0xF]);
   }
-  return str;
 }
 
 int x_bytestring_set(bytestring_t *bs, int index, unsigned char v)
@@ -722,15 +732,14 @@ int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
   return BYTESTRING_OK;
 }
 
-char *bytestring_to_alloc_string_integer(const bytestring_t *bs)
+void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
 {
   bytestring_t *src;
   bytestring_t *b10;
   int i;
-  char *ret;
 
   if (bs->len==0)
-    return strdup("0");
+    return;
   
   src = bytestring_new(8);
   b10 = bytestring_new(8);
@@ -741,15 +750,54 @@ char *bytestring_to_alloc_string_integer(const bytestring_t *bs)
   for (i=0;i<src->len;i++)
     x_bytestring_decimal_mul256_add(b10,src->data[i]);
   
-  ret=(char *)malloc(b10->len+1);
   for (i=0;i<b10->len;i++)
-    ret[i]=b10->data[b10->len-1-i]+'0';
-  ret[i]=0;
+    a_strpushback(dest,b10->data[b10->len-1-i]+'0');
   
   bytestring_free(src);
   bytestring_free(b10);
-  return ret;
 }
+
+char *bytestring_to_format(const char *format, const bytestring_t *bs)
+{
+  char tmp[10];
+  a_string_t *s=a_strnew(NULL);
+
+  while (*format)
+  {
+    if (*format!='%')
+      a_strpushback(s,*format);
+    else
+    {
+      format++;
+      switch (*format) {
+	case '%': a_strpushback(s,'%'); 
+		  break;
+	case 'I': x_bytestring_append_as_integer(s,bs);
+		  break;
+	case 'D': x_bytestring_append_as_digits(s,bs);
+		  break;
+	case 'S': a_strpushback(s,'0'+bs->width);
+		  a_strpushback(s,':');
+		  x_bytestring_append_as_digits(s,bs);
+		  break;
+	case 'w': a_strpushback(s,'0'+bs->width);
+		  break;
+	case 'P': x_bytestring_append_as_printable(s,bs);
+		  break;
+	case 'l': sprintf(tmp,"%i",bs->len);
+		  a_strcat(s,tmp);
+		  break;
+	case 0:	  goto end_this_function;
+	default:  log_printf(LOG_WARNING,"bytestring_to_format() does not recognize %%%c as a format identifier",*format);
+      }
+    }
+    format++;
+  } 
+
+end_this_function:
+  return a_strfinalize(s);
+}
+
 
 double bytestring_to_number(const bytestring_t *bs)
 {
@@ -783,23 +831,3 @@ void bytestring_free(bytestring_t *bs)
 }
 
 
-#ifdef BYTESTRING_TEST
-#include <stdio.h>
-int main()
-{
-  bytestring_t *bs;
-  bytestring_t *bb;
-
-  bs=bytestring_new_from_string(1,"0101");
-  bb=bytestring_new(8);
-
-  bytestring_pad_right(bs,32,1);
-  printf("%d:%s\n",bytestring_get_size(bs),bytestring_to_alloc_string(bs));
-  bytestring_convert(bb,bs);
-  bytestring_invert(bb);
-  printf("%d:%s\n",bytestring_get_size(bb),bytestring_to_alloc_string(bb));
-  bytestring_free(bs);
-
-  return 0;
-}
-#endif

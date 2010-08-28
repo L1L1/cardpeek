@@ -175,7 +175,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   }
 
 
-  tmp = bytestring_to_alloc_string(command);
+  tmp = bytestring_to_format("%D",command);
   if (strlen(tmp)>37)
     strcpy(tmp+32,"(...)");
   log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
@@ -190,7 +190,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
   SW1 = (reader->sw>>8)&0xFF;
   SW2 = reader->sw&0xFF;
 
-  tmp = bytestring_to_alloc_string(result);
+  tmp = bytestring_to_format("%D",result);
   if (strlen(tmp)>37)
     strcpy(tmp+32,"(...)");
   log_printf(LOG_INFO,"Recv: %04X %s [%s]", reader->sw, tmp, iso7816_stringify_sw(reader->sw));
@@ -210,7 +210,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
   while (SW1==0x61) /* use Get Response */
   {
-    get_response = bytestring_new_from_string(8,"00C0000000");
+    get_response = bytestring_new_from_string("8:00C0000000");
     tmp_response = bytestring_new(8);
 
     bytestring_set_element(get_response,4,SW2);

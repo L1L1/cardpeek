@@ -244,15 +244,15 @@ int cardemul_save_to_file(const cardemul_t* ce, const char *filename)
   {
     if (cur.any->type==CARDEMUL_COMMAND)
     {
-      a = bytestring_to_alloc_string(cur.com->query);
-      b = bytestring_to_alloc_string(cur.com->response);
+      a = bytestring_to_format("%D",cur.com->query);
+      b = bytestring_to_format("%D",cur.com->response);
       fprintf(f,"C:%s:%04X:%s\n",a,cur.com->sw,b);
       free(a);
       free(b);
     }
     else /* CARDTREE_RESET */
     {
-      a = bytestring_to_alloc_string(cur.res->atr);
+      a = bytestring_to_format("%D",cur.res->atr);
       fprintf(f,"R:%s\n",a);
       free(a);
     }
@@ -283,6 +283,10 @@ cardemul_t* cardemul_new_from_file(const char *filename)
 
   ce = cardemul_new();
 
+  query = bytestring_new(8);
+  response = bytestring_new(8);
+  atr = bytestring_new(8);
+  
   while ((something_to_read=(fgets(BUF,1024,f)!=NULL)))
   {
     lineno++;
@@ -302,25 +306,26 @@ cardemul_t* cardemul_new_from_file(const char *filename)
 	break;
       *p=0;
       c=p+1;
-      query = bytestring_new_from_string(8,a);
+      bytestring_assign_digit_string(query,a);
       sw = strtol(b,NULL,16);
-      response = bytestring_new_from_string(8,c);
+      bytestring_assign_digit_string(response,c);
       cardemul_add_command(ce,query,sw,response);
-      bytestring_free(query);
-      bytestring_free(response);
     }
     else if (BUF[0]=='R' && BUF[1]==':')
     {
       a=BUF+2;
-      atr = bytestring_new_from_string(8,a);
+      bytestring_assign_digit_string(atr,a);
       cardemul_add_reset(ce,atr);
-      bytestring_free(atr); 
     }
     else if (BUF[0]=='\r' || BUF[0]=='\n')
       continue;
     else
       break;
   }
+  bytestring_free(query);
+  bytestring_free(response);
+  bytestring_free(atr); 
+
   fclose(f);
   if (something_to_read)
   {
@@ -338,37 +343,3 @@ int cardemul_count_records(const cardemul_t* ce)
   return ce->count;
 }
 
-#ifdef EMULATOR_TEST
-int main()
-{
-  int i,j;
-  bytestring_t* query = bytestring_new_from_string(8,"0103");
-  bytestring_t* response = bytestring_new(8);
-  unsigned sw;
-  char *a;
-  char *b;
-
-  cardemul_t* ce = cardemul_new_from_file("test.cpe");
-  /* if (ce) cardemul_save_to_file(ce,"result.cpe"); */
-
-  for (j=0;j<3;j++)
-  {
-    if (j==0)
-      cardemul_run_cold_reset(ce);
-    else
-      cardemul_run_warm_reset(ce);
-    for (i=0;i<10;i++)
-    {
-      bytestring_set_element(query,1,i&3);
-      cardemul_run_command(ce,query,&sw,response);
-      a = bytestring_to_alloc_string(response);
-      b = bytestring_to_alloc_string(query);
-      printf("%s->%04X %s\n",b,sw,a);
-      free(a);
-      free(b);
-    }
-  }
-  if (ce) cardemul_free(ce);
-  return 0;
-}
-#endif

@@ -300,9 +300,9 @@ const char *crypto_stringify_error(crypto_error_t err)
 
 int main()
 {
-  bytestring_t *key = bytestring_new_from_string(8,"0123456789ABCDEF");
+  bytestring_t *key = bytestring_new_from_string("0123456789ABCDEFh");
   bytestring_t *ctx = bytestring_new(8); 
-  bytestring_t *src = bytestring_new_from_string(8,"5468652071756663");
+  bytestring_t *src = bytestring_new_from_string("5468652071756663h");
   bytestring_t *dst = bytestring_new(8);
   bytestring_t *clr = bytestring_new(8);
 

@@ -181,7 +181,7 @@ const bytestring_t* pcsc_last_atr(cardreader_t* cr)
   if (pcsc->status==SCARD_S_SUCCESS)
   {
     bytestring_assign_data(cr->atr,atrlen,pbAtr);
-    tmp = bytestring_to_alloc_string(cr->atr);
+    tmp = bytestring_to_format("%D",cr->atr);
     log_printf(LOG_INFO,"ATR=%s",tmp);
     free(tmp);
   }

@@ -431,9 +431,9 @@ int acg_connect(cardreader_t *cr, unsigned prefered_protocol)
     }
   }
 
-  extra->serial = bytestring_new_from_string(8,response+1);
+  extra->serial = bytestring_new_from_string(response+1);
   /* FIXME should be an append */
-  cr->atr = bytestring_new_from_string(8,"3B 88 80 01");
+  cr->atr = bytestring_new_from_string("3B 88 80 01");
   
   tmp = bytestring_new(8);
   if (bytestring_get_size(extra->serial)>10)
@@ -509,18 +509,17 @@ unsigned short acg_transmit(cardreader_t* cr,
   if (CLA==0xFF)
     return acg_transmit_pcsc_emulation(cr,command,result);
  
-  extended_command = bytestring_new_from_string(8,"00 00 1F 02");
+  extended_command = bytestring_new_from_string("00 1F 02");
   bytestring_append(extended_command,command);
-  bytestring_set_element(extended_command,1,
+  bytestring_set_element(extended_command,0,
 			 bytestring_get_size(extended_command)-3);
 
-  extended_command_string = bytestring_to_alloc_string(extended_command);
-  extended_command_string[1]='t'; /* little lazy hack */
+  extended_command_string = bytestring_to_format("t%D",extended_command);
   bytestring_free(extended_command);
 
   log_printf(LOG_DEBUG,"Sending %s to card",extended_command_string+1);
 
-  if (!serial_send(extra->line,extended_command_string+1))
+  if (!serial_send(extra->line,extended_command_string))
   {
     free(extended_command_string);
     log_printf(LOG_ERROR,"Failed to send command to %s",cr->name);
@@ -550,7 +549,8 @@ unsigned short acg_transmit(cardreader_t* cr,
   }
     
   log_printf(LOG_DEBUG,"Receiving %s from card",extended_result_string);
-  extended_result = bytestring_new_from_string(8,extended_result_string);
+  extended_result = bytestring_new(8);
+  bytestring_assign_digit_string(extended_result,extended_result_string);
   bytestring_substr(result,2,BYTESTRING_NPOS,extended_result);
   bytestring_free(extended_result);
   res_len = bytestring_get_size(result);
@@ -577,7 +577,7 @@ char **acg_get_info(cardreader_t* cr, char** parent)
   while (parent[parent_size]) parent_size++;
   res = realloc(parent,(parent_size+7)*sizeof(char*));
   res[parent_size]  =strdup("TagSerial");
-  res[parent_size+1]=bytestring_to_alloc_string(extra->serial);
+  res[parent_size+1]=bytestring_to_format("%D",extra->serial);
   res[parent_size+2]=strdup("ReaderVersion");
   res[parent_size+3]=strdup(extra->reader_version_string);
   res[parent_size+4]=strdup("TagType");

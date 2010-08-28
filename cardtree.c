@@ -31,6 +31,9 @@
 #include "misc.h"
 #include "cardtree.h"
 
+#define FG_COLOR1 "#2F2F7F"
+#define FG_COLOR2 "#2F2FFF"
+
 void cardtree_clear_tmpstr(cardtree_t* ct) 
 /* internal */
 { 
@@ -132,24 +135,36 @@ void cardtree_create_markup_name_id(cardtree_t* ct, GtkTreeIter* iter)
   a_strfree(markup_name_id);
 }
 
-char *cardtree_create_markup_text(const char* src, int full, const char *color)
+char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
 {
   a_string_t *markup_value;
-  int i,len,max;
+  int i,len,max,offset;
+
+  len=strlen(src);
+
+  if (is_bytes && len>2 && src[1]==':')
+  {
+    offset=2;
+  }
+  else
+  {
+    is_bytes=0;
+    offset=0;
+  }
 
   markup_value   = a_strnew(NULL);
-  if (color)
-    a_sprintf(markup_value,"<span foreground=\"%s\">",color);
+  if (!is_bytes)
+    a_sprintf(markup_value,"<span foreground=\"%s\">",FG_COLOR1);
   a_strcat(markup_value,"<tt>");
+  
   i=0;
-  len=strlen(src);
   if (full)
     max=len;
   else
-    max=(256<len?256:len);
-  while (i<max)
+    max=((256+offset)<len?(256+offset):len);
+  while (i+offset<max)
   {
-    switch (src[i]) {
+    switch (src[i+offset]) {
       case '<': 
 	a_strcat(markup_value,"&lt;"); break;
       case '>':
@@ -157,7 +172,7 @@ char *cardtree_create_markup_text(const char* src, int full, const char *color)
       case '&':
 	a_strcat(markup_value,"&amp;"); break;
       default:
-	a_strpushback(markup_value,src[i]);
+	a_strpushback(markup_value,src[i+offset]);
     }
     i++;
     if (((i%64)==0) && (i+1<len)) a_strpushback(markup_value,'\n');
@@ -165,9 +180,21 @@ char *cardtree_create_markup_text(const char* src, int full, const char *color)
   a_strcat(markup_value,"</tt>");
   if (len>256 && !full) a_strcat(markup_value,"<b>[...]</b>");
 
-  if (color)
+  if (!is_bytes)
     a_strcat(markup_value,"</span>");
-  return a_strfinalize(markup_value);
+  else
+  {
+    switch(src[0]) {
+	case '8': a_strcat(markup_value,"<span foreground=\"" FG_COLOR2 "\">h</span>"); 
+		  break;
+	case '4': a_strcat(markup_value,"<span foreground=\"" FG_COLOR2 "\">q</span>"); 
+	          break;
+	case '1': a_strcat(markup_value,"<span foreground=\"" FG_COLOR2 "\">b</span>"); 
+ 		  break;
+    }
+  }
+
+ return a_strfinalize(markup_value);
 }
 
 void cardtree_create_markup_value(cardtree_t* ct, GtkTreeIter* iter)
@@ -183,7 +210,7 @@ void cardtree_create_markup_value(cardtree_t* ct, GtkTreeIter* iter)
 
   if (value)  
   {
-    markup = cardtree_create_markup_text(value,flags&1,NULL);
+    markup = cardtree_create_markup_text(value,flags&1,1);
     gtk_tree_store_set (ct->_store, iter,
 			C_MARKUP_VALUE, markup,
 			-1);
@@ -203,7 +230,8 @@ void cardtree_create_markup_alt_value(cardtree_t* ct, GtkTreeIter* iter)
   char *markup;
   unsigned flags;
   char *value;
-  char *color="#2F2F7F";
+  char *color;
+  int is_bytes;
 
   gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
 		     C_ALT_VALUE, &value,
@@ -216,11 +244,17 @@ void cardtree_create_markup_alt_value(cardtree_t* ct, GtkTreeIter* iter)
 		       C_VALUE, &value,
 		       -1);
     color=NULL;
+    is_bytes=1;
+  }
+  else
+  {
+    color="#2F2F7F";
+    is_bytes=0;
   }
 
   if (value)  
   {
-    markup = cardtree_create_markup_text(value,flags&1,color);
+    markup = cardtree_create_markup_text(value,flags&1,is_bytes);
     gtk_tree_store_set (ct->_store, iter,
 			C_MARKUP_ALT_VALUE, markup,
 			-1);

@@ -62,7 +62,7 @@ void logstring_default(int level, const char *str)
 int log_printf(int level, const char *format, ...)
 {
   va_list al;
-  char *buf;
+  char *buf=NULL;
   unsigned len_buf;
 
   va_start(al,format);
@@ -138,6 +138,7 @@ a_string_t* a_strnnew(unsigned n, const char* str)
     cs->_alloc=8;
     cs->_size=0;
     cs->_data=(char *)malloc(8);
+    cs->_data[0]=0;
   }
   return cs;
 }

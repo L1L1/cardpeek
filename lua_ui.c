@@ -144,7 +144,7 @@ int subr_ui_tree_set_value(lua_State* L)
   else
   {
     bs = luaL_checkbytestring(L,2);
-    value = bytestring_to_alloc_string(bs);
+    value = bytestring_to_format("%S",bs);
   }
 
   if (cardtree_set_value(CARDTREE,path,value))
@@ -165,7 +165,7 @@ int subr_ui_tree_get_value(lua_State* L)
   
   if (cardtree_get_value(CARDTREE,path,&value))
   {
-    lua_pushbytestring(L,bytestring_new_from_string(8,value));
+    lua_pushbytestring(L,bytestring_new_from_string(value));
     g_free(value);
   }
   else

@@ -96,7 +96,8 @@ bytestring_t* x_bytes_create(lua_State *L, unsigned width, int start, int end)
   {
     switch (lua_type(L,p)) {
       case LUA_TSTRING:
-	tmp = bytestring_new_from_string(bs->width,lua_tostring(L,p));
+	tmp = bytestring_new(width);
+	bytestring_assign_digit_string(tmp,lua_tostring(L,p));
 	bytestring_append(bs,tmp);
 	bytestring_free(tmp);
 	break;
@@ -257,7 +258,17 @@ static int subr_bytes_gc(lua_State *L)
 static int subr_bytes_tostring(lua_State *L) 
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  char *s=bytestring_to_alloc_string(bs);
+  char *s=bytestring_to_format("%D",bs);
+  lua_pushstring(L,s);
+  free(s);
+  return 1;
+}
+
+static int subr_bytes_format(lua_State *L)
+{
+  const char *format = lua_tostring(L,1);
+  bytestring_t *bs = luaL_checkbytestring(L,2);
+  char *s=bytestring_to_format(format,bs);
   lua_pushstring(L,s);
   free(s);
   return 1;
@@ -356,16 +367,17 @@ static int subr_bytes_is_printable(lua_State *L)
   return 1;
 }
 
+/*
 static int subr_bytes_to_printable(lua_State *L)
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  char *ret=bytestring_to_alloc_printable(bs);
+  char *ret=bytestring_to_format("%P",bs);
   
   lua_pushstring(L,ret);
   free(ret);
   return 1;
 }
-
+*/
 
 static int subr_bytes_convert(lua_State *L)
 {
@@ -417,9 +429,10 @@ static const struct luaL_reg byteslib [] = {
   {"width",subr_bytes_width},
   {"maxn",subr_bytes_maxn},
   {"is_printable",subr_bytes_is_printable},
-  {"toprintable",subr_bytes_to_printable},
+/*  {"toprintable",subr_bytes_to_printable}, */
   {"convert",subr_bytes_convert},
   {"tonumber",subr_bytes_to_number},
+  {"format",subr_bytes_format},
   {NULL, NULL}
 };
 

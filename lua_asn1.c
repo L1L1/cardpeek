@@ -128,7 +128,7 @@ int subr_asn1_join(lua_State* L)
 {
   unsigned tag;
   bytestring_t *value;
-  bytestring_t *tail;
+  bytestring_t *tail = NULL;
   bytestring_t *tlv = bytestring_new(8);
   int clear_value=0;
   int clear_tail=0;
@@ -140,8 +140,9 @@ int subr_asn1_join(lua_State* L)
   {
     if (lua_type(L,2)==LUA_TSTRING)
     {
-      value = bytestring_new_from_string(8,lua_tostring(L,2));
-      clear_value = (value!=NULL);
+      value = bytestring_new(8);
+      bytestring_assign_digit_string(value,lua_tostring(L,2));
+      clear_value = 1;
     }
     else
       value = luaL_checkbytestring(L,2);
@@ -153,8 +154,9 @@ int subr_asn1_join(lua_State* L)
   {
     if (lua_type(L,3)==LUA_TSTRING)
     {
-      tail = bytestring_new_from_string(8,lua_tostring(L,3));
-      clear_tail = (tail!=NULL);
+      tail = bytestring_new(8);
+      bytestring_assign_digit_string(tail,lua_tostring(L,3));
+      clear_tail = 1;
     }
     else
       tail = luaL_checkbytestring(L,3);

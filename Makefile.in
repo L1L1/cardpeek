@@ -47,7 +47,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
-	"$(DESTDIR)$(docdir)"
+	"$(DESTDIR)$(desktopdir)" "$(DESTDIR)$(docdir)" \
+	"$(DESTDIR)$(iconsdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_cardpeek_OBJECTS = asn1.$(OBJEXT) attributes.$(OBJEXT) \
@@ -77,8 +78,10 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+desktopDATA_INSTALL = $(INSTALL_DATA)
 docDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(doc_DATA)
+iconsDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(desktop_DATA) $(doc_DATA) $(icons_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -194,7 +197,11 @@ cardpeek_LDADD = dot_cardpeek.$(OBJEXT)
 dist_man_MANS = cardpeek.1
 DRIVERS = drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 CLEANFILES = icons.c doc/*.log doc/*.aux dot_cardpeek.tar.gz
-EXTRA_DIST = script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics/ update_dot_cardpeek_dir.sh script_version.h
+EXTRA_DIST = script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
+desktopdir = $(datadir)/applications
+desktop_DATA = cardpeek.desktop
+iconsdir = $(datadir)/icons/hicolor/48x48/
+icons_DATA = icons/cardpeek.png
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -362,6 +369,23 @@ uninstall-man1:
 	  echo " rm -f '$(DESTDIR)$(man1dir)/$$inst'"; \
 	  rm -f "$(DESTDIR)$(man1dir)/$$inst"; \
 	done
+install-desktopDATA: $(desktop_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(desktopdir)" || $(MKDIR_P) "$(DESTDIR)$(desktopdir)"
+	@list='$(desktop_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(desktopDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(desktopdir)/$$f'"; \
+	  $(desktopDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(desktopdir)/$$f"; \
+	done
+
+uninstall-desktopDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(desktop_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(desktopdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(desktopdir)/$$f"; \
+	done
 install-docDATA: $(doc_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(docdir)" || $(MKDIR_P) "$(DESTDIR)$(docdir)"
@@ -378,6 +402,23 @@ uninstall-docDATA:
 	  f=$(am__strip_dir) \
 	  echo " rm -f '$(DESTDIR)$(docdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(docdir)/$$f"; \
+	done
+install-iconsDATA: $(icons_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(iconsdir)" || $(MKDIR_P) "$(DESTDIR)$(iconsdir)"
+	@list='$(icons_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(iconsDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(iconsdir)/$$f'"; \
+	  $(iconsDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(iconsdir)/$$f"; \
+	done
+
+uninstall-iconsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(icons_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(iconsdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(iconsdir)/$$f"; \
 	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -565,7 +606,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(MANS) $(DATA) config.h
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(desktopdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(iconsdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -614,7 +655,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-docDATA install-man
+install-data-am: install-desktopDATA install-docDATA install-iconsDATA \
+	install-man
 
 install-dvi: install-dvi-am
 
@@ -651,7 +693,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-docDATA uninstall-man
+uninstall-am: uninstall-binPROGRAMS uninstall-desktopDATA \
+	uninstall-docDATA uninstall-iconsDATA uninstall-man
 
 uninstall-man: uninstall-man1
 
@@ -664,15 +707,17 @@ uninstall-man: uninstall-man1
 	distclean-hdr distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
 	install install-am install-binPROGRAMS install-data \
-	install-data-am install-docDATA install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-man1 \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-docDATA uninstall-man uninstall-man1
+	install-data-am install-desktopDATA install-docDATA \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-iconsDATA install-info \
+	install-info-am install-man install-man1 install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-desktopDATA \
+	uninstall-docDATA uninstall-iconsDATA uninstall-man \
+	uninstall-man1
 
 
 dist-hook:
@@ -693,6 +738,7 @@ icons.c:		icons/
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
+			$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
 			touch gui.c
 
 gui.$(OBJEXT):		gui.c gui.h icons.c

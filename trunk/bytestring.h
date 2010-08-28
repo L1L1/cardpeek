@@ -36,23 +36,36 @@ enum {
   BYTESTRING_NPOS=0x7FFFFFFF
 };
 
+/* constructors */
+
 int bytestring_init(bytestring_t *bs, unsigned element_width);
 
 bytestring_t* bytestring_new(unsigned element_width);
-bytestring_t* bytestring_new_from_string(unsigned element_width, const char *str);
+
+bytestring_t* bytestring_new_from_string(const char *str);
+
 bytestring_t* bytestring_duplicate(const bytestring_t *bs);
+
+/* assign */
 
 int bytestring_assign_data(bytestring_t* bs, 
 			   unsigned len, const unsigned char *data);
 int bytestring_assign_element(bytestring_t* bs, 
 			      unsigned len, unsigned char c);
-int bytestring_assign_from_string(bytestring_t* bs,
-				  const char* str);
+int bytestring_assign_digit_string(bytestring_t* bs,
+				   const char* str);
+
+/* copy */
 
 int bytestring_copy(bytestring_t *bs, 
 		    const bytestring_t *src);
+
+/* convert */
+
 int bytestring_convert(bytestring_t *bs,
 		       const bytestring_t *src);
+
+/* append data */
 
 int bytestring_append(bytestring_t *bs, 
 		      const bytestring_t *extra);
@@ -64,6 +77,8 @@ int bytestring_append_element(bytestring_t* bs,
 int bytestring_pushback(bytestring_t *bs, 
 			unsigned char c);
 
+/* accessors */
+
 int bytestring_set_element(const bytestring_t *bs,
 			   int pos, unsigned char element);
 
@@ -72,21 +87,30 @@ int bytestring_get_element(unsigned char* element,
 			   const bytestring_t *bs, 
 			   int pos);
 
+const unsigned char *bytestring_get_data(const bytestring_t *bs);
+
+/* invert */
+
 int bytestring_invert(bytestring_t *bs);
+
+/* clear */
 
 void bytestring_clear(bytestring_t *bs);
 
-const unsigned char *bytestring_get_data(const bytestring_t *bs);
 
 int bytestring_erase(bytestring_t *bs, 
 		     unsigned pos, 
 		     unsigned len);
+
+/* tests */
 
 int bytestring_is_equal(const bytestring_t *a, const bytestring_t *b);
 
 int bytestring_is_empty(const bytestring_t *bs);
 
 int bytestring_is_printable(const bytestring_t *bs);
+
+/* insertion */
 
 int bytestring_insert_data(bytestring_t *bs, 
 			   unsigned pos, 
@@ -104,27 +128,30 @@ int bytestring_pad_left(bytestring_t *bs,
 int bytestring_pad_right(bytestring_t *bs,
 			 unsigned block_size, unsigned char c);
 
+/* get size / resize */
+
 int bytestring_resize(bytestring_t *bs, unsigned len);
+
 unsigned bytestring_get_size(const bytestring_t *bs);
+
+/* substring */
 
 int bytestring_substr(bytestring_t *dst,
 		      unsigned pos, unsigned len,
 		      const bytestring_t* src);
 
-char *bytestring_to_alloc_printable(const bytestring_t *bs);
+/* conversion to other types */
 
-char *bytestring_to_alloc_string(const bytestring_t *bs);
-
-char *bytestring_to_alloc_string_integer(const bytestring_t *bs);
+char *bytestring_to_format(const char *format, const bytestring_t *bs);
 
 double bytestring_to_number(const bytestring_t *bs);
+
+/* destructors */
 
 void bytestring_release(bytestring_t *bs);
 
 void bytestring_free(bytestring_t *bs);
 
-
-/* unsigned subbitstr(unsigned bpos, unsigned blen) const; */
 
 #endif
 

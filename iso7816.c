@@ -139,7 +139,7 @@ int iso7816_make_file_path(bytestring_t* file_path,
     else if (path[1]=='/')
     {
       *path_type=9; /* 9 => SELECT FROM CURRENT DF */
-      bytestring_assign_from_string(file_path,path+2);
+      bytestring_assign_digit_string(file_path,path+2);
       return ISO7816_OK;
     }
     else if (is_hex4(path+1))
@@ -147,13 +147,13 @@ int iso7816_make_file_path(bytestring_t* file_path,
       if (path[5]=='/' && path_len==6) 
       {
 	*path_type=1;
-	bytestring_assign_from_string(file_path,path+1);
+	bytestring_assign_digit_string(file_path,path+1);
 	return ISO7816_OK;
       }
       else if (path_len==5)
       {
 	*path_type=2;
-	bytestring_assign_from_string(file_path,path+1);
+	bytestring_assign_digit_string(file_path,path+1);
         return ISO7816_OK;
       }
     }
@@ -163,7 +163,7 @@ int iso7816_make_file_path(bytestring_t* file_path,
     if (path_len==5)
     {
       *path_type=0;
-      bytestring_assign_from_string(file_path,path+1);
+      bytestring_assign_digit_string(file_path,path+1);
       return ISO7816_OK;
     }
     else if (path_len==1)
@@ -174,14 +174,14 @@ int iso7816_make_file_path(bytestring_t* file_path,
     else
     {
       *path_type=4;
-      bytestring_assign_from_string(file_path,path+1);
+      bytestring_assign_digit_string(file_path,path+1);
       return ISO7816_OK;
     }
   }
   else if (path[0]=='/' && is_hex4(path+1)) 
   {
     *path_type=8; /* 8 => SELECT FROM MF */
-    bytestring_assign_from_string(file_path,path+1);
+    bytestring_assign_digit_string(file_path,path+1);
     return ISO7816_OK;
   }
   return ISO7816_ERROR;

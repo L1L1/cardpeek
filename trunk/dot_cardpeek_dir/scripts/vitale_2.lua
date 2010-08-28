@@ -20,7 +20,7 @@
 require('lib.tlv')
 
 function ui_parse_asciidate(node,data)
-	local d = bytes.toprintable(data)
+	local d = bytes.format("%P",data)
 	local t = os.time( { ['year']  = string.sub(d,1,4),
 	      	   	     ['month'] = string.sub(d,5,6),
 	      		     ['day']   = string.sub(d,7,8) } )
@@ -99,7 +99,7 @@ function create_card_map()
 	  if tag==0x80 then
 	     entry = tostring(bytes.sub(val,8,9))
 	     file  = "."..tostring(bytes.sub(val,10,11))
-	     name  = bytes.toprintable(bytes.sub(val,0,7))
+	     name  = bytes.format("%P",bytes.sub(val,0,7))
 	     table.insert(map[entry]['files'],{ ['name']=name, ['ef']=file })
 	  end
 	until rest==nil or tag==0

@@ -37,6 +37,11 @@ end
 -- a bytestring. These function return true upon success and false
 -- otherwise.
 
+function ui_parse_digits(node,data)
+	ui.tree_set_value(node,data)
+	ui.tree_set_alt_value(node,bytes.format("%D",data))
+end
+
 function ui_parse_number(node,data)
 	ui.tree_set_value(node,data)
 	ui.tree_set_alt_value(node,bytes.tonumber(data))
@@ -78,7 +83,9 @@ end
 function ui_parse_printable(node,data)
 	ui.tree_set_value(node,data)
 	if bytes.is_printable(data) then
-		ui.tree_set_alt_value(node,bytes.toprintable(data))
+		ui.tree_set_alt_value(node,bytes.format("%P",data))
+	else 
+		ui.tree_set_alt_value(node,bytes.format("%P (%D)",data))
 	end
 	return true
 end
@@ -133,8 +140,8 @@ ISO_7816_IDO = {
    ['57'] = {"Track 2 Equivalent Data" },
    ['58'] = {"Track 3 Equivalent Data" },
    ['59'] = {"Card expiration date" },
-   ['5A'] = {"Application PAN" },
-   ['5B'] = {"Name" },
+   ['5A'] = {"Application PAN", ui_parse_digits },
+   ['5B'] = {"Name", ui_parse_printable },
    ['5C'] = {"Tag list" },
    ['5D'] = {"Tag length list" },
    ['5E'] = {"Log-in data" },

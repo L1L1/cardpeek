@@ -22,439 +22,178 @@
 -- This work is based on:
 -- * public information about the calypso card specification, 
 -- * partial information found on the web about the ticketing data 
---   format, as described in the French "intertitre" documentation.
+--   format, as described in the French "intercode" documentation.
 -- * experimentation and guesses, 
 -- This information is incomplete. If you have further data, such 
--- as details of ISO 1543 or calypso card specs, please help send them
+-- as details of ISO 1545 or calypso card specs, please help send them
 -- to L1L1@gmx.com
 --------------------------------------------------------------------------
 
 CARD = 0
 card.CLA=0x94 -- Class for navigo cards
-sel_method = "."
+
+SEL_BY_PATH = 1
+SEL_BY_LFI  = 2
+sel_method  = SEL_BY_LFI
 
 require('lib.strict')
 require('lib.country_codes')
 
+function bytes.is_all(bs,byte)
+	local i
+	if #bs==0 then return false end
+	for i=0,#bs-1 do
+		if bs[i]~=byte then return false end
+	end
+	return true
+end
+
+
 LFI_LIST = {
-  ["0002"] = "ICC",
-  ["0003"] = "ID",
-  ["2001"] = "Environment",
-  ["2010"] = "Event logs",
-  ["2020"] = "Contracts",
-  ["2040"] = "Special events",
-  ["2050"] = "Contract list",
-  ["2069"] = "Counters"
+  { "ICC",              "/0002",      "file" },
+  { "ID",               "/0003",      "file" },
+  { "Ticketing",        "/2000",      "application" },
+  { "Environment",      "/2000/2001", "file" },
+  { "Holder",           "/2000/2002", "file" }, 
+  { "Event logs",       "/2000/2010", "file" },
+  { "Contracts",        "/2000/2020", "file" },
+  { "Counters",         "/2000/202A", "file" },
+  { "Counters",         "/2000/202B", "file" },
+  { "Counters",         "/2000/202C", "file" },
+  { "Counters",         "/2000/202D", "file" },
+  { "Counters",         "/2000/202E", "file" },
+  { "Counters",         "/2000/202F", "file" },
+  { "Counters",         "/2000/2060", "file" },
+  { "Counters",         "/2000/2061", "file" },
+  { "Counters",         "/2000/2062", "file" },
+--  { "Contracts", "/2000/2030" }, -- this is a copy of 0x2050
+  { "Special events",   "/2000/2040", "file" },
+  { "Contract list",    "/2000/2050", "file" },
+  { "Counters",         "/2000/2069", "file" },
+  { "Holder Extended",  "/3F1C",      "file" }
 }
 
-en1543_BITMAP = 1
-en1543_ITEM = 2
-en1543_DATE = 3
-en1543_TIME = 4
-en1543_NUMBER = 5
-en1543_REPEAT = 6
-en1543_NETWORKID = 7
+function calypso_select(ctx,desc,path,type)
+	local path_parsed = card.make_file_path(path)
+	local lfi = bytes.sub(path_parsed,-2)
+	local resp, sw
+	local r,item
+	local PARENT_REF=ctx
+	local FILE_REF=nil
 
-en1543_BestContracts = {
-  [0] = { en1543_REPEAT, 4, "BestContractCount", {
-    [0] = { en1543_BITMAP, 3, "BestContract", {
-      [0] = { en1543_NETWORKID, 24, "BestContractsNetworkId" },
-      [1] = { en1543_ITEM, 16, "BestContractsTariff" },
-      [2] = { en1543_ITEM, 5, "BestContractsPointer" }
-    }}
-  }}
-}
-
-en1543_Env = {
-  [0] = { en1543_ITEM, 6, "EnvVersionNumber" },
-  [1] = { en1543_BITMAP, 7, "Env",{
-    [0] = { en1543_NETWORKID, 24, "EnvNetworkId" },
-    [1] = { en1543_ITEM, 8, "EnvApplicationIssuerId" },
-    [2] = { en1543_DATE, 14, "EnvApplicationValidityEndDate" },
-    [3] = { en1543_ITEM, 11, "EnvPayMethod" },
-    [4] = { en1543_ITEM, 16, "EnvAuthenticator" },
-    [5] = { en1543_ITEM, 32, "EnvSelectList" },
-    [6] = { en1543_ITEM, 2, "EnvData",
-      [0] = { en1543_ITEM, 1, "EnvCardStatus" },
-      [1] = { en1543_ITEM, 0, "EnvExtra" },
-    }}
-  }
-}
-
-en1543_Holder = {
-  [0] = { en1543_BITMAP, 8, "Holder", {
-    [0] = { en1543_BITMAP, 2, "HolderName", {
-      [0] = { en1543_ITEM, 85, "HolderSurname" },
-      [1] = { en1543_ITEM, 85, "HolderForename" }
-    }},
-    [1] = { en1543_BITMAP, 2, "HolderBirth", {
-      [0] = { en1543_ITEM, 32, "HolderBirthDate" },
-      [1] = { en1543_ITEM, 115, "HolderBirthPlace"}
-    }},
-    [2] = { en1543_ITEM, 85, "HolderBirthName" },
-    [3] = { en1543_ITEM, 32, "HolderIdNumber" },
-    [4] = { en1543_ITEM, 24, "HolderCountryAlpha" },
-    [5] = { en1543_ITEM, 32, "HolderCompany" },
-    [6] = { en1543_REPEAT, 4, "HolderProfiles(0..4)", {
-      [0] = { en1543_BITMAP, 3, "Profile", {
-      	[0] = { en1543_ITEM, 24, "NetworkId" },
-	[1] = { en1543_ITEM, 8, "ProfileNumber" },
-	[2] = { en1543_DATE, 14, "ProfileDate" }
-	}}
-    }},
-    [7] = { en1543_BITMAP, 12, "HolderData", {
-      [0] = { en1543_ITEM, 4, "HolderDataCardStatus" },
-      [1] = { en1543_ITEM, 4, "HolderDataTeleReglement" },
-      [2] = { en1543_ITEM, 17, "HolderDataResidence" },
-      [3] = { en1543_ITEM, 6, "HolderDataCommercialID" },
-      [4] = { en1543_ITEM, 17, "HolderDataWorkPlace" },
-      [5] = { en1543_ITEM, 17, "HolderDataStudyPlace" },
-      [6] = { en1543_ITEM, 16, "HolderDataSaleDevice" },
-      [7] = { en1543_ITEM, 16, "HolderDataAuthenticator" },
-      [8] = { en1543_ITEM, 14, "HolderDataProfileStartDate1" },
-      [9] = { en1543_ITEM, 14, "HolderDataProfileStartDate2" },
-      [10] = { en1543_ITEM, 14, "HolderDataProfileStartDate3" },
-      [11] = { en1543_ITEM, 14, "HolderDataProfileStartDate4" }
-    }}
-  }}
-}
-
-en1543_Contract = {
-  [0] = { en1543_BITMAP, 20, "Contract",
-    {
-      [0] = { en1543_NETWORKID, 24, "ContractNetworkId" },
-      [1] = { en1543_ITEM,  8, "ContractProvider" },
-      [2] = { en1543_ITEM, 16, "ContractTariff" },
-      [3] = { en1543_ITEM, 32, "ContractSerialNumber" },
-      [4] = { en1543_BITMAP,  2, "ContractCustomerInfo", {
-	[0] = { en1543_ITEM,  6, "ContractCustomerProfile" },
-	[1] = { en1543_ITEM, 32, "ContractCustomerNumber" },
-      }},
-      [5] = { en1543_BITMAP,  2, "ContractPassengerInfo", {
-	[0] = { en1543_ITEM,  6, "ContractPassengerClass" },
-	[1] = { en1543_ITEM, 32, "ContractPassengerTotal" },
-      }},
-      [6] = { en1543_ITEM, 6, "ContractVehiculeClassAllowed" },
-      [7] = { en1543_ITEM, 32, "ContractPaymentPointer" },
-      [8] = { en1543_ITEM, 11, "ContractPayMethod" },
-      [9] = { en1543_ITEM, 16, "ContractServices" },
-      [10] = { en1543_NUMBER, 16, "ContractPriceAmount" },
-      [11] = { en1543_ITEM, 16, "ContractPriceUnit" },
-      [12] = { en1543_BITMAP, 7, "ContractContractRestriction", {
-	[0] = { en1543_TIME, 11, "ContractStartTime" },
-	[1] = { en1543_TIME, 11, "ContractEndTime" },
-	[2] = { en1543_ITEM, 8, "ContractRestrictDay" },
-	[3] = { en1543_ITEM, 8, "ContractRestrictTimeCode" },
-	[4] = { en1543_ITEM, 8, "ContractRestrictCode" },
-	[5] = { en1543_ITEM, 16, "ContractRestrictProduct" },
-	[6] = { en1543_ITEM, 16, "ContractRestrcitLocation" },
-      }},
-      [13] = { en1543_BITMAP, 9, "ContractContractValidityInfo", {
-	[0] = { en1543_DATE, 14, "ContractStartDate" },
-	[1] = { en1543_TIME, 11, "ContractStartTime" },
-	[2] = { en1543_DATE, 14, "ContractEndDate" },
-	[3] = { en1543_TIME, 11, "ContractEndTime" },
-	[4] = { en1543_ITEM, 8, "ContractDuration" },
-	[5] = { en1543_DATE, 14, "ContractLimitDate" },
-	[6] = { en1543_ITEM, 8, "ContractZones" },
-	[7] = { en1543_ITEM, 16, "ContractJourneys" },
-	[8] = { en1543_ITEM, 16, "ContractPeriodJourneys" },
-      }},
-      [14] = { en1543_BITMAP, 8, "ContractContractJourneyData", {
-	[0] = { en1543_ITEM, 16, "ContractOrigin" },
-	[1] = { en1543_ITEM, 16, "ContractDestination" },
-	[2] = { en1543_ITEM, 16, "ContractRouteNumbers" },
-	[3] = { en1543_ITEM, 8, "ContractRouteVariants" },
-	[4] = { en1543_ITEM, 16, "ContractRun" },
-	[5] = { en1543_ITEM, 16, "ContractVia" },
-	[6] = { en1543_ITEM, 16, "ContractDistance" },
-	[7] = { en1543_ITEM, 8, "ContractInterchange" },
-      }},
-      [15] = { en1543_BITMAP, 4, "ContractContractSaleData", {
-	[0] = { en1543_DATE, 14, "ContractDate" },
-	[1] = { en1543_TIME, 11, "ContractTime" },
-	[2] = { en1543_ITEM, 8, "ContractAgent" },
-	[3] = { en1543_ITEM, 16, "ContractDevice" },
-      }},
-      [16] = { en1543_ITEM, 8, "ContractStatus" },
-      [17] = { en1543_ITEM, 16, "ContractLoyalityPoints" },
-      [18] = { en1543_ITEM, 16, "ContractAuthenticator" },
-      [19] = { en1543_ITEM, 0, "Contract"},
-    }
-  }
-}
-
-en1543_Event = {
-  [0] = { en1543_DATE, 14, "EventDate" },
-  [1] = { en1543_TIME, 11, "EventTime" },
-  [2] = { en1543_BITMAP, 28, "Event",
-    {
-      [0] = { en1543_ITEM,  8, "EventDisplayData" },
-      [1] = { en1543_NETWORKID, 24, "EventNetworkId" },
-      [2] = { en1543_ITEM,  8, "EventCode" },
-      [3] = { en1543_ITEM,  8, "EventResult" },
-      [4] = { en1543_ITEM,  8, "EventServiceProvider" },
-      [5] = { en1543_ITEM,  8, "EventNotOkCounter" },
-      [6] = { en1543_ITEM, 24, "EventSerialNumber" },
-      [7] = { en1543_ITEM, 16, "EventDestination" },
-      [8] = { en1543_ITEM, 16, "EventLocationId" },
-      [9] = { en1543_ITEM,  8, "EventLocationGate" },
-      [10] = { en1543_ITEM, 16, "EventDevice" },
-      [11] = { en1543_NUMBER, 16, "EventRouteNumber" },
-      [12] = { en1543_ITEM,  8, "EventRouteVariant" },
-      [13] = { en1543_ITEM, 16, "EventJourneyRun" },
-      [14] = { en1543_ITEM, 16, "EventVehiculeId" },
-      [15] = { en1543_ITEM,  8, "EventVehiculeClass" },
-      [16] = { en1543_ITEM,  5, "EventLocationType" },
-      [17] = { en1543_ITEM,240, "EventEmployee" },
-      [18] = { en1543_ITEM, 16, "EventLocationReference" },
-      [19] = { en1543_ITEM,  8, "EventJourneyInterchanges" },
-      [20] = { en1543_ITEM, 16, "EventPeriodJourneys" },
-      [21] = { en1543_ITEM, 16, "EventTotalJourneys" },
-      [22] = { en1543_ITEM, 16, "EventJourneyDistance" },
-      [23] = { en1543_NUMBER, 16, "EventPriceAmount" },
-      [24] = { en1543_ITEM, 16, "EventPriceUnit" },
-      [25] = { en1543_ITEM,  5, "EventContractPointer" },
-      [26] = { en1543_ITEM, 16, "EventAuthenticator" },
-      [27] = { en1543_ITEM,  5, "EventBitmapExtra" },
-    }
-  }
-}
-EPOCH = 852073200
-
-date_days = 0
-function en1543_date(source, position)
-	local part =  bytes.sub(source, position, position+13) -- 14 bits
-	bytes.pad_left(part,32,0)
-	date_days = EPOCH+bytes.tonumber(part)*24*3600
-	return os.date("%x",date_days)
-end
-
-function en1543_time(source, position)
-	local date_minutes
-	local part = bytes.sub(source, position, position+10) -- 11 bits
-	bytes.pad_left(part,32,0)
-	date_minutes = date_days + bytes.tonumber(part)*60
-	date_days = 0
-	return os.date("%X",date_minutes)
-end
-
-function en1543_networkid(source, position)
-	local country = bytes.sub(source, position, position+11)
-	local region  = bytes.sub(source, position+12, position+23)
-	local country_code
-	local region_code
-	
-	country_code = iso_country_code_name(tonumber(tostring(bytes.convert(4,country))))
-	region_code  = tonumber(tostring(bytes.convert(4,region)))
-	if region_code then
-	  return "country "..country_code.." / region "..region_code
-	end
-	return "country "..country_code
-end
-
-
-function en1543_parse_item(ctx, format, data, position, reference_index)
-	local parsed = 0
-	local index
-	local NODE
-	local BITMAP_NODE
-	local bitmap_size
-	local hex_info
-	local item
-
-	if format == nil then
-	   return 0
+	if sel_method==SEL_BY_LFI then
+		sw,resp = card.select(bytes.format("#%D",lfi))
+	else
+		sw,resp = card.select(path)
 	end
 
-	parsed = format[2]
-	item = bytes.sub(data,position,position+parsed-1)
-      	NODE = ui.tree_add_node(ctx,format[3],reference_index)
-
-	if format[1] == en1543_BITMAP then
-	   bitmap_size = parsed
-	   parsed = bitmap_size 
-           BITMAP_NODE = ui.tree_add_node(NODE,"("..format[3].."Bitmap)",nil,parsed)
-	   ui.tree_set_value(BITMAP_NODE,item);
-	   for index=0,format[2]-1 do
-	       if data[position+bitmap_size-index-1]~=0 then
-	          parsed = parsed + en1543_parse_item(NODE, format[4][index], data, position+parsed, index)
-	       end
-	   end
-	elseif format[1] == en1543_DATE then
-	   ui.tree_set_value(NODE,item);
-	   ui.tree_set_alt_value(NODE,en1543_date(item,0))
-	elseif format[1] == en1543_TIME then
-	   ui.tree_set_value(NODE,item);
-	   ui.tree_set_alt_value(NODE,en1543_time(item,0)) 
-	elseif format[1] == en1543_NUMBER then
-	   ui.tree_set_value(NODE,item);
-	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
-	elseif format[1] == en1543_NETWORKID then
-	   ui.tree_set_value(NODE,item);
-	   ui.tree_set_alt_value(NODE,en1543_networkid(item,0))
-        elseif format[1] == en1543_REPEAT then
-	   ui.tree_set_value(NODE,item);
-	   ui.tree_set_alt_value(NODE,bytes.tonumber(item))
-           for index=1,bytes.tonumber(item) do
-	       parsed = parsed + en1543_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
-	   end 
-	else 
-	   ui.tree_set_value(NODE,item);
-           hex_info = bytes.convert(8,item)
-	   ui.tree_set_alt_value(NODE,"0x"..tostring(hex_info))
+	if sw==0x9000 then
+		for r=0,(#path_parsed/2)-1 do
+			item = bytes.format("%D",bytes.sub(path_parsed,r*2,r*2+1))
+			FILE_REF = ui.tree_find_node(PARENT_REF,nil,item)
+			if FILE_REF==nil then
+				FILE_REF = ui.tree_add_node(PARENT_REF,
+							    desc,
+							    item,
+							    nil,
+							    type)
+			end
+			PARENT_REF = FILE_REF
+		end
+		return FILE_REF
 	end
-	return parsed
+	return nil
 end
 
-function en1543_parse(ctx, format, data)
-	local index
-	local parsed = 0
-
-	for index=0,#format do
-	    parsed = parsed + en1543_parse_item(ctx,format[index],data,parsed,index)
-	end
-	return parsed
-end
-
-function en1543_unparsed(ctx, data)
-	local NODE
-	if bytes.tonumber(data)>0 then
-		NODE = ui.tree_add_node(ctx,"(remaining unparsed data)");
-		ui.tree_set_value(NODE,data)
-	end
-end
-
-function en1543_process(ctx)
-	local DATA_REF
+function calypso_guess_network(APP)
+	local country_bin
+	local network_bin
+	local ENV_REF
 	local RECORD_REF
-        local NODE_REF
+	local DATA_REF
 	local data
-	local bits
-	local index
-	local parsed
 
-	NODE_REF = ui.tree_find_node(ctx,"File Event logs")
-	
-	if NODE_REF then
-	   for index=1,16 do
-	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
-	      if RECORD_REF==nil then break end
-	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = ui.tree_get_value(DATA_REF)
-	      bits = bytes.convert(1,data)
-	      parsed = en1543_parse(RECORD_REF,en1543_Event,bits)
-	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
-	   end
+	ENV_REF    = ui.tree_find_node(APP,"Environment")
+
+	if ENV_REF then
+		RECORD_REF = ui.tree_find_node(ENV_REF,"record",1)
+		DATA_REF   = ui.tree_find_node(RECORD_REF,"raw data")
+		if DATA_REF then
+			data = bytes.convert(1,ui.tree_get_value(DATA_REF))
+			country_bin = bytes.sub(data,13,24)
+			network_bin = bytes.sub(data,25,36)
+			print(bytes.convert(4,country_bin),bytes.convert(4,network_bin))                        
+			return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),
+			       tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
+		else
+			log.print(log.WARNING,"Could not find data in 'Environement/record 1/'")
+		end
 	else
-	   log.print(log.DEBUG,"No event logs")
+		log.print(log.WARNING,"Could not find data in 'Environement'")
 	end
-
-	NODE_REF = ui.tree_find_node(ctx,"File Special events")
-	
-	if NODE_REF then
-	   for index=1,16 do
-	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
-	      if RECORD_REF==nil then break end
-	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = ui.tree_get_value(DATA_REF)
-	      bits = bytes.convert(1,data)
-	      parsed = en1543_parse(RECORD_REF,en1543_Event,bits)
-	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
-	   end
-	else
-	   log.print(log.DEBUG,"No special events")
-	end
-
-	NODE_REF = ui.tree_find_node(ctx,"File Environment")
-
-	if NODE_REF then
-	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
-	   DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	   data = ui.tree_get_value(DATA_REF)
-	   bits = bytes.convert(1,data)
-	   parsed = en1543_parse(RECORD_REF,en1543_Env,bits)
-	   parsed = en1543_parse(RECORD_REF,en1543_Holder,bytes.sub(bits,parsed))
-	   parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
-	else
-	   log.print(log.DEBUG,"No environment") 
-	end
-
-	NODE_REF = ui.tree_find_node(ctx,"File Contract list")
-	
-	if NODE_REF then
-	   RECORD_REF=ui.tree_find_node(NODE_REF,"record",1)
-	   DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	   data = ui.tree_get_value(DATA_REF)
-	   bits = bytes.convert(1,data)
-	   parsed = en1543_parse(RECORD_REF,en1543_BestContracts,bits)
-	   parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
-
-           --
-      	   -- FIXME: here we should parse the contracts according to "Tariff"
-	   --        but for now we will assume that contract format is 'FF'
-  
-	else
-	   log.print(log.DEBUG,"No contract list (BestContracts)") 
-	end
-
-	NODE_REF = ui.tree_find_node(ctx,"File Contracts")
-	
-	if NODE_REF then
-	   for index=1,16 do
-	      RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
-	      if RECORD_REF==nil then break end
-	      DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-	      data = ui.tree_get_value(DATA_REF)
-	      bits = bytes.convert(1,data)
-	      parsed = en1543_parse(RECORD_REF,en1543_Contract,bits)
-	      parsed = en1543_unparsed(RECORD_REF,bytes.sub(bits,parsed))
-	   end
-	else
-	   log.print(log.DEBUG,"No contracts")
-	end
-
-
+	return false
 end
 
 
-function process_calypso(cardenv)
-	local APP
-	local DF_NAME = "1TIC.ICA" 
-	local lfi
+function calypso_process(cardenv)
+	local lfi_index
 	local lfi_desc
 	local LFI
 	local REC
 	local sw, resp
 	local NODE
+	local country, network
+	local filename, file
 
-
-	sw, resp = card.select("#315449432e494341")
-
-	APP = ui.tree_add_node(cardenv,"Application",DF_NAME,nil,"application")
-	-- note: no real DF select here
- 
-	for lfi,lfi_desc in pairs(LFI_LIST) do
-	        sw,resp = card.select("/2000")
-		if sw~=0x9000 then 
-		        break
-		end
-		sw,resp = card.select(sel_method..lfi)
-		if sw==0x9000 then
-	                local r
-			LFI = ui.tree_add_node(APP,"File "..lfi_desc,lfi,nil,"file")
+	for lfi_index,lfi_desc in ipairs(LFI_LIST) do
+		LFI = calypso_select(cardenv,lfi_desc[1],lfi_desc[2], lfi_desc[3])
+		if LFI then
+	        	local r
 			for r=1,255 do
 				sw,resp=card.read_record(0,r,0x1D)
 				if sw ~= 0x9000 then
 					break
 				end
 				REC = ui.tree_add_node(LFI,"record",r,#resp,"record")
-                                NODE = ui.tree_add_node(REC,"raw data")
-	                        ui.tree_set_value(NODE,resp)
+                        	NODE = ui.tree_add_node(REC,"raw data")
+	                	ui.tree_set_value(NODE,resp)
+	--[[
+				print(lfi_desc[1].." record "..r)
+				local i
+				local d = bytes.convert(1,resp)
+				for i=0,#d,40 do
+				    print(string.format("%03i:  ",i)..
+					  bytes.format(" %D",bytes.sub(d,i+0,i+9))..
+					  bytes.format(" %D",bytes.sub(d,i+10,i+19))..
+					  bytes.format(" %D",bytes.sub(d,i+20,i+29))..
+					  bytes.format(" %D",bytes.sub(d,i+30,i+39)))
+				end
+	--]]
 			end
 		end
 	end
-	en1543_process(APP)
+	
+	country, network = calypso_guess_network(cardenv)
+	filename = "calypso/c"..country..".lua"
+	file = io.open(filename);
+	if file then 
+		io.close(file)
+		dofile(filename)
+	else
+		log.print(log.LOG_INFO,"Could not find "..filename)
+	end
+
+	filename = "calypso/c"..country.."n"..network..".lua"
+	file = io.open(filename);
+	if file then 
+		io.close(file)
+		dofile(filename)
+	else
+		log.print(log.LOG_INFO,"Could not find "..filename)
+	end
+
+	--print(country, network);
+	--process_en1545(APP)
 end
 
 local atr, hex_card_num, card_num
@@ -471,21 +210,19 @@ local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
 ui.tree_set_value(ref,hex_card_num)
 ui.tree_set_alt_value(ref,card_num)
 
-sw = card.select("/2000")
-sw = card.select(".2010")
+sw = card.select("#2010")
 if sw==0x9000 then
-   sel_method = "."
+   sel_method = SEL_BY_LFI
 else
-   sw = card.select("/2000")
-   sw = card.select("/2010")
+   sw = card.select("/2000/2010")
    if sw == 0x9000 then
-      sel_method = "/"
+      sel_method = SEL_BY_PATH
    else
-      sel_method = ""
-      ui.question("This script may not work : this card doesn't seem to react to file selection commands.",{"OK"})
+      sel_method = SEL_BY_LFI
+      ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
    end
 end
 
-process_calypso(CARD)
+calypso_process(CARD)
 
 card.disconnect()

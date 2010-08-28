@@ -18,9 +18,16 @@ DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c driv
 
 CLEANFILES=icons.c doc/*.log doc/*.aux dot_cardpeek.tar.gz
 
-EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics/ update_dot_cardpeek_dir.sh script_version.h
+EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
 
 GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
+
+desktopdir = $(datadir)/applications
+desktop_DATA = cardpeek.desktop
+
+iconsdir = $(datadir)/icons/hicolor/48x48/
+icons_DATA = icons/cardpeek.png
+
 
 dist-hook:
 			rm -rf `find $(distdir)/ -name .svn`
@@ -40,6 +47,7 @@ icons.c:		icons/
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
 			$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
+			$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
 			touch gui.c
 
 gui.$(OBJEXT):		gui.c gui.h icons.c

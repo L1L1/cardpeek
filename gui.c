@@ -78,8 +78,9 @@ void gui_logfunction(int log_level, const char* str)
 		      break;
     case LOG_WARNING: tag = "purple_text";
 		      break;
-    case LOG_ERROR:   tag = "red_text";
-		      break;
+    case LOG_ERROR:   
+    default:
+		      tag = "red_text";
   }
 
   gtk_text_buffer_get_iter_at_offset (LOG_BUFFER,&iter,-1);
@@ -218,6 +219,110 @@ gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
       g_free(comment);
       return TRUE;
     }
+  }
+  return FALSE;
+}
+
+
+void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer userdata)
+/* Callback responding to right click context menu item to change 3rd column format */ 
+{
+  GtkTreeView *treeview = GTK_TREE_VIEW(userdata);
+  GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
+  GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),3);
+
+  if (gtk_tree_view_column_get_visible(column2))
+  {
+    gtk_tree_view_column_set_visible (column2,FALSE);
+    gtk_tree_view_column_set_visible (column3,TRUE);	
+  }
+  else
+  {
+    gtk_tree_view_column_set_visible (column2,TRUE);
+    gtk_tree_view_column_set_visible (column3,FALSE); 
+  }
+}
+
+
+void menu_cardview_context_menu_expand_all(GtkWidget *menuitem, gpointer userdata)
+/* Callback responding to right click context menu item to expand current branch */ 
+{
+  GtkTreeView *treeview = GTK_TREE_VIEW(userdata);
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(treeview);
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  GtkTreePath *path;
+
+  if (gtk_tree_selection_get_selected(selection,&model,&iter))
+  {
+    path = gtk_tree_model_get_path(model,&iter);
+    gtk_tree_view_expand_row(treeview,path,TRUE);
+    gtk_tree_path_free(path);
+  }
+}
+
+void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+/* Create a right click context menu */
+{
+  GtkWidget *menu, *menuitem;
+  GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
+
+  menu = gtk_menu_new();
+
+  /* Menu Item */
+  menuitem = gtk_menu_item_new_with_label("Expand all");
+  g_signal_connect(menuitem, "activate",
+		   (GCallback) menu_cardview_context_menu_expand_all, treeview);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+
+  /* Menu Item */
+  if (gtk_tree_view_column_get_visible(column2))
+  { 
+    menuitem = gtk_menu_item_new_with_label("Show interpreted value");
+    g_signal_connect(menuitem, "activate",
+		     (GCallback) menu_cardview_context_menu_change_value_type, treeview);
+  }
+  else
+  {
+    menuitem = gtk_menu_item_new_with_label("Show raw value");
+    g_signal_connect(menuitem, "activate",
+		     (GCallback) menu_cardview_context_menu_change_value_type, treeview); 
+  }
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+
+
+  gtk_widget_show_all(menu);
+
+  gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		 (event != NULL) ? event->button : 0,
+		 gdk_event_get_time((GdkEvent*)event));
+}
+
+gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+{
+  GtkTreeSelection *selection;
+  GtkTreePath *path;
+
+  if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
+  {
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
+
+    if (gtk_tree_selection_count_selected_rows(selection)  <= 1)
+    {
+
+      /* Get tree path for row that was clicked */
+      if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview),
+					(gint) event->x, 
+					(gint) event->y,
+					&path, NULL, NULL, NULL))
+      {
+	gtk_tree_selection_unselect_all(selection);
+	gtk_tree_selection_select_path(selection, path);
+	gtk_tree_path_free(path);
+      }
+    }
+    menu_cardview_context_menu(treeview,event,userdata);
+    return TRUE;
   }
   return FALSE;
 }
@@ -457,6 +562,8 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
 		   "row-activated", (GCallback) menu_cardview_row_activated, NULL);
   g_signal_connect(CARDVIEW, 
  		   "query_tooltip", (GCallback) menu_cardview_query_tooltip, NULL);
+  g_signal_connect(CARDVIEW,
+		   "button-press-event", (GCallback) menu_cardview_button_press_event, NULL);
 
 
   gtk_container_add (GTK_CONTAINER (scrolled_window), CARDVIEW);
@@ -1064,7 +1171,11 @@ int gui_create(application_callback_t run_script_cb,
   gtk_window_set_default_size(GTK_WINDOW(MAIN_WINDOW),600,400);
   gtk_container_set_border_width (GTK_CONTAINER (MAIN_WINDOW), 0);
   g_signal_connect (MAIN_WINDOW, "delete_event", gtk_main_quit, NULL); /* dirty */
- 
+
+  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_cardpeek, FALSE, NULL);
+  gtk_window_set_default_icon (pixbuf);
+
+
   /* log frame */
 
   text = create_log_view ();

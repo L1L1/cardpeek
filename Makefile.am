@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = gnu
 
 AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
 
-AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
+#AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
 bin_PROGRAMS= cardpeek
 
@@ -10,7 +10,7 @@ cardpeek_SOURCES = asn1.c asn1.h attributes.c attributes.h bytestring.c bytestri
 
 doc_DATA=doc/cardpeek_ref.*.pdf doc/cardpeek_ref.*.tex
 
-cardpeek_LDADD=dot_cardpeek.$(OBJEXT)
+cardpeek_LDADD=dot_cardpeek.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
 dist_man_MANS=cardpeek.1
 

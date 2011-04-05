@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "iso7816.h"
+#include "config.h"
 
 #include "icons.c"
 
@@ -872,6 +873,8 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
 
   label = gtk_label_new(message);
 
+  gtk_label_set_line_wrap(GTK_LABEL(label),TRUE);
+
   hbox = gtk_hbox_new(FALSE,0);
   
   gtk_box_pack_start(GTK_BOX(hbox), img, FALSE, FALSE, 10);
@@ -1015,8 +1018,8 @@ void gui_about()
 				   GTK_DIALOG_DESTROY_WITH_PARENT,
 				   GTK_MESSAGE_INFO,
 				   GTK_BUTTONS_OK,
-				   "%s",
-				   "cardpeek, version 0.5\nCopyright 2009-2010, by 'L1L1'\nLicenced under the GPL 3");
+				   "cardpeek, version %s\nCopyright 2009-2011, by 'L1L1'\nLicenced under the GPL 3",
+				   VERSION);
   gtk_dialog_run (GTK_DIALOG (dialog));
   gtk_widget_destroy (dialog);
 }

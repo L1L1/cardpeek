@@ -125,37 +125,41 @@ AID = {
 --]]
 
 
-card.connect()
-CARD = card.tree_startup("ATR")
+if card.connect() then
+  CARD = card.tree_startup("VITALE 2")
 
-map = create_card_map()
+  map = create_card_map()
 
-if map then
-   for app in pairs(map) do
-       sw,resp = card.select(map[app]['aid'])
-       if sw==0x9000 then
-          APP = ui.tree_add_node(CARD,"Application",map[app]['aid'],nil,"application")
-	  tlv_parse(APP,resp)
-       end
-       for i in pairs(map[app]['files']) do
-          EF = ui.tree_add_node(APP,map[app]['files'][i]['name'],map[app]['files'][i]['ef'],nil,"file")
-	  sw,resp = card.select(map[app]['files'][i]['ef'])
-	  tlv_parse(EF,resp)
-	  if sw==0x9000 then
-	     sw,resp = read_bin()
-	     CONTENT = ui.tree_add_node(EF,"content",nil,#resp)
-	     if sw==0x9000 then
-	        if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
-                  ui.tree_set_value(CONTENT,resp)
-	        else
-                  tlv_parse(CONTENT,resp,VITALE_IDO)
-                end
-	     else
-	        ui.tree_set_alt_value(CONTENT,string.format("data not accessible (code %04X)",sw))
-	     end
-	  end
-       end
-   end
+  if map then
+     for app in pairs(map) do
+         sw,resp = card.select(map[app]['aid'])
+         if sw==0x9000 then
+            APP = ui.tree_add_node(CARD,"Application",map[app]['aid'],nil,"application")
+	    tlv_parse(APP,resp)
+         end
+         for i in pairs(map[app]['files']) do
+            EF = ui.tree_add_node(APP,map[app]['files'][i]['name'],map[app]['files'][i]['ef'],nil,"file")
+  	    sw,resp = card.select(map[app]['files'][i]['ef'])
+	    tlv_parse(EF,resp)
+	    if sw==0x9000 then
+	       sw,resp = read_bin()
+	       CONTENT = ui.tree_add_node(EF,"content",nil,#resp)
+	       if sw==0x9000 then
+	          if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
+                    ui.tree_set_value(CONTENT,resp)
+	          else
+                    tlv_parse(CONTENT,resp,VITALE_IDO)
+                  end
+	       else
+	          ui.tree_set_alt_value(CONTENT,string.format("data not accessible (code %04X)",sw))
+	       end
+	    end
+         end
+     end
+  end
+
+  card.disconnect()
+
+else
+  ui.question("No card detected",{"OK"})
 end
-
-card.disconnect()

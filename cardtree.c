@@ -138,7 +138,7 @@ void cardtree_create_markup_name_id(cardtree_t* ct, GtkTreeIter* iter)
 char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
 {
   a_string_t *markup_value;
-  int i,len,max,offset;
+  int linepos,i,len,max,offset;
 
   len=strlen(src);
 
@@ -158,6 +158,7 @@ char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
   a_strcat(markup_value,"<tt>");
   
   i=0;
+  linepos=0;
   if (full)
     max=len;
   else
@@ -171,11 +172,17 @@ char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
 	a_strcat(markup_value,"&gt;"); break;
       case '&':
 	a_strcat(markup_value,"&amp;"); break;
+      case '\n':
+	linepos=0;
+	a_strpushback(markup_value,'\n'); break;
       default:
 	a_strpushback(markup_value,src[i+offset]);
     }
     i++;
-    if (((i%64)==0) && (i+1<len)) a_strpushback(markup_value,'\n');
+    if ((++linepos==64) && (i+1<len)) { 
+      a_strpushback(markup_value,'\n');
+      linepos=0;
+    }
   }
   a_strcat(markup_value,"</tt>");
   if (len>256 && !full) a_strcat(markup_value,"<b>[...]</b>");

@@ -53,7 +53,7 @@ function process_moneo(card_ctx)
 	   asn1.enable_single_byte_length(true)
 	end
 
-	APP = ui.tree_add_node(nil,"application",AID,nil,"application")
+	APP = ui.tree_add_node(card_ctx,"application",AID,nil,"application")
 	tlv_parse(APP,resp)
 	for name,sfi in pairs(MONEO_SFI) do
 	    SFI = ui.tree_add_node(APP,name,string.format(".%02X",sfi),nil,"file")
@@ -70,7 +70,11 @@ end
 
 
 
-card.connect()
-CARD = card.tree_startup("MONEO")
-process_moneo(CARD)
-card.disconnect()
+if card.connect() then
+  CARD = card.tree_startup("MONEO")
+  process_moneo(CARD)
+  card.disconnect()
+else
+  ui.question("No card detected",{"OK"})
+end
+

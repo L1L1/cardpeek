@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2010 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ function calypso_guess_network(APP)
 			data = bytes.convert(1,ui.tree_get_value(DATA_REF))
 			country_bin = bytes.sub(data,13,24)
 			network_bin = bytes.sub(data,25,36)
-			print(bytes.convert(4,country_bin),bytes.convert(4,network_bin))                        
+			-- print(bytes.convert(4,country_bin),bytes.convert(4,network_bin))
 			return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),
 			       tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
 		else
@@ -198,31 +198,33 @@ end
 
 local atr, hex_card_num, card_num
 
-card.connect()
+if card.connect() then 
 
-CARD = card.tree_startup("CALYPSO")
+  CARD = card.tree_startup("CALYPSO")
+  atr = card.last_atr();
+  hex_card_num = bytes.sub(atr,-7,-4)
+  card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
 
-atr = card.last_atr();
-hex_card_num = bytes.sub(atr,-7,-4)
-card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
+  local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
+  ui.tree_set_value(ref,hex_card_num)
+  ui.tree_set_alt_value(ref,card_num)
 
-local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
-ui.tree_set_value(ref,hex_card_num)
-ui.tree_set_alt_value(ref,card_num)
+  sw = card.select("#2010")
+  if sw==0x9000 then
+     sel_method = SEL_BY_LFI
+  else
+     sw = card.select("/2000/2010")
+     if sw == 0x9000 then
+        sel_method = SEL_BY_PATH
+     else
+        sel_method = SEL_BY_LFI
+        ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
+     end
+  end 
 
-sw = card.select("#2010")
-if sw==0x9000 then
-   sel_method = SEL_BY_LFI
+  calypso_process(CARD)
+
+  card.disconnect()
 else
-   sw = card.select("/2000/2010")
-   if sw == 0x9000 then
-      sel_method = SEL_BY_PATH
-   else
-      sel_method = SEL_BY_LFI
-      ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
-   end
+  ui.question("Connection to card failed. Are you sure a card is inserted in the reader or in proximity of a contactless reader?\n\nNote: French 'navigo' cards cannot be accessed through a contactless interface.",{"OK"});
 end
-
-calypso_process(CARD)
-
-card.disconnect()

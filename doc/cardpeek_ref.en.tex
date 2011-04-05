@@ -3,9 +3,9 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{pmboxdraw}
-\title{\huge{\Cardpeek{} Reference Manual - v0.5}}
+\title{\huge{\Cardpeek{} Reference Manual - v0.6}}
 \author{Copyright 2009-2010, L1L1@gmx.com}
-%\date{March 2010}
+%\date{March 2011}
 \addtolength{\textwidth}{2cm}
 \addtolength{\hoffset}{-1cm}
 
@@ -18,9 +18,9 @@
 
 \chapter*{Presentation}
 
-\Cardpeek{} is a program that reads the contents of smart cards. 
+\Cardpeek{} is a program that reads the contents of smartcards. 
 This GNU/Linux tool has a GTK GUI and can be extended with the LUA programming language. 
-It requires a PCSC card reader to communicate with a smart card.
+It requires a PCSC card reader to communicate with a smartcard.
 
 Smartcards are becoming ubiquitous in our everyday life. 
 We use them for payment, transport, in mobile telephones and many other applications.
@@ -30,7 +30,7 @@ our last journeys in public transport.
 \Cardpeek's goal is to allow you to access all this personal information. As such, you 
 can be better informed about the data that is collected about you.
 
-\Cardpeek{} explores ISO 7816 compliant smart cards and represents their content in an organized 
+\Cardpeek{} explores ISO 7816 compliant smartcards and represents their content in an organized 
 tree format that roughly follows the structure it has inside the card, which is also similar to a 
 classical file-system structure.
 
@@ -59,10 +59,10 @@ reported to work well for traditional ISO 7816 compliant cards.
 \chapter{Installation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\Cardpeek{} can be compiled from source using the provided \texttt{Makefile}.
-It has currently been tested under \emph{Linux Debian version 5} (both i386 and amd64).
+\Cardpeek{} can be compiled from source using \texttt{configure} and \texttt{make}.
+It has currently been tested under \emph{Linux Debian version 5 and 6} (both i386 and amd64).
 
-It has been reported to compile and work under \emph{FreeBSD} as well, with a minor tweak.
+It has been reported to compile and work under \emph{FreeBSD} as well.
 
 Note that, in most cases, cryptography export control restrictions do not apply to the source code
 of \Cardpeek: all cryptographic operations are implemented in the external \texttt{openssl} 
@@ -82,12 +82,12 @@ Instructions:
   \end{itemize}
 (Note: On a Debian system, these packages are all available through \texttt{apt}/\texttt{aptitude}.)}
 \item{Unpack the source if needed and change directory to the source directory.}
-\item{Type\footnote{Note for FreeBSD: before executing \texttt{make}, 
-you will need to make a small change in the Makefile included in the source, 
-as described in the comments included in that file.} `\texttt{make}'}
-\item{The binary executable is `\texttt{cardpeek}', use it directly or copy it to the desired location.}
+\item{Type `\texttt{./configure}'}
+\item{Type `\texttt{make}'}
+\item{Type `\texttt{make install}' (usualy as root) to install install \Cardpeek{} in the proper system directories. }
 \end{enumerate}
 
+Note: the last step (\texttt{make install}) is optional, as you can run \Cardpeek{} directly from the source directory.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Related files and initial setup}
@@ -97,13 +97,15 @@ The first time \Cardpeek{} is run, it will attempt to create the
 The \texttt{.cardpeek/} directory will contain two elements: \texttt{config.lua} and the \texttt{scripts/} directory.
 The \texttt{config.lua} allows you to run commands automatically when the program starts 
 (it should become a full fledged `config file' in the future).
-The \texttt{scripts/} directory contains all the scripts that allow to explore smart cards. 
-Currently it contains 7 LUA files: ``\texttt{emv.lua}'', ``\texttt{navigo.lua}'', ``\texttt{calypso.lua}'', 
+The \texttt{scripts/} directory contains all the scripts that allow to explore smartcards. 
+Currently it contains 6 LUA files: ``\texttt{emv.lua}'', ``\texttt{calypso.lua}'', 
 ``\texttt{moneo.lua}'', ``\texttt{vitale\_2.lua}'', ``\texttt{e-passport.lua}'' and ``\texttt{atr.lua}''.
 These files all show up in the `analyzer' menu of \Cardpeek{} (without their extension `.lua').
 If you add any LUA file to this directory, it will thus also appear in the menu.
-The \texttt{scripts/} directory contains a subdirectory \texttt{lib/} that holds a few LUA files containing 
-frequently used commands that are shared among the card processing scripts.
+The \texttt{scripts/} directory contains three subdirectories: \texttt{lib/}, \texttt{etc/} and \texttt{calypso}. 
+\texttt{lib/} and \texttt{etc/} hold a few LUA files containing frequently used commands or data items that are 
+shared among the card processing scripts. 
+\texttt{calypso} holds country and region specfic scripts for calypso cards.
 
 Each time the program runs, it creates a file \texttt{.cardpeek.log} in your home directory.
 This file contains a copy of the messages displayed in the ``log'' tab of the application (see next chapter). 
@@ -115,7 +117,7 @@ This file contains a copy of the messages displayed in the ``log'' tab of the ap
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{Quick start}
 
-To experiment with \Cardpeek, your may start with your EMV ``PIN and chip'' smart card for example, 
+To experiment with \Cardpeek, your may start with your EMV ``PIN and chip'' smartcard for example, 
 by following these steps:
 \begin{enumerate}
 \item{Start \texttt{cardpeek}.}
@@ -184,6 +186,20 @@ When node data is over 128 bytes in size, it is truncated for display in the car
 This indicated by appending \textbf{[...]} to the truncated data. By double-clicking on the data, it is possible
 to switch to the full representation of the node data.
 
+The \emph{card view} tab has a right-click activated context menu featuring two commands:
+\vspace{1em}\noindent
+\begin{tabular}{l|p{11cm}}
+\hline
+\emph{expand all}	& This expands the contents of the current tree structure selected below the mouse. \\
+\hline
+\emph{show \_\_\_\_\_\_ value} & This is equivalent to clicking on the third column title 
+  to switch between both ``raw'' and ``alternative'' data representations. \\
+\hline
+\end{tabular}
+\vspace{2em}
+
+
+
 \subsection{The reader tab}
 
 The reader tab displays the raw binary data exchanges between the card reader and the card itself. 
@@ -193,7 +209,7 @@ block of data, while card responses contain two elements: a card status word and
 One interesting feature of the card reader tab is the ability to save the APDU/response exchanges between the card reader and
 the card in a file that can later be used to emulate the card. Once card this data is saved in a file (with the .clf
 extension) and placed in the \syn{.cardpeek/log/} folder, it will appear as a choice in the card reader selection
-window that appear when \texttt{cardpeek} is launched. The name of the file will be prefixed by 
+window that appears when \texttt{cardpeek} is launched. The name of the file will be prefixed by 
 ``\url{emulator://}'' in the card selection window. Selecting such a card data file allows to re-run the script
 on the previously recorded APDU/response data instead of a real card inserted in the card reader. This is very useful for
 testing and debugging card scripts without relying on a real card inserted in the card reader.
@@ -242,7 +258,7 @@ This will give you 3 main choices :
   You may have several of PCSC card readers attached to your computer.
       	  Card-readers are usually identified by their name, preceded by \url{pcsc://}.}
 \item{\emph{Select a file containing previously recorded card APDU/response data:}
-  This allows to emulate a smart card that was previously in the reader, and is quite convenient
+  This allows to emulate a smartcard that was previously in the reader, and is quite convenient
   for script debugging purposes.
   Each time an APDU is sent to the emulated card, \Cardpeek{} will answer with the previously 
   recorded response data (or return an error if the query is new).
@@ -278,18 +294,48 @@ In the future this script will be enhanced with a detailed analysis of the ATR.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{calypso}
 
+\begin{center}
+\includegraphics[width=1\textwidth]{graphics/sample-navigo.jpg}
+\end{center}
+
 \paragraph{Overview:}
 This script provides an analysis of Calypso public transport cards used in many cities.
 
 \paragraph{Notes:}
 The following calypso cards have been reported to work with this script: Navigo/Paris,
-MOBIB/Brussels (partial support), and Korrigo/Rennes. The Navigo card has a seperate dedicated
-script which provides more information.
+MOBIB/Brussels (very partial support), and Korrigo/Rennes. 
 
 You will notice that these transport cards keep a ``event log'' describing at 
 least 3 of the last stations/stops you have been through.
 This ``event log'', which could pose a privacy risk, is not protected by any access 
 control means and is freely readable.
+
+For Navigo cards, this script provides enhanced ``event log'' analysis notably with 
+subway/train station names, as illustrated in the example above.
+It has been successfully tested on \emph{Navigo D\'ecouverte}, \emph{Navigo} and 
+\emph{Navigo Int\'egrale} cards.
+
+You must use the contact interface to read a Navigo card, because they cannot be read with a normal contactless 
+card reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B).
+
+\paragraph{Implementation notes:}
+The calypso script reads all the files it can find on the card and extracts the raw
+binary data it finds. 
+The interpretation of that binary data varies from country to country, and even from
+region to region.
+
+Once the data is loaded, the script attemps to automatically detect the country and 
+region the card comes from.
+The country is identified by a number following ISO 3166-1, but without leading zeros.
+The region code is also a numerical value. 
+The script will then look into the \texttt{calypso} directory for a script called ``cXXX.lua'' where
+XXX represents the country code. If found, this extra script will be executed. Next
+the main script will look again in the \texttt{calypso} directory for a script called 
+``cXXXnYYY.lua'' where XXX represents the country code and YYY the region code.
+If found, this script will also be executed.
+
+Programmers wishing to tailor the behavior of the calypso script to their own
+country or region can thus add their own file in the \texttt{calypso} directory.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{emv}
@@ -338,23 +384,6 @@ This scripts provide a (limited) analysis of MONEO electronic purse cards used i
 The provided output is very "raw".
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
-\section{navigo}
-
-\begin{center}
-\includegraphics[width=1\textwidth]{graphics/sample-navigo.jpg}
-\end{center}
-
-\paragraph{Overview:}
-This script is a specialized version of the \texttt{calypso} script, specifically targeted for the Navigo cards used in Paris.
-It provides enhanced ``event log'' analysis notably with subway/train station names, as illustrated in the example above.
-It has been successfully tested on \emph{Navigo D\'ecouverte}, \emph{Navigo} and \emph{Navigo Int\'egrale} cards.
-
-\paragraph{Notes:}
-You must use the contact interface to read a Navigo card, because they cannot be read with a normal contactless 
-card reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B).
-See the section about \emph{calypso} for other information.
-
-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{vitale 2}
 
 \paragraph{Overview:}
@@ -375,14 +404,35 @@ If you want to go further and make a script permanently part of the source code 
 \item{Run \texttt{make} to rebuild \Cardpeek.}
 \end{enumerate}
 
+\paragraph{calypso notes:}
+The calypso script reads all the files it can find on the card and extracts the raw
+binary data it finds. 
+The interpretation of that binary data varies from country to country, and even from
+region to region.
+
+Once the data is loaded, the script attemps to automatically detect the country and 
+region the card comes from.
+The country is identified by a number following ISO 3166-1, but without leading zeros.
+The region code is also a numerical value. 
+The script will then look into the \texttt{calypso} subdirectory for a script called ``cXXX.lua'' where
+XXX represents the country code. If found, this extra script will be executed. Next
+the main script will look again in the \texttt{calypso} subdirectory for a script called 
+``cXXXnYYY.lua'' where XXX represents the country code and YYY the region code.
+If found, this script will also be executed.
+
+Programmers wishing to tailor the behavior of the calypso script to their own
+country or region can thus add their own file in the \texttt{calypso} subdirectory.
+
+ 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Script language description}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The individual scripts that allow to process different types of smart cards are located in your 
+The individual scripts that allow to process different types of smartcards are located in your 
 \texttt{\$HOME/.cardpeek/scripts/} directory.
 These scripts are written in LUA, a programming language which shares some similarities with Pascal and Javascript.
-To allow LUA scripts to communicate with smart cards and to manipulate card data, the LUA language was extended with custom libraries.
+To allow LUA scripts to communicate with smartcards and to manipulate card data, the LUA language was extended with custom libraries.
 This section first starts with a brief example of the script language and then describes the library extensions.
 
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -659,6 +709,38 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
   This function returns a new bytestring upon success and \syn{nil} otherwise.
 
 %------------------------------------------------
+\subsection{bytes.format}
+
+\mansection{Synopsis}
+\syn{bytes.format(format,BS)}
+
+\mansection{Description}
+  Converts the bytestring \syn{BS} to various printable formats according to the \syn{format} character string.
+
+  This \syn{format} string is composed of either plain characters, which are simply copied to the resulting string, and
+  format specifications which are replaced by the designated representation of \syn{BS}.
+
+  As in ``printf-like'' functions, each format specification starts with the character ``\%'' and has the following meaning:
+
+  \syn{\%I} represent \syn{BS} as an unsigned decimal integer.
+  
+  \syn{\%D} represent \syn{BS} as the concatenation of each of its elements represented in 
+  hexadecimal or binary, starting from \syn{BS[0]} to \syn{BS[N-1]}.
+  
+  \syn{\%S} is equivalent to ``\syn{\%w:\%D}''.
+  
+  \syn{\%P} represent \syn{BS} where each element is converted to a printable ascii character.
+  
+  \syn{\%w} represents the width of \syn{BS}, that is 8, 4 or 1.
+  
+  \syn{\%l} represents the length of \syn{BS}, in decimal form.
+  
+  \syn{\%\%} represent the ``\%'' character.
+
+\mansection{Return value}
+  This function returns the resulting character string.
+
+%------------------------------------------------
 \subsection{bytes.insert}
 
 \mansection{Synopsis}
@@ -847,6 +929,8 @@ This function returns \syn{true} upon success and \syn{false} otherwise.
 \mansection{Synopsis}
 \syn{bytes.toprintable(BS)}
 
+This function is OBSOLETE, use \syn{bytes.format()} instead.
+
 \mansection{Description}
   Converts each element in \syn{BS} into an ascii character and returns the
   resulting string.
@@ -976,7 +1060,7 @@ The library provides the following functions.
 %-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 \section{The \syn{card} library}
 
-The \syn{card} library is used to communicate with a smart card in a card reader.
+The \syn{card} library is used to communicate with a smartcard in a card reader.
 
 Cardpeek internally defines a minimal set of card functions in the \syn{card} 
 library.
@@ -994,9 +1078,9 @@ This library contains the following functions.
 \syn{card.connect()}
 
 \mansection{Description}
-  Connect to the card currently inserted in the selected smart card reader. 
+  Connect to the card currently inserted in the selected smartcard reader. 
 
-  This command is used at the start of most smart card scripts.
+  This command is used at the start of most smartcard scripts.
 
 \mansection{Return value}
    This function returns \syn{true} upon success, and \syn{false} otherwise.
@@ -1009,9 +1093,9 @@ This library contains the following functions.
 \syn{card.disconnect()}
 
 \mansection{Description}
-  Disconnect the card currently inserted in the selected smart card reader.
+  Disconnect the card currently inserted in the selected smartcard reader.
 	  
-  This command concludes most smart card scripts.
+  This command concludes most smartcard scripts.
 
 \mansection{Return value}
   This function returns \syn{true} upon success, and \syn{false} otherwise.
@@ -1060,7 +1144,7 @@ This library contains the following functions.
   This function is designed to be a helper function for the implementation of \syn{card.select}.
 
   It converts a human readable path string (representing a file location in
-  a smart card) into a format that is compatible with the SELECT\_FILE command from ISO 7816-4.
+  a smartcard) into a format that is compatible with the SELECT\_FILE command from ISO 7816-4.
 
   This function parses the string \syn{path} and returns a pair of values \{\syn{path\_binary}, \syn{path\_type}\}
   where:
@@ -1277,7 +1361,7 @@ This library contains the following functions.
 
 \mansection{Description}
   Performs a warm reset of the card 
-  (reconnects the card currently inserted in the selected smart card reader).
+  (reconnects the card currently inserted in the selected smartcard reader).
 
 \mansection{Return value}
   None
@@ -1705,10 +1789,10 @@ The XML format is quite straightforward, as shown in the following example:
 \begin{verbatim}
 <?xml version="1.0"?>
 <cardtree>
-  <node name="card" id="ATR">
-    <node name="ATR" id="cold">
-       <val>3B6F0000805A0803040002002531F405909000</val>
-    </node>
+  <node name="card" id="ATR" type="card">
+      <node name="ATR" id="cold" size="18" type="block">
+          <val>8:3B6E00000031C071C66501B0010337839000</val>
+      </node>
   </node>
 </cardtree>
 \end{verbatim}
@@ -1718,7 +1802,9 @@ The format of the XML tree view file is constructed according to the following r
 \begin{itemize}
 \item{The root element of the XML structure is \syn{<cardtree>}, which contains one or more \syn{<node>} elements.}
 \item{A \syn{<node>} element may either contain one or several \syn{<node>} elements or a single \syn{<val>} element (but not both).}
+\item{A \syn{<val>} element contains a bytetring represented as a width value folowed by ``:'' and the digits representing the bytestring (this is equivalent to the \syn{\%S} output format of the \syn{bytes.format()} function).}
 \item{A \syn{<val>} element may be optionally followed by a \syn{<alt>} element within an node.}
+\item{A \syn{<alt>} element is used to represent the same value as a preceding \syn{<val>} in an alternative form.}
 \item{A \syn{<val>} element or a \syn{<alt>} element can only contain text.}
 \item{A \syn{<node>} element can have the following attributes: \syn{name}, \syn{id}, \syn{size} and \syn{type}.}
 \end{itemize}

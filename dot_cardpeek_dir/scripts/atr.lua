@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 require('lib.apdu')
 
-card.connect()
-card.tree_startup("ATR")
-card.disconnect()
+if card.connect() then
+   card.tree_startup("ATR")
+   card.disconnect()
+end

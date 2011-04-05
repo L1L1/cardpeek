@@ -314,6 +314,15 @@ int cardreader_log_count_records(const cardreader_t *reader)
 /************************************************/
 
 /* this should not be here but in pcsc_driver.c */
+int cardmanager_check_pcscd_is_running()
+{
+  int fd=open("/var/pid/pcscd.pid",O_RDONLY);
+  if (fd<0) return 0;
+  close(fd);
+  return 1;
+}
+
+/* this should not be here but in pcsc_driver.c */
 int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 {
   DWORD dwReaders;
@@ -329,6 +338,11 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   if (status!=SCARD_S_SUCCESS)
   {
     log_printf(LOG_INFO,"Failed to establish PCSC card manager context");
+    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
+    if (cardmanager_check_pcscd_is_running()==0)
+      log_printf(LOG_INFO,"The pcscd deamon does not seem to be running.");
+    else
+      log_printf(LOG_INFO,"The pcscd deamon seems to be running.");
     return 0;
   }
 
@@ -336,6 +350,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   if (status!=SCARD_S_SUCCESS)
   {
     log_printf(LOG_WARNING,"No PCSC reader connected");
+    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
     return 0;
   }
 
@@ -345,6 +360,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   if (status!=SCARD_S_SUCCESS)
   {
     log_printf(LOG_WARNING,"PCSC Reader list failed");
+    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
     return 0;
   }
 
@@ -372,7 +388,10 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 
   status = SCardReleaseContext(hcontext);
   if (status!=SCARD_S_SUCCESS) 
+  {
     log_printf(LOG_ERROR,"Failed to release PCSC context");
+    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
+  }
 
   return cm->readers_count;
 }

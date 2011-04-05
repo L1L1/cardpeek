@@ -79,7 +79,7 @@ function mobib_process(APP)
 	
 	ui.tree_delete_node(RECORD_2)
 	ui.tree_delete_node(RECORD_1)
-	print("deleting ",RECORD_1,RECORD_2)
+	-- print("deleting ",RECORD_1,RECORD_2)
 	RECORD_1 = ui.tree_add_node(HOLDER_EXT,"record",1,#data)
 	DATA_REF_1 = ui.tree_add_node(RECORD_1,"raw data")
 	ui.tree_set_value(DATA_REF_1,data)

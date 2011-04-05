@@ -1,3 +1,10 @@
+cardpeek-0.6: L1L1@gmx.com
+27 March 2011
+- Rewrote the Calypso scripts for extended modularity.
+- Added desktop and application icon.
+- Corrected bugs.
+- Added EMV CVM parsing proposed by Adam Laurie (many thanks to him). 
+
 cardpeek-0.5: L1L1@gmx.com
 22 March 2010
 - Complete rework of the GUI, for better clarity and ease of use.

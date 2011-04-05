@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2010 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 -- History:
 -- Aug 07 2010: Corrected bug in GPO command.
 -- Aug 08 2010: Corrected bug in AFL data processing
+-- Mar 27 2011: Added CVM patch from Adam Laurie.
 
 require('lib.tlv')
 require('lib.strict')
@@ -61,6 +62,70 @@ function ui_parse_transaction_type(cc)
 	return tt
 end
 
+function ui_parse_CVM(node,data)
+	local i
+	local left
+	local right
+	local leftstring
+	local rightstring
+	local out = "X="
+	for i = 0, 3 do
+		out = out .. string.format("%02X",data[i])
+	end
+	out = out .. ", Y="
+	for i = 4, 7 do
+		out = out .. string.format("%02X",data[i])
+	end
+	for i= 4,(#data/2)-1 do
+		out = out .. "\n * "
+		left = data[i*2]
+		right = data[i*2+1]
+		if bit.AND(left,0x40) == 0x40 then
+			out = out .. "Apply succeeding CV rule if this rule is unsuccessful: "
+		else
+			out = out .. "Fail cardholder verification if this CVM is unsuccessful: "
+		end
+		if CVM_REFERENCE_BYTE1[bit.AND(left,0xBF)] == nil then
+			leftstring = string.format("Unknown (%02X)",left)
+		else
+			leftstring = CVM_REFERENCE_BYTE1[bit.AND(left,0xBF)]
+		end
+		if CVM_REFERENCE_BYTE2[right] == nil then
+			rightstring = string.format("Unknown (%02X)",right)
+		else
+			rightstring = CVM_REFERENCE_BYTE2[right]
+		end
+		out = out .. leftstring .. " - " .. rightstring
+	end
+        ui.tree_set_value(node,data)
+	ui.tree_set_alt_value(node,out)
+	return true
+end
+
+CVM_REFERENCE_BYTE1 = {
+   [0x00] = "Fail CVM processing",
+   [0x01] = "Plaintext PIN verification performed by ICC",
+   [0x02] = "Enciphered PIN verified online",
+   [0x03] = "Plaintext PIN verification performed by ICC and signature (paper)",
+   [0x04] = "Enciphered PIN verification performed by ICC",
+   [0x05] = "Enciphered PIN verification performed by ICC and signature (paper)",
+   [0x1E] = "Signature (paper)",
+   [0x1F] = "No CVM Required",
+}
+
+CVM_REFERENCE_BYTE2 = {
+   [0x00] = "Always",
+   [0x01] = "If unattended cash",
+   [0x02] = "If not attended cash and not manual cash and not purchase with cashback",
+   [0x03] = "If terminal supports the CVM",
+   [0x04] = "If manual cash",
+   [0x05] = "If purchase with cashback",
+   [0x06] = "If transaction is in the application currency and is under X value",
+   [0x07] = "If transaction is in the application currency and is over X value",
+   [0x08] = "If transaction is in the application currency and is under Y value",
+   [0x09] = "If transaction is in the application currency and is over Y value"
+}	
+
 EMV_REFERENCE = {
    ['5D'] = {"Directory Definition File (DDF) Name" }, 
    ['70'] = {"Application Data File (ADF)" }, 
@@ -70,7 +135,7 @@ EMV_REFERENCE = {
    ['88'] = {"Short File Identifier (SFI)" }, 
    ['8C'] = {"Card Risk Management Data Object List 1 (CDOL1)" }, 
    ['8D'] = {"Card Risk Management Data Object List 2 (CDOL2)" }, 
-   ['8E'] = {"Cardholder Verification Method (CVM) List" }, 
+   ['8E'] = {"Cardholder Verification Method (CVM) List", ui_parse_CVM }, 
    ['8F'] = {"Certificate Authority Public Key Index (PKI)" }, 
    ['90'] = {"Issuer PK Certificate" }, 
    ['91'] = {"Issuer Authentication Data" }, 
@@ -524,23 +589,23 @@ end
 
 -- PROCESSING
 
-card.connect()
+if card.connect() then
 
-local mycard = card.tree_startup("EMV")
+   local mycard = card.tree_startup("EMV")
 
-emv_process_pse(mycard)
-card.warm_reset()
+   emv_process_pse(mycard)
+   card.warm_reset()
 
-for i=1,#AID_LIST
-do
+   for i=1,#AID_LIST
+   do
         -- print(AID_LIST[i])
 	emv_process_application(mycard,AID_LIST[i])
 	card.warm_reset()
+   end
+
+   emv_process_cplc(mycard)
+
+   card.disconnect()
+else
+   ui.question("No card detected in reader",{"OK"})
 end
-
-emv_process_cplc(mycard)
-
-card.disconnect()
-
-
-

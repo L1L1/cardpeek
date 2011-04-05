@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2010 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ function epass_create_master_keys(mrz)
 	local SHA1
 
 	SHA1 = crypto.create_context(0x0030);
-	hash = crypto.digest(SHA1,bytes.new_from_text(mrz_info))
+	hash = crypto.digest(SHA1,bytes.new(8,mrz_info))
 	KM_ENC, KM_MAC = epass_key_derivation(bytes.sub(hash,0,15))
 	return true
 end
@@ -559,33 +559,35 @@ FILES = {
 
 MRZ_DATA = ui.readline("Enter lower MRZ data",44,MRZ_DATA)
 
-card.connect()
-CARD = card.tree_startup("e-passport")
-sw, resp = card.select(AID_MRTD,0)
-APP = ui.tree_add_node(CARD,"application",AID_MRTD,nil,"application")
-tlv_parse(APP,resp)
-epass_create_master_keys(MRZ_DATA)
-if epass_create_session_keys(ke,km)
-   then
-     for i,v in ipairs(FILES) do
-       sw, resp = epass_select(v['FID'])
-       FID = ui.tree_add_node(CARD,v['name'],string.format(".%04X",v['FID']),#resp,"file")
-       if sw==0x9000 then
-          r = epass_read_file()
-	  if r[0]==0x6D then
-	     tag_6D, value_6D = asn1.split(r)
-	     TAG6D = ui.tree_add_node(FID,"National specific data",nil,#value_6D)
-	     ui.tree_set_value(TAG6D,value_6D)
-	  else
-             tlv_parse(FID,r,MRP_REFERENCE)
-	  end
-       else
-	  ui.tree_set_alt_value(FID,string.format("data not accessible (code %04X)",sw))
+if card.connect() then
+  CARD = card.tree_startup("e-passport")
+  sw, resp = card.select(AID_MRTD,0)
+  APP = ui.tree_add_node(CARD,"application",AID_MRTD,nil,"application")
+  tlv_parse(APP,resp)
+  epass_create_master_keys(MRZ_DATA)
+  if epass_create_session_keys(ke,km)
+     then
+       for i,v in ipairs(FILES) do
+         sw, resp = epass_select(v['FID'])
+         FID = ui.tree_add_node(CARD,v['name'],string.format(".%04X",v['FID']),#resp,"file")
+         if sw==0x9000 then
+            r = epass_read_file()
+            if r[0]==0x6D then
+	       tag_6D, value_6D = asn1.split(r)
+	       TAG6D = ui.tree_add_node(FID,"National specific data",nil,#value_6D)
+	       ui.tree_set_value(TAG6D,value_6D)
+	    else
+               tlv_parse(FID,r,MRP_REFERENCE)
+	    end
+         else
+	    ui.tree_set_alt_value(FID,string.format("data not accessible (code %04X)",sw))
+         end
        end
      end
-   end
-card.disconnect()
-
+  card.disconnect()
+else
+  ui.question("No passport detected in proximity of the reader",{"OK"})
+end
 
 
 

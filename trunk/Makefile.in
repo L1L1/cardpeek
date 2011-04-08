@@ -199,7 +199,7 @@ CLEANFILES = icons.c doc/*.log doc/*.aux dot_cardpeek.tar.gz
 EXTRA_DIST = script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
 desktopdir = $(datadir)/applications
 desktop_DATA = cardpeek.desktop
-iconsdir = $(datadir)/icons/hicolor/48x48/
+iconsdir = $(datadir)/icons/hicolor/48x48/apps
 icons_DATA = icons/cardpeek.png
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am

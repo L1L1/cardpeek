@@ -25,7 +25,7 @@ GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
 desktopdir = $(datadir)/applications
 desktop_DATA = cardpeek.desktop
 
-iconsdir = $(datadir)/icons/hicolor/48x48/
+iconsdir = $(datadir)/icons/hicolor/48x48/apps
 icons_DATA = icons/cardpeek.png
 
 

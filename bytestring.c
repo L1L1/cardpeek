@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@
 #include "bytestring.h"
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <ctype.h>
+#endif
 #include "misc.h"
 
 int bytestring_init(bytestring_t *bs, unsigned element_width)
@@ -696,7 +698,7 @@ unsigned x_bytestring_get(bytestring_t *bs, int index)
   return (unsigned)bs->data[index];
 }
 
-int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
+int x_bytestring_decimal_mul_add(bytestring_t *bs, unsigned mul_v, unsigned add_v)
 {
   unsigned r;
   int index;
@@ -704,7 +706,7 @@ int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
 
   for (index=bs->len-1;index>=0;index--)
   {
-    r=((unsigned)bs->data[index])<<8;
+    r=((unsigned)bs->data[index])*mul_v;
     x_bytestring_set(bs,index,r%10);
     r/=10;
     i=1;
@@ -717,7 +719,7 @@ int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
       i++;
     }
   }
-  r=x_bytestring_get(bs,0)+v;
+  r=x_bytestring_get(bs,0)+add_v;
   x_bytestring_set(bs,0,r%10);
   r/=10;
   i=1;
@@ -734,13 +736,13 @@ int x_bytestring_decimal_mul256_add(bytestring_t *bs, unsigned char v)
 
 void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
 {
-  bytestring_t *src;
+/*  bytestring_t *src; */
   bytestring_t *b10;
   int i;
 
   if (bs->len==0)
     return;
-  
+/* 
   src = bytestring_new(8);
   b10 = bytestring_new(8);
   
@@ -748,12 +750,23 @@ void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
   bytestring_pushback(b10,0);
   
   for (i=0;i<src->len;i++)
-    x_bytestring_decimal_mul256_add(b10,src->data[i]);
+    x_bytestring_decimal_mul_add(b10,256,src->data[i]);
   
   for (i=0;i<b10->len;i++)
     a_strpushback(dest,b10->data[b10->len-1-i]+'0');
   
   bytestring_free(src);
+  bytestring_free(b10);
+*/
+  b10 = bytestring_new(8);
+  bytestring_pushback(b10,0);
+
+  for (i=0;i<bs->len;i++)
+    x_bytestring_decimal_mul_add(b10,1<<(bs->width),bs->data[i]);
+  
+  for (i=0;i<b10->len;i++)
+    a_strpushback(dest,b10->data[b10->len-1-i]+'0');
+
   bytestring_free(b10);
 }
 
@@ -801,19 +814,18 @@ end_this_function:
 
 double bytestring_to_number(const bytestring_t *bs)
 {
-  bytestring_t *src;
   int i;
+  unsigned coef = 0;
   double res = 0;
 
   if (bs->len==0)
     return 0;
-  src = bytestring_new(8);
-  bytestring_convert(src,bs);
-    
-  for (i=0;i<src->len;i++)
-    res = (res*256)+src->data[i];
 
-  bytestring_free(src);
+  coef = 1<<(bs->width);
+
+  for (i=0;i<bs->len;i++)
+	res = (res*coef)+bs->data[i];
+
   return res;
 }
 

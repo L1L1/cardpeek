@@ -30,7 +30,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "iso7816.h"
+#ifndef _WIN32
 #include "config.h"
+#else
+#include "win32/config.h"
+#include "win32/win32compat.h"
+#endif
 
 #include "icons.c"
 
@@ -418,9 +423,14 @@ GtkWidget *create_analyzer_menu()
   char *dot;
   char *underscore;
 
- 
   /* Make an ItemFactory */
   item_factory = gtk_item_factory_new (GTK_TYPE_MENU, "<Analyzer>",NULL);
+
+  if (item_factory==NULL)
+  {
+	log_printf(LOG_ERROR,"Could not create menu for scripts in %s",script_path);
+	return NULL;
+  }
 
   if (script_path)
   {
@@ -449,6 +459,7 @@ GtkWidget *create_analyzer_menu()
 	menu_item->prev=SCRIPTS;
 	SCRIPTS = menu_item;
 
+	memset(&fentry,0,sizeof(fentry));
 	fentry.path=menu_item->script_name;
 	fentry.callback=G_CALLBACK(gui_run_script_cb);
 	fentry.callback_action=0;
@@ -462,7 +473,8 @@ GtkWidget *create_analyzer_menu()
     else
       log_printf(LOG_WARNING,"No scripts found in %s",script_path);
   }
-
+ 
+  memset(&fentry,0,sizeof(fentry));
   fentry.path="/Sep1";
   fentry.callback=NULL;
   fentry.callback_action=0;
@@ -470,13 +482,14 @@ GtkWidget *create_analyzer_menu()
   fentry.extra_data=NULL;
   gtk_item_factory_create_item(item_factory,&fentry,NULL,2);
 
+  memset(&fentry,0,sizeof(fentry));
   fentry.path="/Load a script";
   fentry.callback=G_CALLBACK(menu_card_view_analyzer_load_cb);
   fentry.callback_action=0;
   fentry.item_type="<StockItem>";
   fentry.extra_data=GTK_STOCK_OPEN;
   gtk_item_factory_create_item(item_factory,&fentry,NULL,2);
-
+  
   return gtk_item_factory_get_widget (item_factory, "<Analyzer>");
 }
 
@@ -491,7 +504,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   GtkWidget           *analyzer_menu;
 
   /* Create base window container */
-
+  
   base_container = gtk_vbox_new(FALSE,0);
 
   /* Create the toolbar */
@@ -1141,7 +1154,7 @@ int gui_create(application_callback_t run_script_cb,
   /* Build icon sets */
 
   icon_factory = gtk_icon_factory_new();
-
+  
   pixbuf = gdk_pixbuf_new_from_inline (-1, icon_block, FALSE, NULL);
   icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
   gtk_icon_factory_add(icon_factory,"cardpeek-block",icon_set);
@@ -1178,7 +1191,6 @@ int gui_create(application_callback_t run_script_cb,
   pixbuf = gdk_pixbuf_new_from_inline (-1, icon_cardpeek, FALSE, NULL);
   gtk_window_set_default_icon (pixbuf);
 
-
   /* log frame */
 
   text = create_log_view ();
@@ -1205,8 +1217,8 @@ int gui_create(application_callback_t run_script_cb,
   frame1 = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(GTK_FRAME(frame1),GTK_SHADOW_ETCHED_IN);
   gtk_container_add (GTK_CONTAINER(frame1),view);
-
- /* command entry */
+ 
+  /* command entry */
 
   entry = create_command_entry ();
   
@@ -1247,7 +1259,7 @@ int gui_create(application_callback_t run_script_cb,
   /*gtk_widget_size_request(vpaned,&requisition);*/
 
   /*gtk_paned_set_position(GTK_PANED (vpaned), 256);*/
-
+  
   return 1;
 }
 

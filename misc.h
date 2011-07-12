@@ -81,6 +81,6 @@ int a_strequal(const a_string_t* cs, const char *value);
 
 
 #include <stdio.h>
-#define HERE() fprintf(stderr,"%s[%i]\n",__FILE__,__LINE__);
+#define HERE() { fprintf(stderr,"%s[%i]\n",__FILE__,__LINE__); fflush(stderr); }
 
 #endif

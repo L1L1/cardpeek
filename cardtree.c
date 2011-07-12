@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -1047,6 +1047,77 @@ const char* cardtree_find_node(cardtree_t* ct,
 
   return cardtree_find_ext(ct,&iter,node,id);
 }
+
+int cardtree_find_all_ext(a_string_t *res,
+			  cardtree_t* ct, GtkTreeIter* iter, 
+			  const char* t_name, const char *t_id)
+{
+  gchar* name;
+  gchar* id;
+  GtkTreeIter child;
+  int match;
+  gchar* r;
+
+  /* check item */
+  gtk_tree_model_get(GTK_TREE_MODEL(ct->_store),iter,
+		     C_NAME,&name,
+		     C_ID,&id,
+		     -1);
+
+  if ((t_name==NULL || (name && strcmp(t_name,name)==0)) &&
+      (t_id==NULL || (id && strcmp(t_id,id)==0)))
+    match = 1;
+  else
+    match = 0;
+  if (name) g_free(name);
+  if (id) g_free(id);
+
+  if (match)
+  {
+    r = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(ct->_store),iter);
+    a_strcat(res,r);
+    a_strcat(res,";");
+    g_free(r);
+  }
+  /* check children */
+  if (gtk_tree_model_iter_children(GTK_TREE_MODEL(ct->_store),&child,iter)!=FALSE)
+  {
+    do
+    {
+      cardtree_find_all_ext(res,ct,&child,t_name,t_id);
+    }
+    while (gtk_tree_model_iter_next(GTK_TREE_MODEL(ct->_store),&child)!=FALSE);
+  }
+  return a_strlen(res);
+}
+
+
+const char* cardtree_find_all_nodes(cardtree_t* ct, 
+				    const char *root, const char* node, const char *id)
+{
+  GtkTreeIter iter;
+  int path_exists;
+  a_string_t *res = a_strnew(NULL);
+
+  if (id==NULL && node==NULL)
+    return NULL;
+
+  if (root==NULL)
+    path_exists = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ct->_store),&iter);
+  else
+    path_exists = gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(ct->_store),&iter,root);
+
+  if (!path_exists)
+    return NULL;
+
+  cardtree_find_all_ext(res,ct,&iter,node,id);
+
+  cardtree_clear_tmpstr(ct);
+  ct->_tmpstr = a_strfinalize(res);
+  return ct->_tmpstr;
+}
+
+
 
 void cardtree_bind_to_treeview(cardtree_t* ct, GtkWidget *view)
 {

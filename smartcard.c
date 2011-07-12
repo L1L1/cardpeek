@@ -22,19 +22,24 @@
 #include "smartcard.h"
 #include "misc.h"
 #include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "iso7816.h"
-
+#ifdef _WIN32
+#include "win32/win32compat.h"
+#else
+#include <ctype.h>
+#endif
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
 int cardmanager_search_emul_readers(cardmanager_t *cm);
+#ifndef _WIN32
 int cardmanager_search_acg_readers(cardmanager_t *cm);
-
+#endif
 
 /********************************************************************
  * CARDMANAGER
@@ -46,7 +51,9 @@ cardmanager_t *cardmanager_new()
   memset(cm,0,sizeof(cardmanager_t));
 
   cardmanager_search_pcsc_readers(cm);
+#ifndef _WIN32
   cardmanager_search_acg_readers(cm);
+#endif
 
   cardmanager_search_emul_readers(cm);
   return cm;
@@ -86,8 +93,9 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
 #include "drivers/emul_driver.c"
+#ifndef _WIN32
 #include "drivers/acg_driver.c"
-
+#endif
 
 cardreader_t* cardreader_new(const char *card_reader_name)
 {
@@ -109,11 +117,13 @@ cardreader_t* cardreader_new(const char *card_reader_name)
     reader->name=strdup(card_reader_name);
     emul_initialize(reader);
   }
+#ifndef _WIN32
   else if (strncmp(card_reader_name,"acg://",6)==0)
   {
     reader->name=strdup(card_reader_name);
     acg_initialize(reader);
   }
+#endif
   else {
     free(reader);
     log_printf(LOG_ERROR,"Unknown reader type : %s",card_reader_name);
@@ -333,12 +343,14 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   char *readers;
   unsigned r;
 
-  status = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, 
+  
+  status = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, 
 				 &hcontext);
+  
   if (status!=SCARD_S_SUCCESS)
   {
     log_printf(LOG_INFO,"Failed to establish PCSC card manager context");
-    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
+    log_printf(LOG_INFO,"PCSC error code 0x%08X: %s",status,pcsc_stringify_error(status));
     if (cardmanager_check_pcscd_is_running()==0)
       log_printf(LOG_INFO,"The pcscd deamon does not seem to be running.");
     else
@@ -350,7 +362,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   if (status!=SCARD_S_SUCCESS)
   {
     log_printf(LOG_WARNING,"No PCSC reader connected");
-    log_printf(LOG_INFO,"PCSC error code %lX: %s",status,pcsc_stringify_error(status));
+    log_printf(LOG_INFO,"PCSC error code 0x%08X: %s",status,pcsc_stringify_error(status));
     return 0;
   }
 
@@ -430,7 +442,7 @@ int cardmanager_search_emul_readers(cardmanager_t *cm)
   free(namelist);
   return count;
 }
-
+#ifndef _WIN32
 int cardmanager_search_acg_readers(cardmanager_t *cm)
 {
   a_string_t* reader;
@@ -471,7 +483,7 @@ int cardmanager_search_acg_readers(cardmanager_t *cm)
   }
   return count;
 }
-
+#endif
 void cardreader_set_callback(cardreader_t *reader, cardreader_callback_t func, void *user_data)
 {
   reader->cb_func=func;

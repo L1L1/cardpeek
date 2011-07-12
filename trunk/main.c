@@ -31,12 +31,15 @@
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "script_version.h"
+#include <errno.h>
+#ifndef _WIN32
 #include <sys/wait.h>
+#endif
 #include <signal.h> 
 
-
 extern unsigned char _binary_dot_cardpeek_tar_gz_start;
-extern unsigned char _binary_dot_cardpeek_tar_gz_end;
+extern int _binary_dot_cardpeek_tar_gz_size;
+/* extern unsigned char _binary_dot_cardpeek_tar_gz_end; */
 
 int install_dot_file()
 {
@@ -88,8 +91,8 @@ int install_dot_file()
   else
   {
     astr = a_strnew(NULL);
-    a_sprintf(astr,"It seems this is the first time you run Cardpeek, because \n'%s' does not exit.\n"
-  	      "Do you want to create '%s' ?",dot_dir,dot_dir);
+    a_sprintf(astr,"It seems this is the first time you run Cardpeek, because \n'%s' does not exit (%s).\n"
+  	      "Do you want to create '%s' ?",dot_dir,strerror(errno),dot_dir);
 
     if (gui_question(a_strval(astr),"Yes","No",NULL)!=0)
     {
@@ -102,20 +105,32 @@ int install_dot_file()
   }
     
   chdir(home_dir);
-  f = fopen("dot_cardpeek.tar.gz","w");
-  if (fwrite(&_binary_dot_cardpeek_tar_gz_start,
-	     &_binary_dot_cardpeek_tar_gz_end-&_binary_dot_cardpeek_tar_gz_start,
-	     1,f)!=1)
-    return 0;
+  if ((f = fopen("dot_cardpeek.tar.gz","wb"))==NULL)
+  {
+	  log_printf(LOG_ERROR,"Could not create dot_cardpeek.tar.gz in %s (%s)", home_dir, strerror(errno));
+	  gui_question("Could not create dot_cardpeek.tar.gz, aborting.","Ok",NULL);
+	  return 0;
+  }
+  
+  if (fwrite(&_binary_dot_cardpeek_tar_gz_start,_binary_dot_cardpeek_tar_gz_size,1,f)!=1)
+  {
+	  log_printf(LOG_ERROR,"Could not write to dot_cardpeek.tar.gz in %s (%s)", home_dir, strerror(errno));
+	  gui_question("Could not write to dot_cardpeek.tar.gz, aborting.","Ok",NULL);
+	  fclose(f);
+	  return 0;
+  }
+  log_printf(LOG_DEBUG,"Wrote %i bytes to dot_cardpeek.tar.gz",_binary_dot_cardpeek_tar_gz_size);
   fclose(f);
+
   log_printf(LOG_INFO,"Created dot_cardpeek.tar.gz");
-  printf("Creating files in %s :\n", home_dir);
+  log_printf(LOG_INFO,"Creating files in %s", home_dir);
   status = system("tar xzvf dot_cardpeek.tar.gz");
-  if (status!=0)
-    printf("Failed\n");
-  else
-    printf("Done\n");
   log_printf(LOG_INFO,"'tar xzvf dot_cardpeek.tar.gz' returned %i",status);
+  if (status!=0)
+  {
+	gui_question("Extraction of dot_cardpeek.tar.gz failed, aborting.","Ok",NULL);
+	return 0;
+  }
   status = system("rm dot_cardpeek.tar.gz");
   log_printf(LOG_INFO,"'rm dot_cardpeek.tar.gz' returned %i",status);
 
@@ -125,19 +140,28 @@ int install_dot_file()
 
 
 static char *message = 
-"+----------------------------------------------------------------+\n"
-"|  Oups...                                                       |\n"
-"|  Cardpeek has encoutered a problem and has exited abnormally.  |\n"
-"|  Additionnal information may be available in the file          |\n"
-"|    $HOME/.cardpeek.log                                         |\n"
-"|                                                                |\n"
-"|  L1L1@gmx.com                                                  |\n"
-"+----------------------------------------------------------------+\n"
+"***************************************************************\n"
+" Oups...                                                       \n"
+"  Cardpeek has encoutered a problem and has exited abnormally. \n"
+"  Additionnal information may be available in the file         \n"
+"                                                               \n"
+"  "
+;
+
+static char *signature =
+"\n"
+"                                                               \n"
+"  L1L1@gmx.com                                                 \n"
+"*****************************************************************"
 ;
 
 void save_what_can_be_saved(int sig_num) 
-{ 
+{
+  const char *logfile;	
   write(2,message,strlen(message));
+  logfile = config_get_string(CONFIG_FILE_LOG);
+  write(2,logfile,strlen(logfile));
+  write(2,signature,strlen(signature));
   log_close_file();
   exit(-2);
 } 
@@ -151,16 +175,16 @@ int main(int argc, char **argv)
   char* reader_name;
 
   signal(SIGSEGV, save_what_can_be_saved); 
-
+  
   config_init();
     
   log_open_file();
- 
+
   gui_init(&argc,&argv);
   
   gui_create(luax_run_script_cb,luax_run_command_cb);
-  
-  install_dot_file();
+
+  install_dot_file(); 
 
   luax_init();
 

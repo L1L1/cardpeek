@@ -31,9 +31,9 @@ const char *CONFIG_OPTIONS[]={
   NULL,
   NULL,
   "",
-  ".cardpeek/",
-  ".cardpeek/scripts/",
-  ".cardpeek/logs/",
+  ".cardpeek",
+  ".cardpeek/scripts",
+  ".cardpeek/logs",
   ".cardpeek/config.lua",
   ".cardpeek.log",
   ".cardpeek/version",
@@ -47,8 +47,14 @@ int config_init()
 {
   char config_path[PATH_MAX];
   char cwd_path[PATH_MAX];
-  char *home=getenv("HOME");
+  char *home;
   unsigned i;
+
+#ifndef _WIN32
+  home = getenv("HOME");
+#else
+  home = getenv("APPDATA");
+#endif
   
   if (home==NULL)
     return 0;

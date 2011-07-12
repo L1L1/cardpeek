@@ -298,6 +298,28 @@ int subr_ui_find_node(lua_State* L)
   return 1;
 }
 
+int subr_ui_find_all_nodes(lua_State* L)
+{
+  const char* path=NULL;
+  const char* node=NULL;
+  const char* id=NULL;
+  const char* retval;
+
+  if (!lua_isnoneornil(L,1))
+    path = lua_tostring(L,1);
+  if (!lua_isnoneornil(L,2))
+    node = lua_tostring(L,2);
+  if (!lua_isnoneornil(L,3))
+    id = lua_tostring(L,3);
+  if ((retval = cardtree_find_all_nodes(CARDTREE,path,node,id))!=0)
+    lua_pushstring(L,retval);
+  else
+    lua_pushnil(L);
+  return 1;
+}
+
+
+
 int subr_ui_tree_to_xml(lua_State* L)
 {
   const char* path;
@@ -475,6 +497,7 @@ static const struct luaL_reg uilib [] = {
   {"tree_get_node", subr_ui_tree_get_node },
   {"tree_delete_node", subr_ui_tree_delete_node },
   {"tree_find_node", subr_ui_find_node },
+  {"tree_find_all_nodes", subr_ui_find_all_nodes },
   {"tree_to_xml", subr_ui_tree_to_xml },
   {"tree_save",subr_ui_tree_save },
   {"tree_load",subr_ui_tree_load },

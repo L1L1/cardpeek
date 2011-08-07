@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2010 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -134,16 +134,16 @@ if card.connect() then
      for app in pairs(map) do
          sw,resp = card.select(map[app]['aid'])
          if sw==0x9000 then
-            APP = ui.tree_add_node(CARD,"Application",map[app]['aid'],nil,"application")
+            APP = ui.tree_add_node(CARD,"application","Application",map[app]['aid'])
 	    tlv_parse(APP,resp)
          end
          for i in pairs(map[app]['files']) do
-            EF = ui.tree_add_node(APP,map[app]['files'][i]['name'],map[app]['files'][i]['ef'],nil,"file")
+            EF = ui.tree_add_node(APP,"file",map[app]['files'][i]['name'],map[app]['files'][i]['ef'])
   	    sw,resp = card.select(map[app]['files'][i]['ef'])
 	    tlv_parse(EF,resp)
 	    if sw==0x9000 then
 	       sw,resp = read_bin()
-	       CONTENT = ui.tree_add_node(EF,"content",nil,#resp)
+	       CONTENT = ui.tree_add_node(EF,"record","content",nil,#resp)
 	       if sw==0x9000 then
 	          if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
                     ui.tree_set_value(CONTENT,resp)

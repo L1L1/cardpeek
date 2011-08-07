@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ function card.tree_startup(title)
 	local ref
 	local atr = card.last_atr()
 
-	mycard = ui.tree_add_node(nil,"card",title,nil,"card")
-	ref = ui.tree_add_node(mycard,"ATR","cold",#atr,"block")
+	mycard = ui.tree_add_node(nil,"card",title)
+	ref = ui.tree_add_node(mycard,"block","cold ATR",nil,#atr)
 	ui.tree_set_value(ref,atr)
 	return mycard
 end

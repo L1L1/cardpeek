@@ -53,16 +53,16 @@ function process_moneo(card_ctx)
 	   asn1.enable_single_byte_length(true)
 	end
 
-	APP = ui.tree_add_node(card_ctx,"application",AID,nil,"application")
+	APP = ui.tree_add_node(card_ctx,"application","application",AID)
 	tlv_parse(APP,resp)
 	for name,sfi in pairs(MONEO_SFI) do
-	    SFI = ui.tree_add_node(APP,name,string.format(".%02X",sfi),nil,"file")
+	    SFI = ui.tree_add_node(APP,"file",name,string.format("%02X",sfi))
 	    for r=1,255 do
 	        sw,resp = card.read_record(sfi,r)
 	        if (#resp==0) then
                    break
 		end
-		REC = ui.tree_add_node(SFI,"record",r,#resp,"record")
+		REC = ui.tree_add_node(SFI,"record","record",r,#resp)
 		ui.tree_set_value(REC,resp)
 	    end
 	end

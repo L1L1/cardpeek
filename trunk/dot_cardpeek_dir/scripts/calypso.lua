@@ -73,7 +73,7 @@ LFI_LIST = {
   { "Holder Extended",  "/3F1C",      "file" }
 }
 
-function calypso_select(ctx,desc,path,type)
+function calypso_select(ctx,desc,path,classname)
 	local path_parsed = card.make_file_path(path)
 	local lfi = bytes.sub(path_parsed,-2)
 	local resp, sw
@@ -93,10 +93,10 @@ function calypso_select(ctx,desc,path,type)
 			FILE_REF = ui.tree_find_node(PARENT_REF,nil,item)
 			if FILE_REF==nil then
 				FILE_REF = ui.tree_add_node(PARENT_REF,
+							    classname,
 							    desc,
 							    item,
-							    nil,
-							    type)
+							    nil)
 			end
 			PARENT_REF = FILE_REF
 		end
@@ -110,23 +110,26 @@ function calypso_guess_network(APP)
 	local network_bin
 	local ENV_REF
 	local RECORD_REF
-	local DATA_REF
+	--local DATA_REF
 	local data
 
 	ENV_REF    = ui.tree_find_node(APP,"Environment")
 
 	if ENV_REF then
 		RECORD_REF = ui.tree_find_node(ENV_REF,"record",1)
-		DATA_REF   = ui.tree_find_node(RECORD_REF,"raw data")
-		if DATA_REF then
-			data = bytes.convert(1,ui.tree_get_value(DATA_REF))
-			country_bin = bytes.sub(data,13,24)
-			network_bin = bytes.sub(data,25,36)
-			-- print(bytes.convert(4,country_bin),bytes.convert(4,network_bin))
-			return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),
-			       tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
+		--DATA_REF   = ui.tree_find_node(RECORD_REF,"raw data")
+		if RECORD_REF then
+			data = bytes.convert(1,ui.tree_get_value(RECORD_REF))
+			if #data > 36 then
+				country_bin = bytes.sub(data,13,24)
+				network_bin = bytes.sub(data,25,36)
+				return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),
+			       	       tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
+			else
+				log.print(log.WARNING,"Could not find enough data in 'Environement/record#1'")
+			end
 		else
-			log.print(log.WARNING,"Could not find data in 'Environement/record 1/'")
+			log.print(log.WARNING,"Could not find data in 'Environement/record#1'")
 		end
 	else
 		log.print(log.WARNING,"Could not find data in 'Environement'")
@@ -154,21 +157,9 @@ function calypso_process(cardenv)
 				if sw ~= 0x9000 then
 					break
 				end
-				REC = ui.tree_add_node(LFI,"record",r,#resp,"record")
-                        	NODE = ui.tree_add_node(REC,"raw data")
-	                	ui.tree_set_value(NODE,resp)
-	--[[
-				print(lfi_desc[1].." record "..r)
-				local i
-				local d = bytes.convert(1,resp)
-				for i=0,#d,40 do
-				    print(string.format("%03i:  ",i)..
-					  bytes.format(" %D",bytes.sub(d,i+0,i+9))..
-					  bytes.format(" %D",bytes.sub(d,i+10,i+19))..
-					  bytes.format(" %D",bytes.sub(d,i+20,i+29))..
-					  bytes.format(" %D",bytes.sub(d,i+30,i+39)))
-				end
-	--]]
+				REC = ui.tree_add_node(LFI,"record","record",r,#resp)
+                        	--NODE = ui.tree_add_node(REC,"item","raw data")
+	                	ui.tree_set_value(REC,resp)
 			end
 		end
 	end
@@ -192,8 +183,6 @@ function calypso_process(cardenv)
 		log.print(log.LOG_INFO,"Could not find "..filename)
 	end
 
-	--print(country, network);
-	--process_en1545(APP)
 end
 
 local atr, hex_card_num, card_num
@@ -205,7 +194,7 @@ if card.connect() then
   hex_card_num = bytes.sub(atr,-7,-4)
   card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
 
-  local ref = ui.tree_add_node(CARD,"Card number",nil,4,"block")
+  local ref = ui.tree_add_node(CARD,"block","Card number",nil,4)
   ui.tree_set_value(ref,hex_card_num)
   ui.tree_set_alt_value(ref,card_num)
 

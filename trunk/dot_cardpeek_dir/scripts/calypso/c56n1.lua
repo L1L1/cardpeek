@@ -48,9 +48,7 @@ mobib_HolderExtension = {
 function mobib_process(APP)
 	local HOLDER_EXT
 	local RECORD_1
-	local DATA_REF_1
 	local RECORD_2
-	local DATA_REF_2
 	local data
 
 	HOLDER_EXT = ui.tree_find_node(APP,"Holder Extended")
@@ -59,30 +57,19 @@ function mobib_process(APP)
 		log.print(LOG_ERROR,"Could not find record 1 in 'Holder Extended' file")
 		return false
 	end
-	DATA_REF_1 = ui.tree_find_node(RECORD_1,"raw data")
-	if DATA_REF_1==nil then 
-		log.print(LOG_ERROR,"Could not find data in record 1 of 'Holder Extended' file")
-		return false
-	end	
 	RECORD_2 = ui.tree_find_node(HOLDER_EXT,"record",2)
 	if RECORD_2==nil then 
 		log.print(LOG_ERROR,"Could not find record 2 in 'Holder Extended' file")
 		return false
 	end
-	DATA_REF_2 = ui.tree_find_node(RECORD_2,"raw data")
-	if DATA_REF_1==nil then 
-		log.print(LOG_ERROR,"Could not find data in record 2 of 'Holder Extended' file")
-		return false
-	end	
 	
-	data = ui.tree_get_value(DATA_REF_1) .. ui.tree_get_value(DATA_REF_2)
+	data = ui.tree_get_value(RECORD_1) .. ui.tree_get_value(RECORD_2)
 	
 	ui.tree_delete_node(RECORD_2)
 	ui.tree_delete_node(RECORD_1)
 	-- print("deleting ",RECORD_1,RECORD_2)
-	RECORD_1 = ui.tree_add_node(HOLDER_EXT,"record",1,#data)
-	DATA_REF_1 = ui.tree_add_node(RECORD_1,"raw data")
-	ui.tree_set_value(DATA_REF_1,data)
+	RECORD_1 = ui.tree_add_node(HOLDER_EXT,"record","record","1",#data)
+	ui.tree_set_value(RECORD_1,data)
 	en1545_map(APP,"Holder Extended",mobib_HolderExtension)
 end
 

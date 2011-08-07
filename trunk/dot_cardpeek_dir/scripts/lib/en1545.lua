@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2010 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -100,12 +100,12 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 
         parsed = format[2]
         item = bytes.sub(data,position,position+parsed-1)
-        NODE = ui.tree_add_node(ctx,format[3],reference_index)
+        NODE = ui.tree_add_node(ctx,"item",format[3],reference_index)
 
         if format[1] == en1545_BITMAP then
            bitmap_size = parsed
            parsed = bitmap_size
-           BITMAP_NODE = ui.tree_add_node(NODE,"("..format[3].."Bitmap)",nil,parsed)
+           BITMAP_NODE = ui.tree_add_node(NODE,"item","("..format[3].."Bitmap)",nil,parsed)
            ui.tree_set_value(BITMAP_NODE,item);
            for index=0,format[2]-1 do
                if data[position+bitmap_size-index-1]~=0 then
@@ -138,14 +138,12 @@ end
 function en1545_unparsed(ctx, data)
         local NODE
         if bytes.tonumber(data)>0 then
-                NODE = ui.tree_add_node(ctx,"(remaining unparsed data)");
+                NODE = ui.tree_add_node(ctx,"item","(remaining unparsed data)");
                 ui.tree_set_value(NODE,data)
         end
 end
 
 function en1545_map(ctx, data_type, ...)
-        local RECORD_REF
-        local DATA_REF
         local RECORD_REF
         local NODE_REF
         local data
@@ -161,23 +159,22 @@ function en1545_map(ctx, data_type, ...)
                 for index=1,15 do
                         RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
                         if RECORD_REF==nil then break end
-                        DATA_REF = ui.tree_find_node(RECORD_REF,"raw data")
-                        data = ui.tree_get_value(DATA_REF)
+                        data = ui.tree_get_value(RECORD_REF)
                         bits = bytes.convert(1,data)
-                        DATA_REF = ui.tree_add_node(RECORD_REF,"parsed data")
                         parsed = 0
                         for i,template in ipairs({...}) do
                                 block = bytes.sub(bits,parsed)
                                 if bytes.is_all(block,0)==false then
-                                        parsed = parsed + en1545_parse(DATA_REF,template,block)
+                                        parsed = parsed + en1545_parse(RECORD_REF,template,block)
                                 end
                         end
-                        en1545_unparsed(DATA_REF,bytes.sub(bits,parsed))
+                        en1545_unparsed(RECORD_REF,bytes.sub(bits,parsed))
                 end
-                ui.tree_set_attributes(NODE_REF,"name",data_type..", parsed")
+                ui.tree_set_attribute(NODE_REF,"description",data_type..", parsed")
         end
 end
 
+--[[
 function en1545_guess_network(APP)
         local country_bin
 	local network_bin
@@ -205,4 +202,5 @@ function en1545_guess_network(APP)
         end
 	return false
 end
+--]]
 

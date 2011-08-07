@@ -31,13 +31,70 @@ typedef struct {
   long         status;
 } pcsc_data_t;
 
+const char *pcsc_stringify_protocol(DWORD proto)
+{
+	static char proto_string[32];
 
-char *CARD_PROTOCOL[] = { "Unknown", "T0", "T1" };
+        switch (proto) {
+		case SCARD_PROTOCOL_T0:
+			return "T=0";
+		case SCARD_PROTOCOL_T1:
+			return "T=1";
+		case SCARD_PROTOCOL_RAW:
+			return "Raw";
+	}
+	sprintf(proto_string,"UNKNOWN(0x%x)",(unsigned)proto);
+	return proto_string;
+}
+
+const char *pcsc_stringify_state(DWORD state)
+{
+	static char state_string[500];
+	int state_string_len;
+
+	*state_string = 0;			
+
+	if (state & SCARD_STATE_CHANGED)
+		strcat(state_string," Changed state,");
+
+	if (state & SCARD_STATE_IGNORE)
+		strcat(state_string," Ignore reader,");
+
+	if (state & SCARD_STATE_UNKNOWN)
+		strcat(state_string," Unknown reader,");
+
+	if (state & SCARD_STATE_UNAVAILABLE)
+		strcat(state_string," Status unavailable,");
+
+	if (state & SCARD_STATE_EMPTY)
+		strcat(state_string," Card removed,");
+
+	if (state & SCARD_STATE_PRESENT)
+		strcat(state_string," Card present,");
+
+	if (state & SCARD_STATE_EXCLUSIVE)
+		strcat(state_string," Exclusive access,");
+
+	if (state & SCARD_STATE_INUSE)
+		strcat(state_string," Shared access,");
+
+	if (state & SCARD_STATE_MUTE)
+		strcat(state_string," Silent card,");
+	
+	state_string_len=strlen(state_string);
+	if (state_string[state_string_len-1]==',')
+		state_string[state_string_len-1]=0;
+	else
+		strcat(state_string,"UNDEFINED");
+
+	return state_string;
+}
 
 int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   DWORD attr_maxinput;
   DWORD attr_maxinput_len = sizeof(unsigned int);
+  SCARD_READERSTATE reader_state;
 
   pcsc_data_t* pcsc = cr->extra_data;
   
@@ -50,11 +107,35 @@ int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
     return 0;
   }
 
+  memset(&reader_state,0,sizeof(reader_state));
+  reader_state.szReader = cr->name+7;
+  reader_state.dwCurrentState = SCARD_STATE_UNAWARE;
+  pcsc->status = SCardGetStatusChange(pcsc->hcontext,INFINITE,&reader_state,1);
+  if (pcsc->status != SCARD_S_SUCCESS)
+  {
+     log_printf(LOG_ERROR,"Failed to query reader status before connecting [%s]",
+                          pcsc_stringify_error(pcsc->status));
+     return 0;
+  }
+
+  while ((reader_state.dwEventState & SCARD_STATE_PRESENT)==0)
+  {
+     reader_state.dwCurrentState = reader_state.dwEventState;
+     log_printf(LOG_INFO,"Waiting for card to be present (current state: %s)...",
+			  pcsc_stringify_state(reader_state.dwEventState));
+     pcsc->status = SCardGetStatusChange(pcsc->hcontext,3000,&reader_state,1);
+     if (pcsc->status != SCARD_S_SUCCESS && pcsc->status != SCARD_E_TIMEOUT)
+     {
+	log_printf(LOG_ERROR,"Failed to query reader status change before connecting [%s]",
+			     pcsc_stringify_error(pcsc->status));
+	return 0;
+     }
+  }
+
   log_printf(LOG_DEBUG,"Attempting to connect to '%s'",cr->name);
   pcsc->status = SCardConnect(pcsc->hcontext,
       			      cr->name+7,
       			      SCARD_SHARE_EXCLUSIVE,
-			      /*SCARD_SHARE_DIRECT,*/
       			      prefered_protocol,
       			      &(pcsc->hcard),
       			      &(cr->protocol));
@@ -69,9 +150,9 @@ int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   if (SCardGetAttrib(pcsc->hcard,SCARD_ATTR_MAXINPUT,(LPBYTE)&attr_maxinput,(LPDWORD)&attr_maxinput_len)==SCARD_S_SUCCESS)
     log_printf(LOG_INFO,"Reader maximum input length is %u bytes",attr_maxinput);
   else
-    log_printf(LOG_WARNING,"Could not determinate reader maximum input length");
+    log_printf(LOG_DEBUG,"Could not determinate reader maximum input length");
 
-  log_printf(LOG_INFO,"Connection successful, protocol is %s",CARD_PROTOCOL[cr->protocol]);
+  log_printf(LOG_INFO,"Connection successful, protocol is %s",pcsc_stringify_protocol(cr->protocol));
   cr->connected=1;
   return 1;
 }
@@ -182,7 +263,7 @@ const bytestring_t* pcsc_last_atr(cardreader_t* cr)
   {
     bytestring_assign_data(cr->atr,atrlen,pbAtr);
     tmp = bytestring_to_format("%D",cr->atr);
-    log_printf(LOG_INFO,"ATR=%s",tmp);
+    log_printf(LOG_INFO,"ATR is %i bytes: %s",atrlen,tmp);
     free(tmp);
   }
   else

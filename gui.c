@@ -50,6 +50,7 @@ GtkTextBuffer* READER_BUFFER=NULL;
 GtkScrolledWindow* SCROLL_TEXT=NULL;
 GtkWidget* CARDVIEW=NULL;
 GtkStatusbar *STATUS_BAR=NULL;
+GtkListStore *COMPLETION=NULL;
 
 struct menu_script *SCRIPTS=NULL;
 application_callback_t RUN_LUA_SCRIPT = NULL;
@@ -123,14 +124,17 @@ void gui_run_script_cb(GtkWidget *widget,
 void gui_run_command_cb(GtkWidget *widget,
                         GtkWidget *entry )
 {
+  GtkTreeIter iter;
   const gchar *entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
   RUN_LUA_COMMAND(entry_text);
+  gtk_list_store_append(COMPLETION,&iter);
+  gtk_list_store_set(COMPLETION,&iter,0,entry_text,-1);
   gui_update(0);
 }
 
 void menu_card_view_clear_cb(GtkWidget *w, gpointer user_data)
 {
-  cardtree_delete_node(CARDTREE,NULL);
+  cardtree_node_delete(CARDTREE,NULL);
   RUN_LUA_COMMAND("card.CLA=0");
   log_printf(LOG_INFO,"Cleared card data tree");
 }
@@ -171,7 +175,7 @@ void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
-
+/*
 void menu_cardview_row_activated (GtkTreeView        *treeview,
 				 GtkTreePath        *path,
 				 GtkTreeViewColumn  *col,
@@ -180,12 +184,38 @@ void menu_cardview_row_activated (GtkTreeView        *treeview,
   unsigned flags;
   char* string_path = gtk_tree_path_to_string(path);
   cardtree_get_flags(CARDTREE,string_path,&flags);
-  cardtree_set_flags(CARDTREE,string_path,flags^1);
+  cardtree_set_flags(CARDTREE,string_path,flags^C_FLAG_DISPLAY_FULL);
   g_free(string_path);
-/*
-  GtkTreeModel *model;
-  model = gtk_tree_view_get_model(treeview);
+}
 */
+void menu_cardview_cursor_changed(GtkTreeView *treeview,
+				  gpointer userdata)
+{
+	GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
+	GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
+	unsigned flags,size;
+	GtkTreePath *gtktreepath;
+	char *path;
+	GtkTreeViewColumn *column;
+	
+	gtk_tree_view_get_cursor(treeview,&gtktreepath,&column);
+	path = cardtree_path_from_gtktreepath(gtktreepath);
+	
+	if (path)
+	{
+		if ((column==column2 || column==column3))
+		{
+			cardtree_value_strlen(CARDTREE,path,&size);
+			if (size>=256) 
+			{
+				cardtree_flags_get(CARDTREE,path,&flags);
+				cardtree_flags_set(CARDTREE,path,flags^C_FLAG_DISPLAY_FULL);
+				gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW (CARDVIEW),gtktreepath,NULL,TRUE,0,0);
+			}
+		}
+		cardtree_path_free(path);
+		gtk_tree_path_free(gtktreepath);
+	}
 }
 
 void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
@@ -214,17 +244,27 @@ gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 {
   GtkTreeModel *model;
   GtkTreeIter iter;
-  gchar *comment;
+  unsigned flags;
+  unsigned size;
 
   if (gtk_tree_view_get_tooltip_context(GTK_TREE_VIEW(widget),&x,&y,keyboard_mode,&model,NULL,&iter))
   {
-    gtk_tree_model_get(model,&iter,C_TYPE,&comment,-1);
-    if (comment)
-    {
-      gtk_tooltip_set_text(tooltip,comment);
-      g_free(comment);
-      return TRUE;
-    }
+	gtk_tree_model_get(model,&iter,C_FLAGS,&flags,C_SIZE,&size,-1);
+	
+	if (size>256)
+	{
+		if (flags & C_FLAG_DISPLAY_FULL)
+			gtk_tooltip_set_text(tooltip,"Click on the data in the last column to reduce\n"
+						     "the displayed data to the first 256 bytes");
+		else
+			gtk_tooltip_set_text(tooltip,"Click on the data in the last column to display\n"
+						     "it in full");
+	}
+	else
+	{
+		gtk_tooltip_set_text(tooltip,"Right-click for additional tools");
+	}
+	return TRUE;
   }
   return FALSE;
 }
@@ -417,7 +457,7 @@ GtkWidget *create_analyzer_menu()
   GtkItemFactory *item_factory;
   GtkItemFactoryEntry fentry;
   struct dirent **namelist;
-  int n;
+  int n,i;
   const char *script_path=config_get_string(CONFIG_FOLDER_SCRIPTS);
   struct menu_script* menu_item;
   char *dot;
@@ -437,14 +477,14 @@ GtkWidget *create_analyzer_menu()
     n = scandir(script_path, &namelist, select_lua, alphasort);
     if (n > 0)
     {
-      while(n--) 
+      for (i=0;i<n;i++) 
       {
-	log_printf(LOG_INFO,"Adding %s script to menu", namelist[n]->d_name);
+	log_printf(LOG_INFO,"Adding %s script to menu", namelist[i]->d_name);
 
         menu_item=(struct menu_script *)malloc(sizeof(struct menu_script));
-	menu_item->script_name = (char* )malloc(strlen(namelist[n]->d_name)+11);
+	menu_item->script_name = (char* )malloc(strlen(namelist[i]->d_name)+11);
 	strcpy(menu_item->script_name,"/");
-	strcat(menu_item->script_name,namelist[n]->d_name);
+	strcat(menu_item->script_name,namelist[i]->d_name);
 
 	dot = rindex(menu_item->script_name,'.');
 	if (dot)
@@ -455,7 +495,7 @@ GtkWidget *create_analyzer_menu()
 	  if (*underscore=='_') *underscore=' '; 
 	while (*underscore++);
 
-	menu_item->script_file = strdup(namelist[n]->d_name);
+	menu_item->script_file = strdup(namelist[i]->d_name);
 	menu_item->prev=SCRIPTS;
 	SCRIPTS = menu_item;
 
@@ -466,7 +506,7 @@ GtkWidget *create_analyzer_menu()
 	fentry.item_type="<StockItem>";
 	fentry.extra_data=GTK_STOCK_PROPERTIES;
 	gtk_item_factory_create_item(item_factory,&fentry,menu_item,2);
-	free(namelist[n]);
+	free(namelist[i]);
       }
       free(namelist);
     }
@@ -572,10 +612,14 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   g_object_set(CARDVIEW,
 	       "has-tooltip",TRUE, NULL);
 
+/*
   g_signal_connect(CARDVIEW, 
 		   "row-activated", (GCallback) menu_cardview_row_activated, NULL);
+*/
   g_signal_connect(CARDVIEW, 
- 		   "query_tooltip", (GCallback) menu_cardview_query_tooltip, NULL);
+		   "cursor-changed", (GCallback) menu_cardview_cursor_changed, NULL);  
+  g_signal_connect(CARDVIEW, 
+ 		   "query-tooltip", (GCallback) menu_cardview_query_tooltip, NULL);
   g_signal_connect(CARDVIEW,
 		   "button-press-event", (GCallback) menu_cardview_button_press_event, NULL);
 
@@ -597,7 +641,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_column_pack_start(column, renderer, TRUE);
   gtk_tree_view_column_set_attributes(column,renderer,
-				      "markup", C_MARKUP_NAME_ID,
+				      "markup", C_MARKUP_CLASSNAME_DESCRIPTION_ID,
 				      NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(CARDVIEW), column);
 
@@ -817,8 +861,16 @@ GtkWidget *create_command_entry()
   GtkWidget *label;
   GtkWidget *hbox;
   GtkWidget *entry;
+  GtkEntryCompletion* compl;
 
   entry = gtk_entry_new();
+
+  COMPLETION = gtk_list_store_new(1,G_TYPE_STRING);
+  compl = gtk_entry_completion_new();
+  gtk_entry_completion_set_model(compl, GTK_TREE_MODEL(COMPLETION));
+  gtk_entry_completion_set_text_column(compl, 0);
+  gtk_entry_set_completion(GTK_ENTRY(entry), compl);
+
   label = gtk_label_new("Command :");
   hbox = gtk_hbox_new (FALSE, 4);
 
@@ -1031,8 +1083,11 @@ void gui_about()
 				   GTK_DIALOG_DESTROY_WITH_PARENT,
 				   GTK_MESSAGE_INFO,
 				   GTK_BUTTONS_OK,
-				   "cardpeek, version %s\nCopyright 2009-2011, by 'L1L1'\nLicenced under the GPL 3",
-				   VERSION);
+				   "cardpeek, version %s\n"
+				   "Copyright 2009-2011, by 'L1L1'\n"
+				   "Licenced under the GPL 3\n\n"
+				   "Path to scripts is:\n%s",
+				   VERSION,config_get_string(CONFIG_FOLDER_SCRIPTS));
   gtk_dialog_run (GTK_DIALOG (dialog));
   gtk_widget_destroy (dialog);
 }

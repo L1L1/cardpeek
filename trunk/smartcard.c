@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -180,7 +180,9 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
   if (iso7816_describe_apdu(&ad,command)!=ISO7816_OK)
   {
-    log_printf(LOG_ERROR,"Could not parse APDU format");
+    tmp = bytestring_to_format("%D",command);
+    log_printf(LOG_ERROR,"Could not parse APDU format: %s",tmp);
+    free(tmp);
     return CARDPEEK_ERROR_SW;
   }
 

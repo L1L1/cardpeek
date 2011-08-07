@@ -245,7 +245,7 @@ function emv_process_pse(cardenv)
 	   local ATR
 	   card.warm_reset()
 	   warm_atr = card.last_atr()
-	   ATR = ui.tree_add_node(cardenv, "ATR", "warm", #warm_atr, "block")
+	   ATR = ui.tree_add_node(cardenv, "block", "ATR", "warm", #warm_atr)
 	   ui.tree_set_value(ATR,warm_atr)
            sw, resp = card.select(PSE)
 	end
@@ -256,20 +256,20 @@ function emv_process_pse(cardenv)
 	end
 
 	-- Construct tree
-	APP = ui.tree_add_node(cardenv,"application",PSE,nil,"application")
+	APP = ui.tree_add_node(cardenv,"application","application",PSE)
 	emv_parse(APP,resp)
 
 	ref = ui.tree_find_node(APP,nil,"88")
 	if (ref) then
 	   sfi = ui.tree_get_value(ref)
-	   FILE = ui.tree_add_node(APP,"file",sfi[0],nil,"file")
+	   FILE = ui.tree_add_node(APP,"file","file",sfi[0])
 
 	   rec = 1
 	   AID_LIST = {}
 	   repeat 
 	     sw,resp = card.read_record(sfi[0],rec)
 	     if sw == 0x9000 then
-	        RECORD = ui.tree_add_node(FILE,"record",tostring(rec),nil,"record")
+	        RECORD = ui.tree_add_node(FILE,"record","record",tostring(rec))
 	        emv_parse(RECORD,resp)
 	        aid = tostring(ui.tree_get_value(ui.tree_find_node(RECORD,nil,"4F")))
 	        table.insert(AID_LIST,"#"..aid)
@@ -290,8 +290,8 @@ function visa_process_application_logs(application, log_sfi, log_max)
 	local REC
 	local log_recno
 
-	LOG_FILE   = ui.tree_add_node(application,"file",tostring(log_sfi),nil,"file")
-	LOG_DATA   = ui.tree_add_node(LOG_FILE,"log data")
+	LOG_FILE   = ui.tree_add_node(application,"file","file",tostring(log_sfi),nil)
+	LOG_DATA   = ui.tree_add_node(LOG_FILE,"item","log data")
  	
 	log.print(log.INFO,string.format("Reading LOG SFI %i",log_sfi))
 	for log_recno =1,log_max do
@@ -300,7 +300,7 @@ function visa_process_application_logs(application, log_sfi, log_max)
                   log.print(log.WARNING,"Read log record failed")
 		  break
 	   else
-	          REC = ui.tree_add_node(LOG_DATA,"record",log_recno,#resp,"record")
+	          REC = ui.tree_add_node(LOG_DATA,"record","record",log_recno,#resp)
 		  ui.tree_set_value(REC,resp)
 	   end
 	end 
@@ -330,9 +330,9 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	local data
 	local currency_code, currency_name, currency_digits
 
-	LOG_FILE   = ui.tree_add_node(application,"file",log_sfi,nil,"file")
-	LOG_FORMAT = ui.tree_add_node(LOG_FILE,"log format")
-	LOG_DATA   = ui.tree_add_node(LOG_FILE,"log data")
+	LOG_FILE   = ui.tree_add_node(application,"file","file",log_sfi)
+	LOG_FORMAT = ui.tree_add_node(LOG_FILE,"item","log format")
+	LOG_DATA   = ui.tree_add_node(LOG_FILE,"item","log data")
  	
 	sw, log_format = card.get_data(0x9F4F)
 	if sw ~=0x9000 then
@@ -363,15 +363,15 @@ function emv_process_application_logs(application, log_sfi, log_max)
                   log.print(log.WARNING,"Read log record failed")
 		  break
 	   else
-	          REC = ui.tree_add_node(LOG_DATA,"record",log_recno,#resp,"record")
+	          REC = ui.tree_add_node(LOG_DATA,"record","record",log_recno,#resp)
 		  item_pos = 0
 		  ITEM_AMOUNT = nil
 		  currency_digits = 0
 		  for i=1,#log_items do
 		     if log_items[i][3] then
-		        ITEM = ui.tree_add_node(REC,log_items[i][3],nil,log_items[i][2])
+		        ITEM = ui.tree_add_node(REC,"item",log_items[i][3],nil,log_items[i][2])
 		     else
-		        ITEM = ui.tree_add_node(REC,string.format("tag %X",log_items[i][1]),nil,log_items[i][2])
+		        ITEM = ui.tree_add_node(REC,"item",string.format("tag %X",log_items[i][1]),nil,log_items[i][2])
 		     end
 
 		     data = bytes.sub(resp,item_pos,item_pos+log_items[i][2]-1)
@@ -484,7 +484,7 @@ function emv_process_application(cardenv,aid)
                     return false
                 end
             end
-	    GPO = ui.tree_add_node(APP,"processing_options");
+	    GPO = ui.tree_add_node(APP,"item","processing_options");
 	    emv_parse(GPO,resp)
 
 
@@ -498,14 +498,14 @@ function emv_process_application(cardenv,aid)
 	            local sfi
 	            local rec
 	            log.print(log.INFO,string.format("Reading SFI %i",bit.SHR(AFL[i],3)))
-	            sfi = ui.tree_add_node(APP,"file",bit.SHR(AFL[i],3),nil,"file")
+	            sfi = ui.tree_add_node(APP,"file","file",bit.SHR(AFL[i],3))
 	            for j=AFL[i+1],AFL[i+2] do
 		        log.print(log.INFO,string.format("Reading record %i",j))
 		        sw,resp = card.read_record(bit.SHR(AFL[i],3),j)
 	                if sw ~= 0x9000 then
 		            log.print(log.ERROR,"Read record failed")
 		        else
-		            rec = ui.tree_add_node(sfi,"record",j,nil,"record")
+		            rec = ui.tree_add_node(sfi,"record","record",j)
 		            emv_parse(rec,resp)
 		        end
 	            end -- for
@@ -523,7 +523,7 @@ function emv_process_application(cardenv,aid)
 	end
 
 	-- Read extra data 
-	extra = ui.tree_add_node(APP,"extra emv data")
+	extra = ui.tree_add_node(APP,"block","extra emv data")
 	for j=1,#EXTRA_DATA do
 	    sw,resp = card.get_data(EXTRA_DATA[j])
 	    if sw == 0x9000 then
@@ -565,19 +565,18 @@ function emv_process_cplc(cardenv)
 	local cplc_tag
 	local i
 	local pos
-        local ref
 	local ref2
 
 	log.print(log.INFO,"Processing CPLC data")
 	sw,resp = card.get_data(0x9F7F)
 	if sw == 0x9000 then
-	   CPLC      = ui.tree_add_node(cardenv,"cpcl",nil,nil,"block")
 	   cplc_tag, cplc_data = asn1.split(resp)
-	   ref = ui.tree_add_node(CPLC,"cplc data","9F7F",#cplc_data)
-	   ui.tree_set_value(ref,cplc_data) 
+	   CPLC      = ui.tree_add_node(cardenv,"block","cpcl data","9F7F",#cplc_data)
+	   ui.tree_set_value(CPLC,cplc_data) 
 	   pos = 0
 	   for i=1,#CPLC_DATA do
 	       ref2 = ui.tree_add_node(CPLC,
+				       "item",
 				       CPLC_DATA[i][1],
 				       pos);
 	       ui.tree_set_value(ref2,bytes.sub(cplc_data,pos,pos+CPLC_DATA[i][2]-1))

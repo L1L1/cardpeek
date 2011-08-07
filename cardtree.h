@@ -26,16 +26,16 @@
 
 enum {
   /* node info */
-  C_NAME,
+  C_CLASSNAME,
+  C_DESCRIPTION,
   C_ID,
   C_SIZE,
-  C_TYPE,
   /* value data */
   C_VALUE,
   C_ALT_VALUE,
   /* extra helper columns */
+  C_MARKUP_CLASSNAME_DESCRIPTION_ID,
   C_MARKUP_VALUE,
-  C_MARKUP_NAME_ID,
   C_MARKUP_ALT_VALUE,
   C_ICON,
   C_FLAGS,
@@ -44,72 +44,82 @@ enum {
 
 #define CARDTREE_COUNT_ICONS 6
 
+#define C_FLAG_DISPLAY_FULL 1
+
 typedef struct {
   GtkTreeStore* _store;
-  gchar*        _tmpstr;
   GdkPixbuf*    _icons[CARDTREE_COUNT_ICONS];
 } cardtree_t;
 
 cardtree_t* cardtree_new();
 
-gboolean cardtree_is_empty(cardtree_t* ct);
+gboolean cardtree_is_empty(cardtree_t *ct);
 
-const char* cardtree_add_node(cardtree_t* ct,
-			      const char* path,
-			      const char* name, 
-			      const char* id, 
-			      int length, 
-			      const char* comment);
+char *cardtree_node_add(cardtree_t *ct,
+		const char 	*path,
+		const char 	*classname,
+		const char 	*description, 
+		const char 	*id, 
+		unsigned 	size);
+		/* result (char *) must be freed with cardtree_path_free() */
 
-gboolean cardtree_get_attributes(cardtree_t* ct,
-			         const char* path,
-				 const char **attribute_names,
-				 char **attribute_values);
+gboolean cardtree_node_modify(cardtree_t *ct,
+		const char 	*path,
+		const char 	*classname,
+		const char 	*description, 
+		const char 	*id, 
+		unsigned 	size);
 
-gboolean cardtree_set_attributes(cardtree_t* ct,
-			         const char* path,
-				 const char **attribute_names,
-				 const char **attribute_values);
+gboolean cardtree_node_get(cardtree_t *ct, 
+		const char 	*path,
+		char 		**classname,
+		char 		**description, 
+		char 		**id, 
+		unsigned 	*size, 
+		unsigned 	*num_children);
 
-gboolean cardtree_set_value(cardtree_t* ct,
-			    const char* path,
-			    const char* value);
+gboolean cardtree_node_delete(cardtree_t* ct, 
+                              const char *path);
 
-gboolean cardtree_get_value(cardtree_t* ct,
-			    const char* path,
+
+gboolean cardtree_value_set(cardtree_t* ct,
+                            const char* path,
+                            const char* value);
+
+gboolean cardtree_value_get(cardtree_t* ct,
+                            const char* path,
                             char** value);
 
-gboolean cardtree_set_alt_value(cardtree_t* ct,
-			      	const char* path,
-				const char* value);
+gboolean cardtree_alt_value_set(cardtree_t* ct,
+                                const char* path,
+                                const char* value);
 
-gboolean cardtree_get_alt_value(cardtree_t* ct,
-			      	const char* path,
-				char** value);
+gboolean cardtree_alt_value_get(cardtree_t* ct,
+                                const char* path,
+                                char** value);
 
-gboolean cardtree_get_node(cardtree_t* ct, 
-			   const char* path,
-			   char** name, 
-			   char** id, 
-			   int *length, 
-			   char** comment,
-			   int *num_children);
+gboolean cardtree_flags_get(cardtree_t* ct,
+                            const char* path,
+                            unsigned *flags);
 
-gboolean cardtree_get_flags(cardtree_t* ct,
-		 	    const char* path,
-	 		    unsigned *flags);
+gboolean cardtree_flags_set(cardtree_t* ct,
+                            const char* path,
+			    unsigned flags);
 
-gboolean cardtree_set_flags(cardtree_t* ct,
-		    	    const char* path,
-	     		    unsigned flags);
+gboolean cardtree_value_strlen(cardtree_t* ct,
+                               const char *path,
+                               unsigned *len);
 
-gboolean cardtree_delete_node(cardtree_t* ct, 
-			      const char *path);
+char* cardtree_find_node(cardtree_t* ct, 
+		const char *root, const char* node, const char *id);
+		/* result (char*) must be freed with cardtree_path_free() */
 
-const char* cardtree_find_node(cardtree_t* ct, 
-			       const char *root, const char* node, const char *id);
+char* cardtree_find_all_nodes(cardtree_t* ct, 
+		const char *root, const char* node, const char *id);
+		/* result (char*) must be freed with cardtree_path_free() */
 
 char* cardtree_to_xml(cardtree_t* ct, const char *path);
+		/* result (char*) must be freed with cardtree_path_free() */
 
 gboolean cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* path);
 
@@ -121,4 +131,27 @@ void cardtree_bind_to_treeview(cardtree_t* ct, GtkWidget *view);
 
 void cardtree_free(cardtree_t* ct);
 
+gboolean cardtree_attribute_set(cardtree_t *ct,
+    			        const char      *path,
+				const char	*aname,
+				const char	*avalue);
+
+gboolean cardtree_attribute_get(cardtree_t *ct,
+    			        const char      *path,
+				const char	*aname,
+				char		**avalue);
+
+/**** extras ****/
+
+char *cardtree_path_from_gtktreepath(GtkTreePath *path);
+
+char *cardtree_path_from_iter(cardtree_t *ct, GtkTreeIter *iter);
+
+gboolean cardtree_path_to_iter(cardtree_t *ct, const char *path, GtkTreeIter *iter);
+
+void cardtree_path_free(char *path);
+
+gboolean cardtree_path_is_valid(const char *path);
+
 #endif
+

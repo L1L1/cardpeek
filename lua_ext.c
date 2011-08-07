@@ -55,7 +55,12 @@ int print_debug_message(lua_State* L)
 
   lua_getstack(L,1,&ar);
   if (lua_getinfo(L,"n",&ar))
-    log_printf(LOG_ERROR,"Called from %s",ar.name);
+  {
+	if (ar.name)
+		log_printf(LOG_ERROR,"Called from %s",ar.name);
+  	else
+		log_printf(LOG_ERROR,"Called form main body of script");
+  }
   else
     log_printf(LOG_ERROR,"No further information available");
 

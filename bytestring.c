@@ -518,7 +518,7 @@ int bytestring_is_printable(const bytestring_t *bs)
     return 0;
   for (u=0;u<bs->len;u++)
   {
-    if (!isprint((char)(bs->data[u]))) return 0;
+    if (bs->data[u]>127 || !isprint((char)(bs->data[u]))) return 0;
   }
   return 1;
 }
@@ -652,11 +652,15 @@ int bytestring_substr(bytestring_t* dst,
 void x_bytestring_append_as_printable(a_string_t* dest, const bytestring_t *bs)
 {
   unsigned u;
+  char octal_form[5];
 
   for (u=0;u<bs->len;u++)
   {
-    if (!isprint((char)(bs->data[u])))
-      a_strpushback(dest,'?');
+    if (bs->data[u]>127 || !isprint((char)(bs->data[u])))
+    {
+      sprintf(octal_form,"\\%03o",bs->data[u]);
+      a_strcat(dest,octal_form);
+    }
     else
       a_strpushback(dest,(char)(bs->data[u]));
   }

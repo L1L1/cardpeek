@@ -127,7 +127,7 @@ char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
 
 	markup_value   = a_strnew(NULL);
 	if (!is_bytes)
-		a_sprintf(markup_value,"<span foreground=\"%s\">",FG_COLOR1);
+		a_sprintf(markup_value,"<span foreground=\"%s\">-&gt; </span>",FG_COLOR2);
 	a_strcat(markup_value,"<tt>");
 
 	i=0;
@@ -160,9 +160,7 @@ char *cardtree_create_markup_text(const char* src, int full, int is_bytes)
 	a_strcat(markup_value,"</tt>");
 	if (len>256 && !full) a_strcat(markup_value,"<b>[...]</b>");
 
-	if (!is_bytes)
-		a_strcat(markup_value,"</span>");
-	else
+	if (is_bytes)
 	{
 		switch(src[0]) {
 			case '8': a_strcat(markup_value,"<span foreground=\"" FG_COLOR2 "\">h</span>"); 
@@ -584,8 +582,6 @@ gboolean node_to_xml(a_string_t* res, GtkTreeModel *store, GtkTreeIter* iter, in
 		if (gtk_tree_model_iter_children(store,&child,iter))
 		{
 			node_to_xml(res,store,&child,depth+1);
-			for(i=0;i<depth;i++) a_strcat(res,"  ");
-			a_strcat(res,"</node>\n");
 		}
 
 		for(i=0;i<depth;i++) a_strcat(res,"  ");	
@@ -628,7 +624,7 @@ gboolean cardtree_to_xml_file(cardtree_t* ct, const char *fname, const char* pat
 	char *xml;
 	gboolean retval;
 
-	if ((save=fopen(fname,"w"))==NULL)
+	if ((save=fopen(fname,"wb"))==NULL)
 	{
 		log_printf(LOG_ERROR,"Could not open '%s' for output (%s)",fname,strerror(errno));
 		return FALSE;
@@ -948,8 +944,12 @@ gboolean cardtree_from_xml_file(cardtree_t *ct, const char *fname)
 	{
 		log_printf(LOG_ERROR,"Could not stat '%s' (%s)",fname,strerror(errno));
 		return FALSE;
-	} 
+	}
+#ifdef _WIN32	
+	if ((input=open(fname,O_RDONLY | O_BINARY))<0)
+#else
 	if ((input=open(fname,O_RDONLY))<0)
+#endif
 	{
 		log_printf(LOG_ERROR,"Could not open '%s' for input (%s)",fname,strerror(errno));
 		return FALSE;
@@ -968,8 +968,8 @@ gboolean cardtree_from_xml_file(cardtree_t *ct, const char *fname)
 	}
 	else
 	{
-		log_printf(LOG_ERROR,"Could not read all data (%i bytes) from %s (%s)",
-				buf_len,fname,strerror(errno));
+		log_printf(LOG_ERROR,"Could not read all data (%i bytes of %i) from %s (%s)",
+				rd_len,buf_len,fname,strerror(errno));
 		retval = FALSE;
 	}
 	free(buf_val);

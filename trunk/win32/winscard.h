@@ -18,6 +18,7 @@
 #define SCardConnect SCardConnectA
 #define SCardListReaders SCardListReadersA 
 #define SCardStatus SCardStatusA
+#define SCardGetStatusChange SCardGetStatusChangeA
 
 /* partial import from opensc.h */
 
@@ -69,6 +70,7 @@
 #define SCARD_W_REMOVED_CARD		0x80100069 /* The smart card has been removed, so further communication is not possible. */
 #endif
 
+#define INFINITE            0xFFFFFFFF
 
 typedef const BYTE *LPCBYTE;
 typedef long SCARDCONTEXT; /* hContext returned by SCardEstablishContext() */

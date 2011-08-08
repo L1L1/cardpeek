@@ -20,7 +20,9 @@
 */
 
 #include <winscard.h>
+#ifndef _WIN32
 #include <reader.h>
+#endif
 
 #define MAX_PCSC_READ_LENGTH 270 
 

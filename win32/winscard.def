@@ -10,6 +10,7 @@ SCardGetAttrib@16
 SCardDisconnect@8
 SCardReconnect@20
 SCardTransmit@28
+SCardGetStatusChangeA@16
 ; g_rgSCardT0Pci
 ; g_rgSCardT1Pci
 

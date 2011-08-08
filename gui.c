@@ -58,6 +58,40 @@ application_callback_t RUN_LUA_COMMAND = NULL;
 guint STATUS_BAR_CONTEXT_ID=0;
 
 /*********************************************************/
+/* JUST ONE SIMPLE FUNC TO ESCAPE LUA STRINGS ************/
+/*********************************************************/
+
+char *lua_escape_string(const char *src)
+{
+	char *res;
+	const char *s;
+	char *p;
+	unsigned alloc_count = 1;
+
+	for (s=src;*s;s++) 
+	{
+		if (*s=='\\') 
+			alloc_count+=2;
+		else
+			alloc_count++;
+	}
+	p = res = malloc(alloc_count);
+	while (*src)
+	{
+		if (*src=='\\')
+		{
+			*p++='\\';
+			*p++='\\';
+		}
+		else
+			*p++=*src;
+		src++;
+	}
+	*p='\0';
+	return res;
+}
+
+/*********************************************************/
 /* LOG FUNCTIONS AND UI CALLBACKS ************************/
 /*********************************************************/
 
@@ -143,17 +177,20 @@ void menu_card_view_open_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
+  char *filename;
 
   select_info = gui_select_file("Load xml card description",config_get_string(CONFIG_FOLDER_CARDTREES),NULL);
   if (select_info[1])
   {
     config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
+    filename = lua_escape_string(select_info[1]);
     command=a_strnew(NULL);
-    a_sprintf(command,"ui.tree_load(\"%s\")",select_info[1]);
+    a_sprintf(command,"ui.tree_load(\"%s\")",filename);
     RUN_LUA_COMMAND(a_strval(command));
     a_strfree(command);
     g_free(select_info[0]);
     g_free(select_info[1]);
+    free(filename);
   }
 }
 
@@ -161,17 +198,20 @@ void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
+  char *filename;
 
   select_info = gui_select_file("Save xml card description",config_get_string(CONFIG_FOLDER_CARDTREES),"card.xml");
   if (select_info[1])
   {  
     config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
+    filename = lua_escape_string(select_info[1]);
     command=a_strnew(NULL);
-    a_sprintf(command,"ui.tree_save(\"%s\")",select_info[1]);
+    a_sprintf(command,"ui.tree_save(\"%s\")",filename);
     RUN_LUA_COMMAND(a_strval(command));
     a_strfree(command);
     g_free(select_info[0]);
     g_free(select_info[1]);
+    free(filename);
   }
 }
 
@@ -427,16 +467,19 @@ void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
+  char *filename;
 
   select_info = gui_select_file("Save recorded data",config_get_string(CONFIG_FOLDER_LOGS),"card.clf");
   if (select_info[1])
   {  
+    filename = lua_escape_string(select_info[1]);
     command=a_strnew(NULL);
-    a_sprintf(command,"card.log_save(\"%s\")",select_info[1]);
+    a_sprintf(command,"card.log_save(\"%s\")",filename);
     RUN_LUA_COMMAND(a_strval(command));
     a_strfree(command);
     g_free(select_info[0]);
     g_free(select_info[1]);
+    free(filename);
   }
 }
 

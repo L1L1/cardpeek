@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2010 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -32,26 +32,50 @@
  * USER INTERFACE FUNCTIONS
  */
 
+GtkTreeIter* luaL_check_node_ref(lua_State *L, int p)
+{
+  void *ud = luaL_checkudata(L,p,"node_ref.type");
+  luaL_argcheck(L, ud != NULL, p, "`node_ref' expected");
+  return (GtkTreeIter *)ud;
+}
+
+void lua_push_node_ref(lua_State *L, GtkTreeIter *iter)
+{
+  GtkTreeIter *dst;
+
+  if (iter==NULL)
+    lua_pushnil(L);
+  else
+  {
+    dst = (GtkTreeIter *)lua_newuserdata(L, sizeof(GtkTreeIter));
+    luaL_getmetatable(L, "node_ref.type");
+    lua_setmetatable(L, -2);
+    *dst = *iter;
+  }
+}
+
+
 int subr_ui_tree_add_node(lua_State* L)
 {
-	const char *path;            	/*1*/
+	GtkTreeIter *parent;            /*1*/
 	const char *classname;  	/*2*/
-	const char *description;	/*3*/
-	const char *id;               /*4*/
-	unsigned size;              /*5*/
-	char *res;
+	const char *label;		/*3*/
+	const char *id;             	/*4*/
+	const char *size;             	/*5*/
+	GtkTreeIter node;
+	gboolean res;
 
 	if (lua_isnoneornil(L,1))
-		path = NULL;
+		parent = NULL;
 	else
-		path=lua_tostring(L,1);
+		parent=luaL_check_node_ref(L,1);
 
 	classname=lua_tostring(L,2);
 
 	if (lua_isnoneornil(L,3))
-		description = NULL;
+		label = NULL;
 	else
-		description=lua_tostring(L,3);
+		label = lua_tostring(L,3);
 
 	if (lua_isnoneornil(L,4))
 		id = NULL;
@@ -59,16 +83,16 @@ int subr_ui_tree_add_node(lua_State* L)
 		id = lua_tostring(L,4);
 
 	if (lua_isnoneornil(L,5))
-		size = 0;
+		size = NULL;
 	else
-		size = lua_tointeger(L,5);
+		size = lua_tostring(L,5);
 
-	res = cardtree_node_add(CARDTREE,path,classname,description,id,size);
+	
+	res = cardtree_node_append(CARDTREE,&node,parent,classname,label,id,size);
 
-	if (res!=NULL)
+	if (res)
 	{
-		lua_pushstring(L,res);
-		cardtree_path_free(res);
+		lua_push_node_ref(L,&node);
 	}
 	else
 	{	
@@ -79,56 +103,17 @@ int subr_ui_tree_add_node(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_modify_node(lua_State* L)
-{
-	const char *path;            	/*1*/
-	const char *classname;  	/*2*/
-	const char *description;	/*3*/
-	const char *id;               /*4*/
-	unsigned size;              /*5*/
-
-	if (lua_isnoneornil(L,1))
-		path = NULL;
-	else
-		path=lua_tostring(L,1);
-
-	classname=lua_tostring(L,2);
-
-	if (lua_isnoneornil(L,3))
-		description = NULL;
-	else
-		description=lua_tostring(L,3);
-
-	if (lua_isnoneornil(L,4))
-		id = NULL;
-	else
-		id = lua_tostring(L,4);
-
-	if (lua_isnoneornil(L,5))
-		size = 0;
-	else
-		size = lua_tointeger(L,5);
-
-	if (cardtree_node_modify(CARDTREE,path,classname,description,id,size)==TRUE)
-		lua_pushboolean(L,1);
-	else
-		lua_pushboolean(L,0);
-
-	gui_update(1);
-	return 1;
-}
-
 int subr_ui_tree_set_attribute(lua_State* L)
 {
-  const char *path;
+  GtkTreeIter *iter;
   const char *attribute_name;
   const char *attribute_value;
 
-  path 		  = lua_tostring(L,1);
+  iter = luaL_check_node_ref(L,1);
   attribute_name  = lua_tostring(L,2);
   attribute_value = lua_tostring(L,3);
 
-  if (cardtree_attribute_set(CARDTREE,path,attribute_name,attribute_value))
+  if (cardtree_attribute_set_by_name(CARDTREE,iter,attribute_name,attribute_value))
     lua_pushboolean(L,1);
   else
     lua_pushboolean(L,0);
@@ -138,17 +123,16 @@ int subr_ui_tree_set_attribute(lua_State* L)
 
 int subr_ui_tree_get_attribute(lua_State* L)
 {
-  const char *path;
+  GtkTreeIter *iter;
   const char *attribute_name;
-  char *attribute_value;
+  const char *attribute_value;
 
-  path 		  = lua_tostring(L,1);
+  iter  	  = luaL_check_node_ref(L,1);
   attribute_name  = lua_tostring(L,2);
 
-  if (cardtree_attribute_get(CARDTREE,path,attribute_name,&attribute_value))
+  if (cardtree_attribute_get_by_name(CARDTREE,iter,attribute_name,&attribute_value))
   {
       	lua_pushstring(L,attribute_value);
-  	free(attribute_value);
   }
   else
     lua_pushnil(L);
@@ -158,11 +142,11 @@ int subr_ui_tree_get_attribute(lua_State* L)
 
 int subr_ui_tree_set_value(lua_State* L)
 {
-	const char *path;
+	GtkTreeIter *iter;
 	char *value;
 	bytestring_t *bs;
 
-	path = lua_tostring(L,1);
+	iter = luaL_check_node_ref(L,1);
 	if (lua_isnoneornil(L,2))
 		value = NULL;
 	else
@@ -171,7 +155,7 @@ int subr_ui_tree_set_value(lua_State* L)
 		value = bytestring_to_format("%S",bs);
 	}
 
-	if (cardtree_value_set(CARDTREE,path,value))
+	if (cardtree_attribute_set(CARDTREE,iter,CC_VAL,value))
 		lua_pushboolean(L,1);
 	else
 		lua_pushboolean(L,0);
@@ -182,15 +166,14 @@ int subr_ui_tree_set_value(lua_State* L)
 
 int subr_ui_tree_get_value(lua_State* L)
 {
-	const char *path;
-	char *value;
+	GtkTreeIter *iter;
+	const char *value;
 
-	path = lua_tostring(L,1);
+	iter = luaL_check_node_ref(L,1);
 
-	if (cardtree_value_get(CARDTREE,path,&value))
+	if (cardtree_attribute_get(CARDTREE,iter,CC_VAL,&value))
 	{
 		lua_pushbytestring(L,bytestring_new_from_string(value));
-		g_free(value);
 	}
 	else
 		lua_pushnil(L);
@@ -200,33 +183,31 @@ int subr_ui_tree_get_value(lua_State* L)
 
 int subr_ui_tree_set_alt_value(lua_State* L)
 {
-	const char *path;
-	const char *value;
+  GtkTreeIter *iter;
+  const char *attribute_value;
 
-	path = lua_tostring(L,1);
-	if (lua_isnoneornil(L,2))
-		value = NULL;
-	else
-		value = lua_tostring(L,2);
+  iter = luaL_check_node_ref(L,1);
+  attribute_value = lua_tostring(L,2);
 
-	if (cardtree_alt_value_set(CARDTREE,path,value))
-		lua_pushboolean(L,1);
-	else
-		lua_pushboolean(L,0);
-	return 1;
+  if (cardtree_attribute_set(CARDTREE,iter,CC_ALT,attribute_value))
+    lua_pushboolean(L,1);
+  else
+    lua_pushboolean(L,0);
+
+  return 1;
+	
 }
 
 int subr_ui_tree_get_alt_value(lua_State* L)
 {
-	const char *path;
-	char *value;
+	GtkTreeIter *iter;
+	const char *value;
 
-	path = lua_tostring(L,1);
+	iter = luaL_check_node_ref(L,1);
 
-	if (cardtree_alt_value_get(CARDTREE,path,&value))
+	if (cardtree_attribute_get(CARDTREE,iter,CC_ALT,&value))
 	{
 		lua_pushstring(L,value);
-		g_free(value);
 	}
 	else
 		lua_pushnil(L);
@@ -236,6 +217,7 @@ int subr_ui_tree_get_alt_value(lua_State* L)
 
 int subr_ui_tree_get_node(lua_State* L)
 {
+/* 
 	const char *path;
 	char *classname;
 	char *description;
@@ -283,14 +265,17 @@ int subr_ui_tree_get_node(lua_State* L)
 	lua_pushstring(L,"num_children");
 	lua_pushinteger(L,num_children);
 	lua_settable(L,-3);
-
+*/
+#warning IMPLEMENT
+	lua_pushnil(L);
 	return 1;
 }
 
 int subr_ui_tree_delete_node(lua_State* L)
 {
-  const char* path = lua_tostring(L,1);
-  if (!cardtree_node_delete(CARDTREE,path))
+  GtkTreeIter* iter = luaL_check_node_ref(L,1);
+
+  if (!cardtree_node_remove(CARDTREE,iter))
     lua_pushboolean(L,0);
   else
     lua_pushboolean(L,1);
@@ -298,78 +283,213 @@ int subr_ui_tree_delete_node(lua_State* L)
   gui_update(1);
   return 1;
 }
+/*
+ * FOR THE FUTURE MAYBE
+ *  
+gboolean create_search_context(lua_State* L, int **r_indices, char ***r_values, int *r_n_values)
+{
+  int i,index;
+  char *label;
+  char *value;
+  int *indices;
+  char **values;
+  int n_values = (lua_gettop(L)-1)/2;
+
+  if (n_values<1)
+  	return FALSE;
+
+  indices = g_new0(int,n_values);
+  values  = g_new0(char *,n_values);
+
+  n_values = 0;
+  for (i=2;i<=lua_gettop(L);i+=2)
+  {
+  	if (!lua_isnoneornil(L,i))
+    		label = lua_tostring(L,i);
+	else
+		continue;
+
+	if (!lua_isnoneornil(L,i+1))
+    		value = lua_tostring(L,i);
+	else
+		continue;
+
+	if ((index = dyntree_model_column_name_to_index(CARDTREE,label))>=0)
+	{
+		indices[n_values] = index;
+		values[n_values] = value;
+		n_values ++;
+	}
+  }
+  *r_indices  = indices;
+  *r_values   = values;
+  *r_n_values = n_values;
+  return TRUE;
+}
 
 int subr_ui_find_node(lua_State* L)
 {
-  const char* path=NULL;
-  const char* desc=NULL;
-  const char* id=NULL;
-  const char* retval;
+  GtkTreeIter* iter; 
+  int *indices;
+  char **values;
+  int n_values;
+  GtkTreeIter* node;
 
   if (!lua_isnoneornil(L,1))
-    path = lua_tostring(L,1);
-  if (!lua_isnoneornil(L,2))
-    desc = lua_tostring(L,2);
-  if (!lua_isnoneornil(L,3))
-    id = lua_tostring(L,3);
-  if ((retval = cardtree_find_node(CARDTREE,path,desc,id))!=NULL)
-    lua_pushstring(L,retval);
+  	  iter = lua_check_node_ref(L,1);
+  else
+	  iter = NULL;
+
+  if (create_search_context(L,&indices,&values,&n_valuues)==FALSE)
+  {
+	lua_pushnil(L);
+  	return 1;
+  }
+
+  if (dyntree_model_iter_find_first(CARDTREE,&node,iter,indices,values,n_values))
+    lua_push_node_ref(L,&node);
   else
     lua_pushnil(L);
+  g_free(indices);
+  g_free(values);
   return 1;
 }
 
 int subr_ui_find_all_nodes(lua_State* L)
 {
-  const char* path=NULL;
-  const char* desc=NULL;
-  const char* id=NULL;
-  const char* retval;
+  GtkTreeIter* iter; 
+  int *indices;
+  char **values;
+  int n_values;
+  GtkTreeIter* node;
   int i;
 
   if (!lua_isnoneornil(L,1))
-    path = lua_tostring(L,1);
-  if (!lua_isnoneornil(L,2))
-    desc = lua_tostring(L,2);
-  if (!lua_isnoneornil(L,3))
-    id = lua_tostring(L,3);
+  	  iter = lua_check_node_ref(L,1);
+  else
+	  iter = NULL;
+
+  if (create_search_context(L,&indices,&values,&n_valuues)==FALSE)
+  {
+	lua_pushnil(L);
+  	return 1;
+  }
+
 
   lua_newtable(L);
 
-  if ((retval = cardtree_find_all_nodes(CARDTREE,path,desc,id))!=0)
+  if (dyntree_model_iter_find_first(CARDTREE,&node,iter,indices,values,n_values))
   {
-    i = 1;
-    while (*retval) 
-    {
-      /* fprintf(stderr,"[%i] => %s\n",i,retval); */
-      lua_pushinteger(L,i++);
-      lua_pushstring(L,retval);
-      lua_settable(L,-3);
-      while (*retval) retval++;
-      retval++;
-    }
+ 	lua_pushinteger(L,1);
+      	lua_push_node_ref(L,&node);
+      	lua_settable(L,-3);
+
+	i=2;
+	while (dyntree_model_iter_find_next(CARDTREE,&node,iter,indices,values,n_values))
+	{
+		lua_pushinteger(L,i++);
+	      	lua_push_node_ref(L,&node);
+      		lua_settable(L,-3);
+	}
   }
+
   return 1;
+}
+***/
+
+int subr_ui_find_node(lua_State* L)
+{
+  GtkTreeIter* iter; 
+  const char *label;
+  const char *id;
+  GtkTreeIter node;
+
+  if (!lua_isnoneornil(L,1))
+  	  iter = luaL_check_node_ref(L,1);
+  else
+	  iter = NULL;
+
+  if (lua_isnoneornil(L,2))
+		label = NULL;
+	else
+		label = lua_tostring(L,2);
+
+	if (lua_isnoneornil(L,3))
+		id = NULL;
+	else
+		id = lua_tostring(L,3);
+
+
+  if (cardtree_find_first(CARDTREE,&node,iter,label,id))
+    lua_push_node_ref(L,&node);
+  else
+    lua_pushnil(L);
+
+  return 1;
+}
+
+int subr_ui_find_all_nodes(lua_State* L)
+{
+	GtkTreeIter* iter; 
+	const char *label;
+	const char *id;
+	GtkTreeIter node;
+	int i;
+
+	if (!lua_isnoneornil(L,1))
+		iter = luaL_check_node_ref(L,1);
+	else
+		iter = NULL;
+
+	if (lua_isnoneornil(L,2))
+		label = NULL;
+	else
+		label = lua_tostring(L,2);
+
+	if (lua_isnoneornil(L,3))
+		id = NULL;
+	else
+		id = lua_tostring(L,3);
+
+	lua_newtable(L);
+
+	if (cardtree_find_first(CARDTREE,&node,iter,label,id))
+	{
+		lua_pushinteger(L,1);
+		lua_push_node_ref(L,&node);
+		lua_settable(L,-3);
+
+		i=2;
+		while (cardtree_find_next(CARDTREE,&node,iter,label,id))
+		{
+			lua_pushinteger(L,i++);
+			lua_push_node_ref(L,&node);
+			lua_settable(L,-3);
+		}
+	}
+
+	return 1;
 }
 
 int subr_ui_tree_to_xml(lua_State* L)
 {
-  const char* path;
+  GtkTreeIter *iter;
   char *res;
   
   if (lua_isnoneornil(L,1))
-	path = NULL;
+	iter = NULL;
   else
-  	path = lua_tostring(L,1);
-  res = cardtree_to_xml(CARDTREE,path);
+  	iter = luaL_check_node_ref(L,1);
+
+  res = cardtree_to_xml(CARDTREE,iter);
   if (res==NULL)
   {  
-    lua_pushnil(L);
+    	lua_pushnil(L);
   }
   else  
   {
-    lua_pushstring(L,res);
-    free(res);
+    	lua_pushstring(L,res);
+    	free(res);
   }
   
   return 1;
@@ -384,7 +504,7 @@ int subr_ui_tree_save(lua_State* L)
 
   filename= lua_tostring(L,1);
 
-  if (cardtree_to_xml_file(CARDTREE,filename,NULL)==0)
+  if (cardtree_to_xml_file(CARDTREE,NULL,filename)==0)
   {
     log_printf(LOG_ERROR,"Could not write xml data to '%s'",filename);
     lua_pushboolean(L,0);
@@ -406,7 +526,7 @@ int subr_ui_tree_load(lua_State* L)
     return luaL_error(L,"Expecting one parameter: a filename (string)");
   
   filename = lua_tostring(L,1);
-  retval =  cardtree_from_xml_file(CARDTREE,filename);
+  retval =  cardtree_from_xml_file(CARDTREE,NULL,filename);
   lua_pushboolean(L,retval);
   return 1;
 }
@@ -518,9 +638,25 @@ int subr_ui_about(lua_State* L)
   return 0;
 }
 
+int subr_node_ref_tostring(lua_State* L)
+{
+  GtkTreeIter *iter;
+  char buf[20];
+
+  iter = luaL_check_node_ref(L,1);
+  g_sprintf(buf,"<node:%p>",iter->user_data);
+  lua_pushstring(L,buf);
+  return 1;
+}
+
+
+static const struct luaL_reg nodereflib_mt [] = {
+	{ "__tostring", subr_node_ref_tostring },
+  	{NULL,NULL}  /* sentinel */
+};
+
 static const struct luaL_reg uilib [] = {
   {"tree_add_node", subr_ui_tree_add_node },
-  {"tree_modify_node", subr_ui_tree_modify_node },
   {"tree_set_value", subr_ui_tree_set_value },
   {"tree_get_value", subr_ui_tree_get_value },
   {"tree_set_alt_value", subr_ui_tree_set_alt_value },
@@ -543,6 +679,8 @@ static const struct luaL_reg uilib [] = {
 
 int luaopen_ui(lua_State* L)
 {
+  luaL_newmetatable(L, "node_ref.type");
+  luaL_openlib(L, NULL, nodereflib_mt, 0);
   luaL_openlib(L, "ui", uilib, 0);
   return 1;
 }

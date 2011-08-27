@@ -40,6 +40,107 @@
 #include "icons.c"
 
 /*********************************************************/
+/* EXPERIMENTAL ******************************************/
+/*********************************************************/
+
+GHashTable *WIDGET_TABLE = NULL;
+
+guint stringhash(gconstpointer str)
+{
+	const unsigned char *s = str;
+	guint res=0;
+	while (*s)
+	{
+		res = (res*27)+(*s);
+		s++;
+	}
+	return res;
+}
+
+gint stringcompare(gconstpointer a, gconstpointer b)
+{
+	return (strcmp(a,b)==0);
+}
+
+gboolean gui_widget_table_init()
+{
+	WIDGET_TABLE = g_hash_table_new(stringhash,stringcompare);
+	return TRUE;
+}
+
+void gui_widget_table_release()
+{
+	g_hash_table_destroy(WIDGET_TABLE);
+}
+
+GtkWidget *gui_widget_table_lookup(const gchar *name)
+{
+	return (GtkWidget *)g_hash_table_lookup(WIDGET_TABLE,name);
+}
+
+void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
+{
+	g_hash_table_insert(WIDGET_TABLE,(gpointer)name,(gpointer)widget);	
+}
+
+
+typedef struct {
+	gchar *id;
+	gchar *icon;
+	gchar *text;
+	GCallback callback;
+	gpointer callback_data;
+} toolbar_item_t; 
+
+#define TOOLBAR_ITEM_SEPARATOR 	"separator"
+#define TOOLBAR_ITEM_EXPANDER "expander"
+
+
+GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
+{
+	GtkWidget	*toolbar;
+	GtkToolItem	*item;
+	int 		i;
+
+	toolbar = gtk_toolbar_new();
+
+	gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL );
+	gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+
+	for (i=0; tbitems[i].icon!=NULL; i++)
+	{
+		if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_SEPARATOR)==0)
+		{
+			item = gtk_separator_tool_item_new();
+			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+			
+		}
+		else if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_EXPANDER)==0)
+		{
+			item = gtk_separator_tool_item_new();
+			gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM(item),FALSE);
+			gtk_tool_item_set_expand(GTK_TOOL_ITEM(item),TRUE);
+			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+
+		}
+		else
+		{
+			item = gtk_tool_button_new_from_stock (tbitems[i].icon);
+			if (tbitems[i].text) 
+				gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),tbitems[i].text);
+			if (tbitems[i].callback)
+				g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(tbitems[i].callback),tbitems[i].callback_data);
+			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+		}
+
+		if (tbitems[i].id)
+			gui_widget_table_insert(tbitems[i].id, GTK_WIDGET(item));
+		
+	}
+	return toolbar;
+}
+
+/*********************************************************/
 /* THE INFAMOUS UGLY GLOBALS *****************************/
 /*********************************************************/
   
@@ -168,7 +269,7 @@ void gui_run_command_cb(GtkWidget *widget,
 
 void menu_card_view_clear_cb(GtkWidget *w, gpointer user_data)
 {
-  cardtree_node_delete(CARDTREE,NULL);
+  cardtree_node_remove(CARDTREE,NULL);
   RUN_LUA_COMMAND("card.CLA=0");
   log_printf(LOG_INFO,"Cleared card data tree");
 }
@@ -215,49 +316,6 @@ void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
-/*
-void menu_cardview_row_activated (GtkTreeView        *treeview,
-				 GtkTreePath        *path,
-				 GtkTreeViewColumn  *col,
-				 gpointer            userdata)
-{
-  unsigned flags;
-  char* string_path = gtk_tree_path_to_string(path);
-  cardtree_get_flags(CARDTREE,string_path,&flags);
-  cardtree_set_flags(CARDTREE,string_path,flags^C_FLAG_DISPLAY_FULL);
-  g_free(string_path);
-}
-*/
-void menu_cardview_cursor_changed(GtkTreeView *treeview,
-				  gpointer userdata)
-{
-	GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
-	GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
-	unsigned flags,size;
-	GtkTreePath *gtktreepath;
-	char *path;
-	GtkTreeViewColumn *column;
-	
-	gtk_tree_view_get_cursor(treeview,&gtktreepath,&column);
-	path = cardtree_path_from_gtktreepath(gtktreepath);
-	
-	if (path)
-	{
-		if ((column==column2 || column==column3))
-		{
-			cardtree_value_strlen(CARDTREE,path,&size);
-			if (size>=256) 
-			{
-				cardtree_flags_get(CARDTREE,path,&flags);
-				cardtree_flags_set(CARDTREE,path,flags^C_FLAG_DISPLAY_FULL);
-				gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW (CARDVIEW),gtktreepath,NULL,TRUE,0,0);
-			}
-		}
-		cardtree_path_free(path);
-		gtk_tree_path_free(gtktreepath);
-	}
-}
-
 void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
 	       			    gpointer           user_data) 
 {
@@ -284,26 +342,10 @@ gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 {
   GtkTreeModel *model;
   GtkTreeIter iter;
-  unsigned flags;
-  unsigned size;
 
   if (gtk_tree_view_get_tooltip_context(GTK_TREE_VIEW(widget),&x,&y,keyboard_mode,&model,NULL,&iter))
   {
-	gtk_tree_model_get(model,&iter,C_FLAGS,&flags,C_SIZE,&size,-1);
-	
-	if (size>256)
-	{
-		if (flags & C_FLAG_DISPLAY_FULL)
-			gtk_tooltip_set_text(tooltip,"Click on the data in the last column to reduce\n"
-						     "the displayed data to the first 256 bytes");
-		else
-			gtk_tooltip_set_text(tooltip,"Click on the data in the last column to display\n"
-						     "it in full");
-	}
-	else
-	{
-		gtk_tooltip_set_text(tooltip,"Right-click for additional tools");
-	}
+	gtk_tooltip_set_text(tooltip,"Right-click for additional tools");
 	return TRUE;
   }
   return FALSE;
@@ -313,7 +355,8 @@ gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer userdata)
 /* Callback responding to right click context menu item to change 3rd column format */ 
 {
-  GtkTreeView *treeview = GTK_TREE_VIEW(userdata);
+  /* GtkTreeView *treeview = GTK_TREE_VIEW(userdata); */
+  GtkTreeView* treeview = CARDVIEW;
   GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
   GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),3);
 
@@ -576,6 +619,24 @@ GtkWidget *create_analyzer_menu()
   return gtk_item_factory_get_widget (item_factory, "<Analyzer>");
 }
 
+toolbar_item_t TB_CARD_VIEW[] = {
+	{ "card-view-analyzer", "cardpeek-smartcard", "Analyzer", G_CALLBACK(menu_card_view_analyzer_cb), NULL },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
+	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_card_view_clear_cb), NULL },
+	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_card_view_open_cb), NULL },
+	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_card_view_save_as_cb), NULL },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
+	{ "card-view-format",	GTK_STOCK_CONVERT, "Change format", G_CALLBACK(menu_cardview_context_menu_change_value_type), NULL },
+	{ NULL, 		TOOLBAR_ITEM_EXPANDER },
+	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(menu_run_command_cb), "ui.about()" },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
+	{ "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL },
+
+	/* END MARKER : */
+	{ NULL, 		NULL }
+};
+
+
 GtkWidget *create_card_view(cardtree_t *cardtree)
 {
   GtkCellRenderer     *renderer;
@@ -583,8 +644,6 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   GtkTreeViewColumn   *column;
   GtkWidget           *base_container;
   GtkWidget           *toolbar;
-  GtkToolItem         *item;
-  GtkWidget           *analyzer_menu;
 
   /* Create base window container */
   
@@ -592,50 +651,9 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
 
   /* Create the toolbar */
 
-  toolbar = gtk_toolbar_new();
-  
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
- /*  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5); */
+  TB_CARD_VIEW[0].callback_data = create_analyzer_menu();
 
-  item = gtk_tool_button_new_from_stock ("cardpeek-smartcard");
-  gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),"Analyzer");
-  analyzer_menu = create_analyzer_menu();
-  g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(menu_card_view_analyzer_cb),analyzer_menu);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_CLEAR);
-  g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(menu_card_view_clear_cb),NULL);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN);
-  g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(menu_card_view_open_cb),NULL);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE_AS);
-  g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(menu_card_view_save_as_cb),NULL);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_separator_tool_item_new();
-  gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM(item),FALSE);
-  gtk_tool_item_set_expand(GTK_TOOL_ITEM(item),TRUE);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_ABOUT);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_run_command_cb),
-		   "ui.about()");
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_QUIT);
-  g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(gtk_main_quit),NULL);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+  toolbar = gui_toolbar_new(TB_CARD_VIEW);
 
   gtk_box_pack_start (GTK_BOX (base_container), toolbar, FALSE, FALSE, 0);
 
@@ -650,17 +668,13 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
 
 
   CARDVIEW = gtk_tree_view_new ();
+  
   /* "enable-tree-lines" */
   /* gtk_tree_view_set_enable_tree_lines (GTK_TREE_VIEW(view),TRUE);*/
+  
   g_object_set(CARDVIEW,
 	       "has-tooltip",TRUE, NULL);
 
-/*
-  g_signal_connect(CARDVIEW, 
-		   "row-activated", (GCallback) menu_cardview_row_activated, NULL);
-*/
-  g_signal_connect(CARDVIEW, 
-		   "cursor-changed", (GCallback) menu_cardview_cursor_changed, NULL);  
   g_signal_connect(CARDVIEW, 
  		   "query-tooltip", (GCallback) menu_cardview_query_tooltip, NULL);
   g_signal_connect(CARDVIEW,
@@ -678,13 +692,13 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   renderer = gtk_cell_renderer_pixbuf_new();
   gtk_tree_view_column_pack_start(column, renderer, FALSE);
   gtk_tree_view_column_set_attributes(column,renderer,
-				      "stock-id", C_ICON,
+				      "stock-id", CC_ICON,
 				      NULL);
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_column_pack_start(column, renderer, TRUE);
   gtk_tree_view_column_set_attributes(column,renderer,
-				      "markup", C_MARKUP_CLASSNAME_DESCRIPTION_ID,
+				      "markup", CC_MARKUP_LABEL_ID,
 				      NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(CARDVIEW), column);
 
@@ -695,7 +709,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
                                                -1,      
                                                "Size",  
                                                renderer,
-                                               "text", C_SIZE,
+                                               "text", CC_SIZE,
                                                NULL);
 
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),1);
@@ -711,7 +725,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
                                                -1,
                                                "Raw Value",  
                                                renderer,
-                                               "markup", C_MARKUP_VALUE,
+                                               "markup", CC_MARKUP_VAL,
                                                NULL);
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
   gtk_tree_view_column_set_resizable(column,TRUE);
@@ -726,7 +740,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
                                                -1,
                                                "Interpreted Value",  
                                                renderer,
-                                               "markup", C_MARKUP_ALT_VALUE,
+                                               "markup", CC_MARKUP_ALT,
                                                NULL);
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
   gtk_tree_view_column_set_resizable(column,TRUE);
@@ -757,13 +771,23 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   return base_container;
 }
 
+toolbar_item_t TB_READER_VIEW[] = {
+	{ "reader-view-connect", 	GTK_STOCK_CONNECT, NULL, G_CALLBACK(menu_run_command_cb), "card.connect()" },
+	{ "reader-view-reset", 		GTK_STOCK_REDO, NULL, G_CALLBACK(menu_run_command_cb), "card.warm_reset()" },
+	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, NULL, G_CALLBACK(menu_run_command_cb), "card.disconnect()" },
+	{ NULL,				TOOLBAR_ITEM_SEPARATOR },
+	{ "reader-view-clear", 		GTK_STOCK_CLEAR, NULL, G_CALLBACK(menu_run_command_cb), "card.log_clear()" },
+	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, NULL, G_CALLBACK(menu_reader_save_as_cb), NULL },	
+	{ NULL, 			NULL }
+};
+
+
 GtkWidget *create_reader_view()
 {
   GtkWidget           *view;
   GtkWidget           *scrolled_window;
   GtkWidget           *base_container;
   GtkWidget           *toolbar;
-  GtkToolItem         *item;
   PangoFontDescription *font_desc;
 
   /* Create base window container */
@@ -772,46 +796,7 @@ GtkWidget *create_reader_view()
 
   /* Create the toolbar */
 
-  toolbar = gtk_toolbar_new();
-  
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
- /*  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5); */
-
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_CONNECT);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_run_command_cb),
-		   "card.connect()");
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_REDO);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_run_command_cb),
-		   "card.warm_reset()");
-  gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),"Reset");
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_DISCONNECT);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_run_command_cb),
-		   "card.disconnect()");
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_CLEAR);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_run_command_cb),
-		   "card.log_clear()");
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-
-  item = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE_AS);
-  g_signal_connect(G_OBJECT(item),"clicked",
-		   G_CALLBACK(menu_reader_save_as_cb),
-		   NULL);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+  toolbar = gui_toolbar_new(TB_READER_VIEW);
 
   gtk_box_pack_start (GTK_BOX (base_container), toolbar, FALSE, FALSE, 0);
 
@@ -1246,6 +1231,8 @@ int gui_create(application_callback_t run_script_cb,
   GdkPixbuf* pixbuf;
   GtkIconFactory* icon_factory;
 
+  gui_widget_table_init();
+
   RUN_LUA_SCRIPT = run_script_cb;
   RUN_LUA_COMMAND = run_command_cb;
 
@@ -1354,10 +1341,6 @@ int gui_create(application_callback_t run_script_cb,
 
   gtk_widget_show_all (MAIN_WINDOW);
 
-  /*gtk_widget_size_request(vpaned,&requisition);*/
-
-  /*gtk_paned_set_position(GTK_PANED (vpaned), 256);*/
-  
   return 1;
 }
 
@@ -1379,6 +1362,7 @@ int gui_run()
      SCRIPTS=it;
   }
 
+  gui_widget_table_release();
   /* FIXME: do some more cleanup */
  
   return 1;

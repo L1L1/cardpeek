@@ -110,9 +110,11 @@ char *internal_cardtree_create_markup_text(const char* src, int full, int is_byt
 
 	len=strlen(src);
 
-	if (is_bytes && len>2 && src[1]==':')
+	if (is_bytes && len>=2 && src[1]==':')
 	{
 		offset=2;
+		if (len==2)
+			return g_strdup("");
 	}
 	else
 	{

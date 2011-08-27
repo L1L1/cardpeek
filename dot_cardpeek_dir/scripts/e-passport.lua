@@ -62,7 +62,7 @@ function epass_create_master_keys(mrz)
 	local SHA1
 
 	SHA1 = crypto.create_context(0x0030);
-	hash = crypto.digest(SHA1,bytes.new(8,mrz_info))
+	hash = crypto.digest(SHA1,bytes.new_from_chars(mrz_info))
 	KM_ENC, KM_MAC = epass_key_derivation(bytes.sub(hash,0,15))
 	return true
 end
@@ -158,8 +158,8 @@ function epass_read_binary(start,len)
 	DO8E = asn1.join(0x8E,crypto.mac(CBC_MAC,bytes.concat(SSC,cmdheader,"80 00 00 00",DO97)))
 	command = bytes.concat(cmdheader,(#DO97+#DO8E),DO97,DO8E,0)
 	sw, resp = card.send(command)
-	if (sw~=0x9000) then return false end
 	epass_inc_SSC()
+	if (sw~=0x9000) then return false end
 	tag_87, value_87 = asn1.split(resp)
 	decrypted_data = crypto.decrypt(TDES_CBC,bytes.sub(value_87,1,-1),iv)
 	return sw, bytes.sub(decrypted_data,0,len-1)
@@ -345,7 +345,7 @@ function ui_parse_block(node,format,data,pos)
 	local index
 
 	for i,v in ipairs(format) do
-		ITEM = ui.tree_add_node(node,v[1],i-1,v[2])
+		ITEM = ui.tree_add_node(node,"item",v[1],i-1,v[2])
 		block = bytes.sub(data,pos,pos+v[2]-1)
 		if v[3]~=nil then
 			if type(v[3])=="function" then
@@ -389,23 +389,23 @@ function ui_parse_biometry_fac(node,data)
 
 	num_faces = bytes.tonumber(bytes.sub(data,12,13))
 
-	BLOCK = ui.tree_add_node(node,"Facial Record Header");
+	BLOCK = ui.tree_add_node(node,"item","Facial Record Header");
 	index = ui_parse_block(BLOCK,BL_FAC_RECORD_HEADER,data,index)
 	if index==nil then
 		log.print(log.ERROR,"Failed to parse facial header information") 
 		return false 
 	end 
 
-	BLOCK = ui.tree_add_node(node,"Facial Data Records")
+	BLOCK = ui.tree_add_node(node,"item","Facial Data Records")
 
 	for i = 1,num_faces do
 		block_start = index
 		block_length = bytes.tonumber(bytes.sub(data,index,index+3))
 		num_features = bytes.tonumber(bytes.sub(data,index+4,index+5))
 		
-		SUBBLOCK = ui.tree_add_node(BLOCK,"Facial Record Data",i,block_length)
+		SUBBLOCK = ui.tree_add_node(BLOCK,"item","Facial Record Data",i,block_length)
 		
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Facial Information")
+		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Facial Information")
 		index = ui_parse_block(SUBSUBBLOCK,BL_FAC_INFORMATION,data,index)
 		if index==nil then 
 			log.print(log.ERROR,"Failed to parse facial information")
@@ -413,9 +413,9 @@ function ui_parse_biometry_fac(node,data)
 		end 	
 
 		if num_features>0 then
-			SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Feature points")
+			SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Feature points")
 			for j=1,num_features do
-				SUBSUBSUBBLOCK =  ui.tree_add_node(node,"Feature Point",j)
+				SUBSUBSUBBLOCK =  ui.tree_add_node(node,"item","Feature Point",j)
 				index = ui_parse_block(SUBSUBSUBBLOCK,BL_FEATURE_POINT,data,index)				
 				if index==nil then 
 					log.print(log.ERROR,"Failed to parse facial feature information")
@@ -424,7 +424,7 @@ function ui_parse_biometry_fac(node,data)
 			end
 		end
 
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Image Information");
+		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Image Information");
 		index = ui_parse_block(SUBSUBBLOCK,BL_FAC_IMAGE_INFORMATION,data,index)
 		if index==nil then
 			log.print(log.ERROR,"Failed to parse facial image information") 
@@ -432,7 +432,7 @@ function ui_parse_biometry_fac(node,data)
 		end
 		
 		image_len = block_length-(index-block_start)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Image Data",image_len)
+		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Image Data",image_len)
 		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_len-1))
 		index = index + image_len
 	end
@@ -451,7 +451,7 @@ function ui_parse_biometry_fir(node,data)
 	local image_size
 	local i
 
-	BLOCK = ui.tree_add_node(node,"Finger General Record Header");
+	BLOCK = ui.tree_add_node(node,"item","Finger General Record Header");
 	index = ui_parse_block(BLOCK,BL_FIR_GENERAL_RECORD_HEADER,data,index)
 	if index==nil then 
 		log.print(log.ERROR,"Failed to parse finger general record header information")
@@ -459,13 +459,13 @@ function ui_parse_biometry_fir(node,data)
 	end 
 	num_images = bytes.tonumber(bytes.sub(data,18,18))
 
-	BLOCK = ui.tree_add_node(node,"Finger Images")
+	BLOCK = ui.tree_add_node(node,"item","Finger Images")
 	for i=1,num_images do
 		record_size = bytes.tonumber(bytes.sub(data,index,index+3))
 		record_start = index
 
-		SUBBLOCK = ui.tree_add_node(BLOCK,"Finger Image",i,record_size)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Finger Image Record Header")
+		SUBBLOCK = ui.tree_add_node(BLOCK,"item","Finger Image",i,record_size)
+		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Finger Image Record Header")
 		index = ui_parse_block(SUBSUBBLOCK,BL_FIR_IMAGE_RECORD_HEADER,data,index)
 		if index==nil then 
 			log.print(log.ERROR,"Failed to parse finger image record header information")
@@ -473,7 +473,7 @@ function ui_parse_biometry_fir(node,data)
 		end
 
 		image_size = record_size-(index-record_start)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"Finger Image Data")
+		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Finger Image Data")
 		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_size-1))
 		index = index + image_size
 	end
@@ -557,30 +557,41 @@ FILES = {
   { ['FID']=0x011D, ['name']='EF.SOD' } 
 }
 
-MRZ_DATA = ui.readline("Enter lower MRZ data",44,MRZ_DATA)
+
+repeat
+	MRZ_DATA = ui.readline("Enter the code from the lower MRZ data (printed inside the passport)",44,MRZ_DATA)
+	if #MRZ_DATA<28 then
+		ui.question("You must enter at least 28 characters",{"OK"})
+	end
+until #MRZ_DATA>=28
+
 
 if card.connect() then
   CARD = card.tree_startup("e-passport")
   sw, resp = card.select(AID_MRTD,0)
-  APP = ui.tree_add_node(CARD,"application",AID_MRTD,nil,"application")
+  APP = ui.tree_add_node(CARD,"application","application",AID_MRTD)
   tlv_parse(APP,resp)
   epass_create_master_keys(MRZ_DATA)
   if epass_create_session_keys(ke,km)
      then
        for i,v in ipairs(FILES) do
          sw, resp = epass_select(v['FID'])
-         FID = ui.tree_add_node(CARD,v['name'],string.format(".%04X",v['FID']),#resp,"file")
+         FID = ui.tree_add_node(CARD,"file",v['name'],string.format(".%04X",v['FID']),#resp)
          if sw==0x9000 then
             r = epass_read_file()
-            if r[0]==0x6D then
-	       tag_6D, value_6D = asn1.split(r)
-	       TAG6D = ui.tree_add_node(FID,"National specific data",nil,#value_6D)
-	       ui.tree_set_value(TAG6D,value_6D)
+	    if r then
+                if r[0]==0x6D then
+	       		tag_6D, value_6D = asn1.split(r)
+	       		TAG6D = ui.tree_add_node(FID,"item","National specific data",nil,#value_6D)
+	       		ui.tree_set_value(TAG6D,value_6D)
+	    	else
+               		tlv_parse(FID,r,MRP_REFERENCE)
+	    	end
 	    else
-               tlv_parse(FID,r,MRP_REFERENCE)
-	    end
+		    ui.tree_set_alt_value(FID,"Selected file, but data is not accessible")
+            end
          else
-	    ui.tree_set_alt_value(FID,string.format("data not accessible (code %04X)",sw))
+	    ui.tree_set_alt_value(FID,string.format("could not select file, data not accessible (code %04X)",sw))
          end
        end
      end

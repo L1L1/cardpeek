@@ -1,7 +1,7 @@
-CC = gcc
+CC = gcc 
 GDK_PIXBUF_CSOURCE = gdk-pixbuf-csource
 
-OBJECTS = dot_cardpeek.o asn1.o attributes.o \
+OBJECTS = dyntree_model.o dot_cardpeek.o asn1.o attributes.o \
         bytestring.o cardtree.o crypto.o \
         emulator.o iso7816.o \
         lua_asn1.o lua_bit.o lua_bytes.o \

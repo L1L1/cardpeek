@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2011 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -266,31 +266,20 @@ int a_strequal(const a_string_t* cs, const char *value)
   return a_strnequal(cs,strlen(value),value);
 }
 
-/******
-void a_strdump(const a_string_t* cs)
+guint cstring_hash(gconstpointer str)
 {
-  unsigned u;
-  for (u=0;u<cs->_size;u++)
-  {
-    if (cs->_data[u]<' ')
-      fprintf(stderr,"\\x%02x",cs->_data[u]);
-    else
-      fprintf(stderr,"%c",cs->_data[u]);
-  }
-  fprintf(stderr,"\n");
+	const unsigned char *s = str;
+	guint res=0;
+	while (*s)
+	{
+		res = (res*27)+(*s);
+		s++;
+	}
+	return res;
 }
 
-int main()
+gint cstring_equal(gconstpointer a, gconstpointer b)
 {
-  a_string_t *s;
-
-  s=a_strnew(NULL);
-  a_strcpy(s,"Alain");
-  a_strdump(s);
-  a_strncat(s,6,"Boris");
-  a_strdump(s);
-  a_strcat(s,"Celine");
-  a_strdump(s);
-  a_strfree(s);
+	return (strcmp(a,b)==0);
 }
-****/
+

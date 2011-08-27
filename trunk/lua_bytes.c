@@ -132,7 +132,7 @@ static int subr_bytes_new(lua_State *L)
   return 1;
 }
 
-static int subr_bytes_new_from_text(lua_State *L)
+static int subr_bytes_new_from_chars(lua_State *L)
 {
   const char *str = luaL_checkstring(L, 1);
   bytestring_t *bs = bytestring_new(8);
@@ -415,7 +415,7 @@ static const struct luaL_reg byteslib_mt [] = {
 
 static const struct luaL_reg byteslib [] = {
   {"new", subr_bytes_new},
-  {"new_from_text",subr_bytes_new_from_text},
+  {"new_from_chars",subr_bytes_new_from_chars},
   {"assign",subr_bytes_assign},
   {"append",subr_bytes_append},
   {"insert",subr_bytes_insert},

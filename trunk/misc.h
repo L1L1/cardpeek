@@ -21,6 +21,7 @@
 
 #ifndef MISC_H
 #define MISC_H
+#include <glib/gtypes.h>
 
 #define is_hex(a)       ((a>='0' && a<='9') || \
                          (a>='A' && a<='F') || \
@@ -79,6 +80,8 @@ int a_sprintf(a_string_t* cs, const char *format, ...);
 int a_strnequal(const a_string_t* cs, unsigned n, const char *value);
 int a_strequal(const a_string_t* cs, const char *value);
 
+guint cstring_hash(gconstpointer data);
+gint cstring_equal(gconstpointer a, gconstpointer b);
 
 #include <stdio.h>
 #define HERE() { fprintf(stderr,"%s[%i]\n",__FILE__,__LINE__); fflush(stderr); }

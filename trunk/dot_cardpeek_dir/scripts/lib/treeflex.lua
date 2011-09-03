@@ -4,9 +4,9 @@ if not __original_tree_add_node then
  __original_tree_delete_node = ui.tree_delete_node
 end
 
-function ui.tree_add_node(node,classname,description,id,length)
+function ui.tree_add_node(node,classname,label,id,length)
 	treeFlex.cache = {}
-        return __original_tree_add_node(node,classname,description,id,length);
+        return __original_tree_add_node(node,classname,label,id,length);
 end
 
 function ui.tree_delete_node(node)
@@ -27,32 +27,13 @@ treeFlex = {
 	else
 		m = { string.match(obj,"^([^#]+)#(.+)") }
 		if m[1] then
-			ret["description"] = m[1]
+			ret["label"] = m[1]
 			ret["id"] = m[2]
 		else
-			ret["description"] = obj
+			ret["label"] = obj
 		end
 	end
 	return ret
-  end,
-
-  internal_sort = function(self)
-	table.sort(self.items)
-	return self
-  end,
-
-  internal_normalize = function(self)
-	local new_items = {}
-	local prev_v = ""
-	table.sort(self.items)
-	for i,v in ipairs(self.items) do
-		if v ~= prev_v then
-			table.insert(new_items,v)
-			prev_v = v
-		end
-	end
-	self.items = new_items
-	return self
   end,
 
   new = function(self,obj,root)
@@ -61,11 +42,14 @@ treeFlex = {
 	  local obj_ref
   
   	  if obj then
-	      	if string.match(obj,"^@[0123456789:]+") then
-				o = { ["items"] = { obj } } 
+	      	if type(obj)=="userdata" then
+			o = { ["items"] = { obj } } 
+		elseif type(obj)=="table" then
+			log.print(log.WARNING,"treeFlex:new(x) or _(x) was called on an object x that is already a treeFlex object.")
+			o = { ["items"] = obj["items"] }
 		else
 			if root then
-				obj_ref = root .. ">" .. obj
+				obj_ref = tostring(root) .. ">" .. obj
 			else
 				obj_ref = "@>"..obj
 			end
@@ -73,7 +57,10 @@ treeFlex = {
 	    			o = { ["items"] = treeFlex.cache[obj_ref] }
   			else 
 	   			local pat = treeFlex.internal_pattern(obj)
-	    			o = { ["items"] = ui.tree_find_all_nodes(nil,pat["description"],pat["id"]) }
+	    			o = { ["items"] = ui.tree_find_all_nodes(nil,pat["label"],pat["id"]) }
+				if #o.items==0 then
+					log.print(log.WARNING,"treeFlex.new('"..obj.."') returns an empty set.")
+				end
 				treeFlex.cache[obj_ref] = o.items
 	      		end
 		end
@@ -90,6 +77,13 @@ treeFlex = {
 	local i,v;
 	for i,v in ipairs(self.items) do f(i,v) end
 	return self
+  end,
+
+  get = function(self,index)
+	if index then
+		return self.items[index]
+	end
+	return self.items
   end,
 
   eq = function(self,index)
@@ -142,7 +136,6 @@ treeFlex = {
   remove = function(self)
 	local pos
 
-	self:internal_sort()
 	for pos=#self.items,1,-1 do
 		ui.tree_delete_node(self.items[pos])
 	end
@@ -150,12 +143,16 @@ treeFlex = {
 	return self
   end,
 
-  append = function(self,classname,description,id,length)
+  append = function(self,classname,label,id,length)
 	local i,v
 	local obj = treeFlex:new()
-	
+
+	if #self.items==0 then
+		log.print(log.WARNING,"treeFlex.append() was called on an empty object.")
+	end
+
 	for i,v in ipairs(self.items) do
-		table.insert(obj.items,ui.tree_add_node(v,classname,description,id,length))
+		table.insert(obj.items,ui.tree_add_node(v,classname,label,id,length))
 	end
 	return obj
   end,
@@ -165,24 +162,24 @@ treeFlex = {
 	local i2,v2
 	local res,pat
 	local obj_ref
-	local obj = treeFlex:new()
+	local retval = treeFlex:new()
 
         for i,v in ipairs(self.items) do
-		obj_ref = v..">"..obj
+		obj_ref = tostring(v)..">"..obj
 		if treeFlex.cache[obj_ref] then
 			res = treeFlex.cache[obj_ref]
 		else
                 	pat = treeFlex.internal_pattern(obj)
-			res = ui.tree_find_all_nodes(v,pat["description"],pat["id"])
+			res = ui.tree_find_all_nodes(v,pat["label"],pat["id"])
                 	treeFlex.cache[obj_ref] = res
 		end
 		if res then
 			for i2,v2 in ipairs(res) do
-				table.insert(obj.items,v2)
+				table.insert(retval.items,v2)
 			end
 		end
 	end
-  	return obj:internal_normalize()
+  	return retval -- FIXME: do we need to normalize
   end,
 
   children = function(self)
@@ -209,7 +206,7 @@ treeFlex = {
 
   __tostring = function(self)
 	  local res = "treeFlex = {"
-	  self:each(function(i,v) res=res..' ['..i..']="'..v..'",' end)
+	  self:each(function(i,v) res=res..' ['..i..']="'..tostring(v)..'",' end)
 	  return res .. '}';
   end
 }

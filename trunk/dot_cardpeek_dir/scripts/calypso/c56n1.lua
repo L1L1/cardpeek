@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2011 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -16,9 +16,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- 
+-- ACKNOWLEDGEMENT:
+-- The MOBIB "Event" parsing included in this file was build from
+-- information found in public-domain software from Gildas Avoine, 
+-- Tania Martin and Jean-Pierre Szikora from the Université catholique 
+-- de Louvain, Belgium.
+
 
 require('lib.strict')
 require('lib.en1545')
+require('lib.treeflex')
+require('etc.brussels-metro')
+require('etc.brussels-bus')
 
 function mobib_BIRTHDATE(source)
 	local source_digits = bytes.convert(4,source)
@@ -28,22 +38,110 @@ function mobib_BIRTHDATE(source)
 	return os.date("%x",os.time({['year']=year,['month']=month,['day']=day}))
 end
 
+function mobib_GENDER(source)
+	local n = bytes.tonumber(source)
+	if n==1 then
+		return "Male"
+	elseif n==2 then
+		return "Female"
+	end
+	return "Unknown"
+end
+
 function mobib_HOLDERNUMBER(source)
 	local source_digits = bytes.convert(4,source)
 	return  tostring(bytes.sub(source_digits,0,5)).."/"..
 		tostring(bytes.sub(source_digits,6,17)).."/"..
 		tostring(bytes.sub(source_digits,18,18))
-
 end
 
-mobib_HolderExtension = {
-  [0] = { en1545_UNDEFINED, 18, "HolderUnknownData1" },
-  [1] = { mobib_HOLDERNUMBER, 76, "HolderNumber" },
-  [2] = { en1545_UNDEFINED, 74, "HolderUnknownData2" },
-  [3] = { mobib_BIRTHDATE, 32, "HolderBirthDate" },
-  [4] = { en1545_UNDEFINED,  5, "HolderUnknownData3" },
-  [5] = { en1545_ALPHA, 160, "HolderName" }
-}
+
+function mobib_TRANSPORT_BUS(source)
+	local stationid = bytes.tonumber(source)
+	local retval = BRUSSELS_BUS[stationid]
+	if retval then
+		return retval
+	end
+	return "Unknown location"
+end
+
+function mobib_TRANSPORT_METRO(source)
+	local stationid = bytes.tonumber(source)
+	local retval = BRUSSELS_METRO[stationid]
+	if retval then
+		return retval
+	end
+	return "Unknown location"
+end
+
+function mobib_TRANSPORT(source)
+	local t = bytes.tonumber(source)
+	if t==0 then return "metro"
+	elseif t==7 then return "premetro"
+	elseif t==15 then return "bus"
+	elseif t==22 then return "tramway"
+	else return "UNKNOWN("..t..")"
+	end
+end
+
+function mobib_process_block(REC,label,beginp,endp,block,func)
+	local data = bytes.sub(block,beginp,endp)
+	local res = func(data)
+	_(REC):append("item",label,nil,endp-beginp+1)
+	       :setVal(data)
+		:setAlt(res)
+	return res
+end
+
+function mobib_process_holderext(i,ref)
+	local block = bytes.convert(1,ui.tree_get_value(ref))
+	if bytes.is_all(block,0) then
+		return false
+	end
+	mobib_process_block(ref,"HolderNumber",18,93,block,mobib_HOLDERNUMBER)
+	mobib_process_block(ref,"HolderBirthRate",168,199,block,mobib_BIRTHDATE)
+	mobib_process_block(ref,"HolderGender",200,201,block,mobib_GENDER)
+	mobib_process_block(ref,"HolderName",205,359,block,en1545_ALPHA)
+end
+
+function mobib_process_event(i,ref)
+	local block = bytes.convert(1,ui.tree_get_value(ref))
+	local transport_type
+	local ref2
+
+	if bytes.is_all(block,0) then
+		_(ref):setAlt("NO EVENT RECORDED")
+		return false
+	end
+	mobib_process_block(ref,"EventDataDateStamp",6,19,block,en1545_DATE)
+	mobib_process_block(ref,"EventDataTimeStamp",20,30,block,en1545_TIME)
+	mobib_process_block(ref,"EventDataDateFirstStamp",186,199,block,en1545_DATE)
+	mobib_process_block(ref,"EventDataTimeFirstStamp",200,210,block,en1545_TIME)
+	
+	mobib_process_block(ref,"EventCountOfCoupons",139,161,block,en1545_NUMBER)
+	transport_type = mobib_process_block(ref,"EventTransportType",99,104,block,mobib_TRANSPORT)
+	if transport_type=="metro" or transport_type=="premetro" then
+		mobib_process_block(ref,"EventLocationId",104,120,block,mobib_TRANSPORT_METRO)
+		ref2 = _(ref):find("EventLocationId"):get(1)	
+		mobib_process_block(ref2,"EventLocationZone",104,109,block,en1545_NUMBER)
+		mobib_process_block(ref2,"EventLocationSubZone",110,113,block,en1545_NUMBER)
+		mobib_process_block(ref2,"EventLocationStation",114,120,block,en1545_NUMBER)
+	elseif transport_type=="bus" then
+		mobib_process_block(ref,"EventLocationId",71,82,block,mobib_TRANSPORT_BUS)
+		mobib_process_block(ref,"EventJourneyRoute",92,98,block,en1545_NUMBER)		
+	end
+	return true
+end
+
+function mobib_process_env(i,ref)
+	local block = bytes.convert(1,ui.tree_get_value(ref))
+	if bytes.is_all(block,0) then
+		_(ref):setAlt("NO ENVIRONMENT DATA")
+	        return false
+	end
+	mobib_process_block(ref,"EnvNetworkId",13,36,block,en1545_NETWORKID)
+	return true
+end
 
 function mobib_process(APP)
 	local HOLDER_EXT
@@ -51,26 +149,29 @@ function mobib_process(APP)
 	local RECORD_2
 	local data
 
-	HOLDER_EXT = ui.tree_find_node(APP,"Holder Extended")
-	RECORD_1 = ui.tree_find_node(HOLDER_EXT,"record",1)
-	if RECORD_1==nil then 
+	RECORD_1=_(APP):find("Holder Extended"):find("record#1")
+	if RECORD_1:size()==0 then 
 		log.print(LOG_ERROR,"Could not find record 1 in 'Holder Extended' file")
 		return false
 	end
-	RECORD_2 = ui.tree_find_node(HOLDER_EXT,"record",2)
-	if RECORD_2==nil then 
+	RECORD_2=_(APP):find("Holder Extended"):find("record#2")
+	if RECORD_2:size()==0 then 
 		log.print(LOG_ERROR,"Could not find record 2 in 'Holder Extended' file")
 		return false
 	end
 	
-	data = ui.tree_get_value(RECORD_1) .. ui.tree_get_value(RECORD_2)
+	data = RECORD_1:val() .. RECORD_2:val()
 	
-	ui.tree_delete_node(RECORD_2)
-	ui.tree_delete_node(RECORD_1)
-	-- print("deleting ",RECORD_1,RECORD_2)
-	RECORD_1 = ui.tree_add_node(HOLDER_EXT,"record","record","1",#data)
-	ui.tree_set_value(RECORD_1,data)
-	en1545_map(APP,"Holder Extended",mobib_HolderExtension)
+	RECORD_2:remove()
+	RECORD_1:remove()
+
+	_(APP):find("Holder Extended")
+		:append("record","record","1+2",#data)
+    		:setVal(data)
+		:each(mobib_process_holderext)
+
+	_(APP):find("Event logs"):find("record"):each(mobib_process_event)
+	_(APP):find("Environment"):find("record"):each(mobib_process_env)
 end
 
 mobib_process(CARD)

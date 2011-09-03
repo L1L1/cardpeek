@@ -105,7 +105,7 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
         if format[1] == en1545_BITMAP then
            bitmap_size = parsed
            parsed = bitmap_size
-           BITMAP_NODE = ui.tree_add_node(NODE,"item","("..format[3].."Bitmap)",nil,parsed)
+           BITMAP_NODE = ui.tree_add_node(NODE,"item","("..format[3].."Bitmap)")
            ui.tree_set_value(BITMAP_NODE,item);
            for index=0,format[2]-1 do
                if data[position+bitmap_size-index-1]~=0 then
@@ -144,7 +144,8 @@ function en1545_unparsed(ctx, data)
 end
 
 function en1545_map(ctx, data_type, ...)
-        local RECORD_REF
+        local NODE_REFS
+	local RECORD_REF
         local NODE_REF
         local data
         local bits
@@ -152,9 +153,11 @@ function en1545_map(ctx, data_type, ...)
         local i
         local parsed
         local block
+	local foo
 
-        while true do
-                NODE_REF = ui.tree_find_node(ctx,data_type)
+	NODE_REFS = ui.tree_find_all_nodes(ctx,data_type)
+
+        for foo,NODE_REF in ipairs(NODE_REFS) do
                 if NODE_REF==nil then break end
                 for index=1,15 do
                         RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
@@ -170,8 +173,8 @@ function en1545_map(ctx, data_type, ...)
                         end
                         en1545_unparsed(RECORD_REF,bytes.sub(bits,parsed))
                 end
-                ui.tree_set_attribute(NODE_REF,"description",data_type..", parsed")
-        end
+                ui.tree_set_attribute(NODE_REF,"label",data_type..", parsed")
+	end
 end
 
 --[[

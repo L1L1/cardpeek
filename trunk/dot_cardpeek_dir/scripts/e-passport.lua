@@ -91,9 +91,11 @@ function epass_create_session_keys()
 	sw, resp = card.send(bytes.new(8,"00 82 00 00 28",cmd_data,0x28))
 	
 	if (sw==0x6300) then
-	   log.print(log.WARNING,"Perhaps you didn't enter the right MRZ data for this passport")
+	   	log.print(log.WARNING,"Perhaps you didn't enter the right MRZ data for this passport")
+        end
+	if (sw~=0x9000) then 
+		return false 
 	end
-	if (sw~=0x9000) then return false end
 	R = crypto.decrypt(TDES_CBC,bytes.sub(resp,0,31),iv)
 	k_icc = bytes.sub(R,16,31)
 	k_seed = bytes.new(8)
@@ -570,7 +572,9 @@ if card.connect() then
   CARD = card.tree_startup("e-passport")
   sw, resp = card.select(AID_MRTD,0)
   APP = ui.tree_add_node(CARD,"application","application",AID_MRTD)
-  tlv_parse(APP,resp)
+  if #resp>0 then
+	  tlv_parse(APP,resp)
+  end
   epass_create_master_keys(MRZ_DATA)
   if epass_create_session_keys(ke,km)
      then
@@ -594,6 +598,8 @@ if card.connect() then
 	    ui.tree_set_alt_value(FID,string.format("could not select file, data not accessible (code %04X)",sw))
          end
        end
+     else
+	     ui.question("Could not create session keys. Perhaps you didn't enter the correct MRZ data.",{"OK"})
      end
   card.disconnect()
 else

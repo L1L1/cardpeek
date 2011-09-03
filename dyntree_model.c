@@ -135,7 +135,7 @@ int dyntree_model_column_name_to_index(DyntreeModel *ctm, const char *column_nam
 	return GPOINTER_TO_INT(g_hash_table_lookup(ctm->columns_by_name,(gpointer)column_name))-1;
 }
 
-char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int index)
+const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int index)
 {
 	if (index<0 || index>=ctm->n_columns) 
 		return NULL;

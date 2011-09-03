@@ -25,8 +25,6 @@ static void dyntree_model_finalize (GObject *object);
 
 static GtkTreeModelFlags dyntree_model_get_flags (GtkTreeModel *tree_model);
 
-static gint dyntree_model_get_n_columns (GtkTreeModel *tree_model);
-
 static GType dyntree_model_get_column_type (GtkTreeModel *tree_model, 
 		gint index);
 
@@ -179,7 +177,7 @@ static void dyntree_model_finalize (GObject *object)
 {
 	DyntreeModel *ctm = DYNTREE_MODEL(object);
 	int i;
-HERE();
+	
 	dyntree_model_iter_remove(ctm,NULL);
 
 	for (i=0;i<ctm->n_columns;i++)
@@ -189,10 +187,9 @@ HERE();
 	}
 	g_free(ctm->columns_by_index);
 	g_hash_table_destroy(ctm->columns_by_name);
-HERE();
+
 	/* must chain up - finalize parent */
 	(* parent_class->finalize) (object);
-HERE();
 }
 
 static GtkTreeModelFlags dyntree_model_get_flags (GtkTreeModel *tree_model)
@@ -207,7 +204,7 @@ static GtkTreeModelFlags dyntree_model_get_flags (GtkTreeModel *tree_model)
 * columns we export via the tree model interface
 *
 *****************************************************************************/
-static gint dyntree_model_get_n_columns (GtkTreeModel *tree_model)
+gint dyntree_model_get_n_columns (GtkTreeModel *tree_model)
 {
 	g_return_val_if_fail (DYNTREE_IS_MODEL(tree_model), 0);
 	return DYNTREE_MODEL(tree_model)->n_columns;

@@ -260,6 +260,44 @@ gboolean cardtree_node_remove(cardtree_t* ct, GtkTreeIter *iter)
 	return dyntree_model_iter_remove(ct->_store,iter);
 }
 
+
+gboolean cardtree_node_child(cardtree_t *ct,
+		GtkTreeIter *iter,
+		GtkTreeIter *parent)
+{
+	return gtk_tree_model_iter_children(GTK_TREE_MODEL(ct->_store),
+			iter,
+			parent);
+}
+
+gboolean cardtree_node_next(cardtree_t *ct,
+		GtkTreeIter *iter)
+{
+	return gtk_tree_model_iter_next(GTK_TREE_MODEL(ct->_store),
+			iter);
+}
+
+gboolean cardtree_node_parent(cardtree_t *ct,
+		GtkTreeIter *parent,
+		GtkTreeIter *child)
+{
+	return gtk_tree_model_iter_parent(GTK_TREE_MODEL(ct->_store),
+			parent,
+			child);
+}
+
+
+gint cardtree_attribute_count(cardtree_t* ct)
+{
+	return dyntree_model_get_n_columns(GTK_TREE_MODEL(ct->_store));
+}
+
+const char *cardtree_attribute_name(cardtree_t* ct, int index)
+{
+	return dyntree_model_column_index_to_name(ct->_store, index);
+}
+
+
 gboolean cardtree_attribute_set(cardtree_t* ct,
 				GtkTreeIter *iter,
                             	int index,

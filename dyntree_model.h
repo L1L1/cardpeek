@@ -65,11 +65,10 @@ int dyntree_model_column_register(DyntreeModel *ctm,
 int dyntree_model_column_name_to_index(DyntreeModel *ctm, 
 		const char *column_name);
 
-char *dyntree_model_column_index_to_name(DyntreeModel *ctm, 
+const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, 
 		int index);
 
-const char *dyntree_model_get_column_type_name(DyntreeModel *ctm, 
-		int index);
+gint dyntree_model_get_n_columns (GtkTreeModel *tree_model);
 
 /* Setting attributes */
 

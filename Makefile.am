@@ -6,7 +6,7 @@ AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GT
 
 bin_PROGRAMS= cardpeek
 
-cardpeek_SOURCES = asn1.c asn1.h attributes.c attributes.h bytestring.c bytestring.h dyntree_model.c dyntree_model.h cardtree.c cardtree.h crypto.c crypto.h emulator.c emulator.h gui.c gui.h iso7816.c iso7816.h lua_asn1.c lua_asn1.h lua_bit.c lua_bit.h lua_bytes.c lua_bytes.h lua_card.c lua_card.h lua_crypto.c lua_crypto.h lua_ext.c lua_ext.h lua_log.c lua_log.h lua_ui.c lua_ui.h main.c misc.c misc.h pathconfig.c pathconfig.h smartcard.c smartcard.h 
+cardpeek_SOURCES = asn1.c asn1.h attributes.c attributes.h bytestring.c bytestring.h gui_flexi_cell_renderer.c gui_flexi_cell_renderer.h dyntree_model.c dyntree_model.h cardtree.c cardtree.h crypto.c crypto.h emulator.c emulator.h gui.c gui.h iso7816.c iso7816.h lua_asn1.c lua_asn1.h lua_bit.c lua_bit.h lua_bytes.c lua_bytes.h lua_card.c lua_card.h lua_crypto.c lua_crypto.h lua_ext.c lua_ext.h lua_log.c lua_log.h lua_ui.c lua_ui.h main.c misc.c misc.h pathconfig.c pathconfig.h smartcard.c smartcard.h 
 
 doc_DATA=doc/cardpeek_ref.*.pdf doc/cardpeek_ref.*.tex
 

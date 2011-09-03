@@ -61,6 +61,22 @@ gboolean cardtree_node_remove(cardtree_t *ct,
 		GtkTreeIter *iter);
 
 
+gboolean cardtree_node_child(cardtree_t *ct,
+		GtkTreeIter *iter,
+		GtkTreeIter *parent);
+
+gboolean cardtree_node_next(cardtree_t *ct,
+		GtkTreeIter *iter);
+
+gboolean cardtree_node_parent(cardtree_t *ct,
+		GtkTreeIter *parent,
+		GtkTreeIter *child);
+
+
+gint cardtree_attribute_count(cardtree_t* ct);
+
+const char *cardtree_attribute_name(cardtree_t* ct, int index);
+
 gboolean cardtree_attribute_set(cardtree_t* ct,
 				GtkTreeIter *iter,
                             	int index,

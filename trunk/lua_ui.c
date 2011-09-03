@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include "bytestring.h"
 #include "lua_bytes.h"
+#include <glib/gprintf.h>
 
 /***********************************************************
  * USER INTERFACE FUNCTIONS
@@ -216,60 +217,67 @@ int subr_ui_tree_get_alt_value(lua_State* L)
 }
 
 int subr_ui_tree_get_node(lua_State* L)
-{
-/* 
-	const char *path;
-	char *classname;
-	char *description;
-	char *id;
-	unsigned size;
-	unsigned num_children;
+{ 
+	GtkTreeIter *iter;
+	const char *attr_name;
+	const char *attr_value;
+	int i,attr_num;
 
-	path = lua_tostring(L,1);
-	if (!cardtree_node_get(CARDTREE,path,&classname,&description,&id,&size,&num_children))
-	{
-		lua_pushnil(L);
-		return 1;
-	}
+	iter = luaL_check_node_ref(L,1);
+
+	attr_num = cardtree_attribute_count(CARDTREE);
 
 	lua_newtable(L);
 
-	if (classname)
+	for (i=0;i<attr_num;i++)
 	{
-		lua_pushstring(L,"class");
-		lua_pushstring(L,classname);
-		lua_settable(L,-3);
-		free(classname);
+		if (cardtree_attribute_get(CARDTREE,iter,i,&attr_value))
+		{
+			attr_name = cardtree_attribute_name(CARDTREE,i);
+			lua_pushstring(L,attr_name);
+			lua_pushstring(L,attr_value);
+			lua_settable(L,-3);
+		}
 	}
-
-	if (description)
-	{
-		lua_pushstring(L,"description");
-		lua_pushstring(L,description);
-		lua_settable(L,-3);
-		free(description);
-	}
-
-	if (id)
-	{
-		lua_pushstring(L,"id");
-		lua_pushstring(L,id);
-		lua_settable(L,-3);
-		free(id);
-	}
-
-	lua_pushstring(L,"size");
-	lua_pushinteger(L,size);
-	lua_settable(L,-3);
-
-	lua_pushstring(L,"num_children");
-	lua_pushinteger(L,num_children);
-	lua_settable(L,-3);
-*/
-#warning IMPLEMENT
-	lua_pushnil(L);
 	return 1;
 }
+
+int subr_ui_tree_child_node(lua_State *L)
+{
+	GtkTreeIter *iter = luaL_check_node_ref(L,1);
+	GtkTreeIter ret;
+
+	if (cardtree_node_child(CARDTREE,&ret,iter))
+		lua_push_node_ref(L,&ret);		
+	else
+		lua_pushnil(L);
+	return 1;
+}
+
+int subr_ui_tree_next_node(lua_State *L)
+{
+	GtkTreeIter *iter = luaL_check_node_ref(L,1);
+	GtkTreeIter ret = *iter;
+
+	if (cardtree_node_next(CARDTREE,&ret))
+		lua_push_node_ref(L,&ret);		
+	else
+		lua_pushnil(L);
+	return 1;
+}
+
+int subr_ui_tree_parent_node(lua_State *L)
+{
+	GtkTreeIter *iter = luaL_check_node_ref(L,1);
+	GtkTreeIter ret;
+
+	if (cardtree_node_parent(CARDTREE,&ret,iter))
+		lua_push_node_ref(L,&ret);		
+	else
+		lua_pushnil(L);
+	return 1;
+}
+
 
 int subr_ui_tree_delete_node(lua_State* L)
 {
@@ -283,119 +291,6 @@ int subr_ui_tree_delete_node(lua_State* L)
   gui_update(1);
   return 1;
 }
-/*
- * FOR THE FUTURE MAYBE
- *  
-gboolean create_search_context(lua_State* L, int **r_indices, char ***r_values, int *r_n_values)
-{
-  int i,index;
-  char *label;
-  char *value;
-  int *indices;
-  char **values;
-  int n_values = (lua_gettop(L)-1)/2;
-
-  if (n_values<1)
-  	return FALSE;
-
-  indices = g_new0(int,n_values);
-  values  = g_new0(char *,n_values);
-
-  n_values = 0;
-  for (i=2;i<=lua_gettop(L);i+=2)
-  {
-  	if (!lua_isnoneornil(L,i))
-    		label = lua_tostring(L,i);
-	else
-		continue;
-
-	if (!lua_isnoneornil(L,i+1))
-    		value = lua_tostring(L,i);
-	else
-		continue;
-
-	if ((index = dyntree_model_column_name_to_index(CARDTREE,label))>=0)
-	{
-		indices[n_values] = index;
-		values[n_values] = value;
-		n_values ++;
-	}
-  }
-  *r_indices  = indices;
-  *r_values   = values;
-  *r_n_values = n_values;
-  return TRUE;
-}
-
-int subr_ui_find_node(lua_State* L)
-{
-  GtkTreeIter* iter; 
-  int *indices;
-  char **values;
-  int n_values;
-  GtkTreeIter* node;
-
-  if (!lua_isnoneornil(L,1))
-  	  iter = lua_check_node_ref(L,1);
-  else
-	  iter = NULL;
-
-  if (create_search_context(L,&indices,&values,&n_valuues)==FALSE)
-  {
-	lua_pushnil(L);
-  	return 1;
-  }
-
-  if (dyntree_model_iter_find_first(CARDTREE,&node,iter,indices,values,n_values))
-    lua_push_node_ref(L,&node);
-  else
-    lua_pushnil(L);
-  g_free(indices);
-  g_free(values);
-  return 1;
-}
-
-int subr_ui_find_all_nodes(lua_State* L)
-{
-  GtkTreeIter* iter; 
-  int *indices;
-  char **values;
-  int n_values;
-  GtkTreeIter* node;
-  int i;
-
-  if (!lua_isnoneornil(L,1))
-  	  iter = lua_check_node_ref(L,1);
-  else
-	  iter = NULL;
-
-  if (create_search_context(L,&indices,&values,&n_valuues)==FALSE)
-  {
-	lua_pushnil(L);
-  	return 1;
-  }
-
-
-  lua_newtable(L);
-
-  if (dyntree_model_iter_find_first(CARDTREE,&node,iter,indices,values,n_values))
-  {
- 	lua_pushinteger(L,1);
-      	lua_push_node_ref(L,&node);
-      	lua_settable(L,-3);
-
-	i=2;
-	while (dyntree_model_iter_find_next(CARDTREE,&node,iter,indices,values,n_values))
-	{
-		lua_pushinteger(L,i++);
-	      	lua_push_node_ref(L,&node);
-      		lua_settable(L,-3);
-	}
-  }
-
-  return 1;
-}
-***/
 
 int subr_ui_find_node(lua_State* L)
 {
@@ -661,6 +556,9 @@ static const struct luaL_reg uilib [] = {
   {"tree_get_value", subr_ui_tree_get_value },
   {"tree_set_alt_value", subr_ui_tree_set_alt_value },
   {"tree_get_alt_value", subr_ui_tree_get_alt_value },
+  {"tree_child_node", subr_ui_tree_child_node },
+  {"tree_next_node", subr_ui_tree_next_node },
+  {"tree_parent_node", subr_ui_tree_parent_node },
   {"tree_get_node", subr_ui_tree_get_node },
   {"tree_delete_node", subr_ui_tree_delete_node },
   {"tree_find_node", subr_ui_find_node },

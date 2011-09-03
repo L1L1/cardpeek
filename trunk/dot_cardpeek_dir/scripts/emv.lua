@@ -54,12 +54,14 @@ TRANSACTION_TYPE = {
   [1]="Cash"
 }
 
-function ui_parse_transaction_type(cc)
+function ui_parse_transaction_type(node,cc)
 	local tt = TRANSACTION_TYPE[cc[0]]
 	if tt == nil then 
 	   return tostring(cc)
 	end
-	return tt
+	ui.tree_set_value(node,cc)
+	ui.tree_set_alt_value(node,tt)
+	return true
 end
 
 function ui_parse_CVM(node,data)
@@ -68,23 +70,27 @@ function ui_parse_CVM(node,data)
 	local right
 	local leftstring
 	local rightstring
-	local out = "X="
-	for i = 0, 3 do
-		out = out .. string.format("%02X",data[i])
-	end
-	out = out .. ", Y="
-	for i = 4, 7 do
-		out = out .. string.format("%02X",data[i])
-	end
+	local subnode
+	local out 
+
+	subnode = ui.tree_add_node(node,"item","X",nil,4)
+	ui.tree_set_value(subnode,bytes.sub(data,0,3))
+
+	subnode = ui.tree_add_node(node,"item","Y",nil,4)
+	ui.tree_set_value(subnode,bytes.sub(data,4,7))
+
 	for i= 4,(#data/2)-1 do
-		out = out .. "\n * "
+		subnode = ui.tree_add_node(node,"item","CVM",i-3,2)
+		ui.tree_set_value(subnode,bytes.sub(data,i*2,i*2+1))
 		left = data[i*2]
 		right = data[i*2+1]
+
 		if bit.AND(left,0x40) == 0x40 then
-			out = out .. "Apply succeeding CV rule if this rule is unsuccessful: "
+			out = "Apply succeeding CV rule if this rule is unsuccessful: "
 		else
-			out = out .. "Fail cardholder verification if this CVM is unsuccessful: "
+			out = "Fail cardholder verification if this CVM is unsuccessful: "
 		end
+
 		if CVM_REFERENCE_BYTE1[bit.AND(left,0xBF)] == nil then
 			leftstring = string.format("Unknown (%02X)",left)
 		else
@@ -96,9 +102,9 @@ function ui_parse_CVM(node,data)
 			rightstring = CVM_REFERENCE_BYTE2[right]
 		end
 		out = out .. leftstring .. " - " .. rightstring
+		ui.tree_set_alt_value(subnode,out)
 	end
         ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,out)
 	return true
 end
 
@@ -161,7 +167,7 @@ EMV_REFERENCE = {
    ['9F12'] = {"Application Preferred Name" }, 
    ['9F13'] = {"Last Online ATC Register" }, 
    ['9F14'] = {"Lower Consecutive Offline Limit (Terminal Check)" }, 
-   ['9F17'] = {"PIN Try Counter" }, 
+   ['9F17'] = {"PIN Try Counter", ui_parse_number }, 
    ['9F19'] = {"Dynamic Data Authentication Data Object List (DDOL)" }, 
    ['9F1A'] = {"Terminal Country Code", ui_parse_country_code },
    ['9F1F'] = {"Track 1 Discretionary Data", ui_parse_printable }, 
@@ -420,7 +426,7 @@ function emv_process_application(cardenv,aid)
 
 
 	-- Process 'File Control Infomation' and get PDOL
-	APP = ui.tree_add_node(cardenv,"application",aid,nil,"application")
+	APP = ui.tree_add_node(cardenv,"application","application",aid)
 	emv_parse(APP,resp)
 	ref = ui.tree_find_node(APP,nil,"9F38")
 	if (ref) then

@@ -644,7 +644,7 @@ int subr_node_ref_tostring(lua_State* L)
   char buf[20];
 
   iter = luaL_check_node_ref(L,1);
-  g_sprintf(buf,"<node:%p>",iter->user_data);
+  g_sprintf(buf,"@node(%p)",iter->user_data);
   lua_pushstring(L,buf);
   return 1;
 }

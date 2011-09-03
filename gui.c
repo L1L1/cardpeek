@@ -20,6 +20,7 @@
 */
 
 #include "gui.h"
+#include "gui_flexi_cell_renderer.h"
 #include <dirent.h>
 #include "misc.h"
 #include "pathconfig.h"
@@ -356,9 +357,8 @@ void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer 
 /* Callback responding to right click context menu item to change 3rd column format */ 
 {
   /* GtkTreeView *treeview = GTK_TREE_VIEW(userdata); */
-  GtkTreeView* treeview = CARDVIEW;
-  GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
-  GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),3);
+  GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(CARDVIEW),2);
+  GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW(CARDVIEW),3);
 
   if (gtk_tree_view_column_get_visible(column2))
   {
@@ -625,8 +625,6 @@ toolbar_item_t TB_CARD_VIEW[] = {
 	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_card_view_clear_cb), NULL },
 	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_card_view_open_cb), NULL },
 	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_card_view_save_as_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
-	{ "card-view-format",	GTK_STOCK_CONVERT, "Change format", G_CALLBACK(menu_cardview_context_menu_change_value_type), NULL },
 	{ NULL, 		TOOLBAR_ITEM_EXPANDER },
 	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(menu_run_command_cb), "ui.about()" },
 	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
@@ -644,6 +642,8 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   GtkTreeViewColumn   *column;
   GtkWidget           *base_container;
   GtkWidget           *toolbar;
+  GtkWidget	      *colheader;
+  GtkWidget	      *colitem;
 
   /* Create base window container */
   
@@ -723,7 +723,7 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,
-                                               "Raw Value",  
+                                               NULL,  
                                                renderer,
                                                "markup", CC_MARKUP_VAL,
                                                NULL);
@@ -733,51 +733,51 @@ GtkWidget *create_card_view(cardtree_t *cardtree)
   gtk_tree_view_column_set_clickable(column,TRUE);
   g_signal_connect(column,"clicked",(GCallback)menu_cardview_column_activated,NULL);
 
+  colheader = gtk_hbox_new(FALSE,10);
+  gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Raw value"), FALSE, FALSE, 0);
+  if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
+  {
+  	gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
+  }
+  gtk_widget_show_all(colheader);
+  gtk_tree_view_column_set_widget(column,colheader);
+
    /* --- Column #3 --- */
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,
-                                               "Interpreted Value",  
+                                               NULL,  
                                                renderer,
                                                "markup", CC_MARKUP_ALT,
                                                NULL);
+
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
   gtk_tree_view_column_set_resizable(column,TRUE);
   gtk_tree_view_column_set_clickable(column,TRUE);
   g_signal_connect(column,"clicked",(GCallback)menu_cardview_column_activated,NULL);
 
-
-/*
-  renderer = gtk_cell_renderer_text_new ();
-  gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
-                                               -1,      
-                                               "Information",  
-                                               renderer,
-                                               "text", C_COMMENT,
-                                               NULL);
-  column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
-  gtk_tree_view_column_set_resizable(column,TRUE);
-
-  g_object_set(renderer,
-               "style-set", TRUE,
-               "style", PANGO_STYLE_ITALIC,
-               NULL);
-    */
+  colheader = gtk_hbox_new(FALSE,10);
+  gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Interpreted value"), FALSE, FALSE, 0);
+  if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
+  {
+  	gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
+  }
+  gtk_widget_show_all(colheader);
+  gtk_tree_view_column_set_widget(column,colheader);
 
   cardtree_bind_to_treeview(cardtree,CARDVIEW);
-  /* gtk_widget_set_size_request (scrolled_window,-1,200);*/
 
   return base_container;
 }
 
 toolbar_item_t TB_READER_VIEW[] = {
-	{ "reader-view-connect", 	GTK_STOCK_CONNECT, NULL, G_CALLBACK(menu_run_command_cb), "card.connect()" },
-	{ "reader-view-reset", 		GTK_STOCK_REDO, NULL, G_CALLBACK(menu_run_command_cb), "card.warm_reset()" },
-	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, NULL, G_CALLBACK(menu_run_command_cb), "card.disconnect()" },
+	{ "reader-view-connect", 	GTK_STOCK_CONNECT, "Connect", G_CALLBACK(menu_run_command_cb), "card.connect()" },
+	{ "reader-view-reset", 		GTK_STOCK_REDO, "Reset", G_CALLBACK(menu_run_command_cb), "card.warm_reset()" },
+	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, "Disconnect", G_CALLBACK(menu_run_command_cb), "card.disconnect()" },
 	{ NULL,				TOOLBAR_ITEM_SEPARATOR },
-	{ "reader-view-clear", 		GTK_STOCK_CLEAR, NULL, G_CALLBACK(menu_run_command_cb), "card.log_clear()" },
-	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, NULL, G_CALLBACK(menu_reader_save_as_cb), NULL },	
+	{ "reader-view-clear", 		GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_run_command_cb), "card.log_clear()" },
+	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, "Save as", G_CALLBACK(menu_reader_save_as_cb), NULL },	
 	{ NULL, 			NULL }
 };
 
@@ -890,6 +890,7 @@ GtkWidget *create_command_entry()
   GtkWidget *hbox;
   GtkWidget *entry;
   GtkEntryCompletion* compl;
+  GtkWidget *icon;
 
   entry = gtk_entry_new();
 
@@ -899,11 +900,14 @@ GtkWidget *create_command_entry()
   gtk_entry_completion_set_text_column(compl, 0);
   gtk_entry_set_completion(GTK_ENTRY(entry), compl);
 
-  label = gtk_label_new("Command :");
+  label = gtk_label_new("Command:");
   hbox = gtk_hbox_new (FALSE, 4);
+  
+  if ((icon = gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU)))
+    gtk_box_pack_start (GTK_BOX (hbox), icon, FALSE, FALSE, 0);
 
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 2);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 2);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
 
   g_signal_connect (G_OBJECT (entry), "activate",
 		    G_CALLBACK (gui_run_command_cb),

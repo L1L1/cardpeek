@@ -183,14 +183,15 @@ treeFlex = {
   end,
 
   children = function(self)
-	local info
+	local node
 	local i,v,j
 	local obj = treeFlex:new()
 
 	for i,v in ipairs(self.items) do 
-		info = ui.tree_get_node(v)  
-	  	for index=0,info.num_children-1 do
-			table.insert(obj.items,v..":"..index)
+		node = ui.tree_child_node(v)
+		while node do
+			table.insert(obj.items,node)
+			node = ui.tree_next_node(node)
 		end
 	end
 	return obj

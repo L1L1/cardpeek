@@ -1,3 +1,16 @@
+cardpeek-0.7: L1L1@gmx.com
+4 September 2011
+- Added support for the Windows XP OS.
+- Extended MOBIB transport card support with better event log parsing including metro and bus stations names.
+- Added preliminary GSM SIM card support.
+- Added prelininary Mifare card support (tested with the Thalys card).
+- Corrected a major bug in the e-passport script.
+- Changed the XML data format used to save card data.
+- Rewrote the card data model for additional flexibility.
+- Added a new flexible card view manipulation library called "treeflex".
+- Minor GUI tweaks.
+- Many bug corrections.
+
 cardpeek-0.6: L1L1@gmx.com
 27 March 2011
 - Rewrote the Calypso scripts for extended modularity.

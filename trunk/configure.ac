@@ -116,13 +116,13 @@ AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero getcwd memmove memset select strcasecmp strdup strerror strncasecmp strrchr strtol])
 
-AC_PATH_PROG(PDFLATEX,[pdflatex],no)
-if test x$PDFLATEX = xno ; then
-AC_MSG_WARN([The pdflatex program could not be found. 
-	This is only a problem if you wish to rebuild the pdf documentation 
-	from the LaTeX source in the doc/ sub-directory.
-	Otherwise this warning can be safely ignored.])
-fi
+#AC_PATH_PROG(PDFLATEX,[pdflatex],no)
+#if test x$PDFLATEX = xno ; then
+#AC_MSG_WARN([The pdflatex program could not be found. 
+#	This is only a problem if you wish to rebuild the pdf documentation 
+#	from the LaTeX source in the doc/ sub-directory.
+#	Otherwise this warning can be safely ignored.])
+#fi
 
 AC_CONFIG_FILES([Makefile])
 

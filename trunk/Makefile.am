@@ -8,7 +8,7 @@ bin_PROGRAMS= cardpeek
 
 cardpeek_SOURCES = asn1.c asn1.h attributes.c attributes.h bytestring.c bytestring.h gui_flexi_cell_renderer.c gui_flexi_cell_renderer.h dyntree_model.c dyntree_model.h cardtree.c cardtree.h crypto.c crypto.h emulator.c emulator.h gui.c gui.h iso7816.c iso7816.h lua_asn1.c lua_asn1.h lua_bit.c lua_bit.h lua_bytes.c lua_bytes.h lua_card.c lua_card.h lua_crypto.c lua_crypto.h lua_ext.c lua_ext.h lua_log.c lua_log.h lua_ui.c lua_ui.h main.c misc.c misc.h pathconfig.c pathconfig.h smartcard.c smartcard.h 
 
-doc_DATA=doc/cardpeek_ref.*.pdf doc/cardpeek_ref.*.tex
+doc_DATA=doc/cardpeek_ref.*.pdf 
 
 cardpeek_LDADD=dot_cardpeek.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
@@ -16,9 +16,9 @@ dist_man_MANS=cardpeek.1
 
 DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 
-CLEANFILES=icons.c doc/*.log doc/*.aux dot_cardpeek.tar.gz
+CLEANFILES=icons.c dot_cardpeek.tar.gz
 
-EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.tex doc/*.pdf doc/Makefile doc/graphics update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
+EXTRA_DIST=script.S $(DRIVERS) icons/*.png dot_cardpeek_dir doc/*.pdf update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
 
 GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
 

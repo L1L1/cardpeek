@@ -4,13 +4,12 @@
 
 http://cardpeek.googlecode.com/files/sample-navigo.jpg
 
-The "navigo" script included in *cardpeek* is specifically targeted to read the content of Navigo cards used in Paris. It provides enhanced "event log" analysis notably with subway/train station names, as illustrated in the screenshot above. It has been successfully tested on Navigo Découverte, Navigo and Navigo Intégrale cards.
+The "calypso" script included in *cardpeek* can read the content of Navigo cards used in Paris. It provides enhanced "event log" analysis notably with subway/train station names, as illustrated in the screenshot above. It has been successfully tested on Navigo Découverte, Navigo and Navigo Intégrale cards.
 
 = Notes =
-The "navigo" script included in *cardpeek* a specialized version of the calypso script also provided in *cardpeek*, which allows to read the contents of transport cards used in many cities.
 You must use the contact interface to read a Navigo card, because they cannot be read with a normal conctactless card-reader (these cards use a specific protocol that is not fully compatible with ISO 14443 B). 
 
 = Privacy notes =
 
 These transport cards keep an "event log" describing at least 3 of the last stations/stops you have been through. This "event log", which could pose a privacy risk, is not protected by any access control means and is freely readable.
-Note however that your name does not appear on the card (to our best knowledge).
+Note however that your name does not appear on the card (to our best knowledge), as opposed to the MOBIB card in Brussels.

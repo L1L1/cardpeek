@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2012 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 -- Aug 07 2010: Corrected bug in GPO command.
 -- Aug 08 2010: Corrected bug in AFL data processing
 -- Mar 27 2011: Added CVM patch from Adam Laurie.
+-- Jan 23 2012: Added UK Post Office Card Account in AID list from Tyson Key.
 
 require('lib.tlv')
 require('lib.strict')
@@ -226,7 +227,8 @@ AID_LIST = {
   "#A0000000032010",
   "#A0000000041010",
   "#A0000000042010",
-  "#A00000006900"
+  "#A00000006900",   -- FR Moneo
+  "#A0000001850002", -- UK Post Office Card Account card
 }
 
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }

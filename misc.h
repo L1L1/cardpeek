@@ -21,7 +21,7 @@
 
 #ifndef MISC_H
 #define MISC_H
-#include <glib/gtypes.h>
+#include <glib.h>
 
 #define is_hex(a)       ((a>='0' && a<='9') || \
                          (a>='A' && a<='F') || \

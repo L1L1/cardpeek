@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include "bytestring.h"
 #include "lua_bytes.h"
-#include <glib/gprintf.h>
+#include <glib.h>
 
 /***********************************************************
  * USER INTERFACE FUNCTIONS

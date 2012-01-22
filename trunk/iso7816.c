@@ -305,6 +305,31 @@ const char* iso7816_stringify_sw(unsigned short sw)
       else
 	strcpy(msg,"No precise diagnosis");
       break;
+    case 0x92:
+      strcpy(msg,"GSM - Update successful after n reties (see SW2)");
+      break;
+    case 0x94:
+      switch (sw&0xFF) {
+	case 0x00: strcpy(msg,"GSM - No EF selected"); break;
+	case 0x02: strcpy(msg,"GSM - Out of range (invalid address)"); break;
+	case 0x04: strcpy(msg,"GSM - File ID or pattern not found"); break;
+	case 0x08: strcpy(msg,"GSM - File inconsistent with the command"); break;
+      }
+      break;
+    case 0x98:
+      switch (sw&0xFF) {
+	case 0x02: strcpy(msg,"GSM - No CHV initilaized"); break;
+	case 0x04: strcpy(msg,"GSM - Authentication failed"); break;
+	case 0x08: strcpy(msg,"GSM - In contradiction with CHV status"); break;
+	case 0x10: strcpy(msg,"GSM - In contradiction invalidation status"); break;
+	case 0x40: strcpy(msg,"GSM - Authentication failed, no attempts left"); break;
+	case 0x50: strcpy(msg,"GSM - Increase failed, max. vaule reached"); break;
+      }
+      break;
+     case 0x9F:
+      strcpy(msg,"GSM - Length of response in SW2"); 
+      break;
+
     default:
       strcpy(msg,"** Unkown error code **");
   }

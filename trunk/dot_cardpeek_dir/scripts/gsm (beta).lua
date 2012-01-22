@@ -119,42 +119,95 @@ function GSM_ADN(node,data)
 	return node:setAlt(r)
 end
 
+function add_item(node,data,label,pos,len,func)
+	local subnode
+	local edata = bytes.sub(data,pos,pos+len-1)
+
+	subnode = node:append("item",label,nil,#edata)
+			:setVal(edata)
+	if func then
+		func(subnode,edata)
+	end
+end
+
+function GSM_SMS(node,data)
+	local subnode
+	local pos
+	
+	add_item(node,data,"status",0,1)
+	pos = 1
+	if data[0]>0 then
+		add_item(node,data,"Length of SMSC information",pos,1)
+		add_item(node,data,"Type of address",pos+1,1)
+		add_item(node,data,"Service center number",pos+2,data[pos]-1)
+		pos = pos+data[pos] + 1
+		add_item(node,data,"First octet SMS deliver message",pos,1)
+		pos = pos + 1
+		add_item(node,data,"Length of address",pos,1)
+		add_item(node,data,"Type of address",pos+1,1)
+		add_item(node,data,"Sender number",pos+2,math.floor(data[pos]/2))
+		pos = pos+math.floor(data[pos]/2) + 2
+		add_item(node,data,"TP-PID",pos,1)
+		add_item(node,data,"TP-DCS",pos+1,1)
+		add_item(node,data,"TP-SCTS",pos+2,7)
+		pos = pos + 9
+		add_item(node,data,"Length of SMS",pos,2)
+		add_item(node,data,"Text of SMS",pos+2,(data[pos]*256+data[pos+1])*7/8)
+	end
+end
+
 GSM_MAP = 
 { "application", "3F00", "MF", {
+		{ "file", "2F00", "Application directory", nil },
+		{ "file", "2F05", "Preferred languages", nil },
+		{ "file", "2F06", "Access rule reference", nil },
 		{ "file", "2FE2", "ICCID", GSM_ICCID },
 		{ "application", "7F10", "TELECOM", {
-				{ "file", "6F3A", "ADN", GSM_ADN },
-				{ "file", "6F3B", "FDN", nil },
-				{ "file", "6F3V", "SMS", nil },
-				{ "file", "6F3D", "CCP", nil },
+				{ "file", "6F06", "Access rule reference", nil },
+				{ "file", "6F3A", "Abbreviated dialling numbers", GSM_ADN },
+				{ "file", "6F3B", "Fixed dialing numbers", nil },
+				{ "file", "6F3C", "Short messages", GSM_SMS },
+				{ "file", "6F3D", "Capability configuration parameters", nil },
 				{ "file", "6F40", "MSISDN", nil },
-				{ "file", "6F42", "SMSP", nil },
-				{ "file", "6F43", "SMSS", nil },
+				{ "file", "6F42", "SMS parameters", nil },
+				{ "file", "6F43", "SMS status", nil },
 				{ "file", "6F44", "LND", nil },
-				{ "file", "6F4A", "EXT1", nil },
-				{ "file", "6F4B", "EXT2", nil },
+				{ "file", "6F47", "Short message status report", nil },
+				{ "file", "6F49", "Service dialing numbers", nil },
+				{ "file", "6F4A", "Extension 1", nil },
+				{ "file", "6F4B", "Extension 2", nil },
+				{ "file", "6F4C", "Extenstion 3", nil },
+				{ "file", "6F4D", "Barred dialing numbers", nil },
+				{ "file", "6F4E", "Extension 5", nil },
+				{ "file", "6F4F", "ECCP", nil },
+				{ "file", "6F53", "GPRS location", nil },
+				{ "file", "6F54", "SetUp menu elements", nil },
+				{ "file", "6FE0", "In case of emergency - dialing number", nil },
+				{ "file", "6FE1", "In case of emergency - free format", nil },
+				{ "file", "6FE5", "Public service identity of the SM-SC", nil },
+
 			}
 		},
 		{ "application", "7F20", "GSM", {
-				{ "file", "6F05", "LP", nil },
+				{ "file", "6F05", "Language indication", nil },
 				{ "file", "6F07", "IMSI", nil },
-				{ "file", "6F20", "Kc", nil },
-				{ "file", "6F30", "PLMNsel", nil },
-				{ "file", "6F31", "HPLMN", nil },
-				{ "file", "6F37", "ACMmax", nil },
-				{ "file", "6F38", "SST", nil },
-				{ "file", "6F39", "ACM", nil },
-				{ "file", "6F3E", "GID1", nil },
-				{ "file", "6F3F", "GID2", nil },
+				{ "file", "6F20", "Ciphering key Kc", nil },
+				{ "file", "6F30", "PLMN selector", nil },
+				{ "file", "6F31", "Higher priority PLMN search", nil },
+				{ "file", "6F37", "ACM maximum value", nil },
+				{ "file", "6F38", "Sim service table", nil },
+				{ "file", "6F39", "Accumulated call meter", nil },
+				{ "file", "6F3E", "Group identifier 1", nil },
+				{ "file", "6F3F", "Groupe identifier 2", nil },
 				{ "file", "6F41", "PUCT", nil },
 				{ "file", "6F45", "CBMI", nil },
-				{ "file", "6F46", "SPN", GSM_SPN },
+				{ "file", "6F46", "Service provider name", GSM_SPN },
 				{ "file", "6F74", "BCCH", nil },
-				{ "file", "6F78", "ACC", nil },
-				{ "file", "6F7B", "FPLMN", nil },
-				{ "file", "6F7E", "LOCI", nil },
-				{ "file", "6FAD", "AD", nil },
-				{ "file", "6FAE", "PHASE", nil },
+				{ "file", "6F78", "Access control class", nil },
+				{ "file", "6F7B", "Forbidden PLMNs", nil },
+				{ "file", "6F7E", "Location information", nil },
+				{ "file", "6FAD", "Administrative data", nil },
+				{ "file", "6FAE", "Phase identification", nil },
 			}
 		},
 	}
@@ -310,21 +363,24 @@ local sw,resp
 if card.connect() then
    CARD = card.tree_startup("GSM")
 
-   sw,resp = card.send(bytes.new(8,"A0 A4 00 00 02 7F 20")) -- select DF GSM
-   log.print(log.INFO,"Testing if response code starts with 9F")
-   if bit.AND(sw,0xFF00) == 0x9F00 then
-	PIN = ui.readline("Enter PIN for verification (or keep empty to avoid PIN verification)",8,"0000")
-	if PIN~="" then
-		PIN= pin_wrap(PIN)
-   		card.send(bytes.new(8,"A0 20 00 01 08",PIN)) -- unblock pin = 0000
-	end
-   	gsm_map(_(CARD),GSM_MAP)
+   PIN = ui.readline("Enter PIN for verification (or keep empty to avoid PIN verification)",8,"0000")
+   if PIN~="" then
+   	PIN=pin_wrap(PIN)
+   	sw, resp = card.send(bytes.new(8,"A0 20 00 01 08",PIN)) -- unblock pin = XXXX
+	if sw == 0x9000 then
+		gsm_map(_(CARD),GSM_MAP)
+	elseif bit.AND(sw,0xFF00) == 0x9800 then 
+		log.print(log.ERROR,"PIN Verification failed")
+		ui.question("PIN Verfication failed, halting.",{"OK"})
+	else
+		ui.question("This does not seem to be a GSM SIM card, halting.",{"OK"})
+   	end
    else
-	print(sw,resp)
-	ui.question("This does not seem to be a GSM SIM card, halting.",{"OK"})
+	gsm_map(_(CARD),GSM_MAP)
    end
+
    card.disconnect()
 end
 
-log.print(log.WARNING,"NOTE: This GSM script is still incomplete.")
+log.print(log.WARNING,"NOTE: This GSM script is still incomplete. Several data items are not analyzed and UMTS (3G) card data is not processed.")
 

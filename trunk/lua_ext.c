@@ -27,6 +27,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <glib/gstdio.h>
 #include "pathconfig.h"
 #include "iso7816.h"
 #include "misc.h"
@@ -84,7 +85,7 @@ const char* read_chunk(lua_State* L, void* input, size_t* sz)
 
 int run_file(lua_State* L, const char *filename)
 {
-  FILE* input = fopen(filename,"r");
+  FILE* input = g_fopen(filename,"r");
   if (input==NULL)
   {
     log_printf(LOG_ERROR,"Could not load %s (%s)",filename,strerror(errno));

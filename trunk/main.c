@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2011 by 'L1L1'
+* Copyright 2009-2012 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <glib/gstdio.h>
 #include "smartcard.h"
 #include "misc.h"
 #include "gui.h"
@@ -57,7 +58,7 @@ int install_dot_file()
   {
     log_printf(LOG_DEBUG,"Found directory '%s'",dot_dir);
 
-    if ((f = fopen(version_file,"r"))!=NULL) 
+    if ((f = g_fopen(version_file,"r"))!=NULL) 
     {
       fscanf(f,"%u",&dot_version);
       fclose(f);
@@ -78,7 +79,7 @@ int install_dot_file()
 
       if (response==2)
       {
-	if ((f=fopen(version_file,"w"))!=NULL)
+	if ((f=g_fopen(version_file,"w"))!=NULL)
 	{
 	  fprintf(f,"%u\n",SCRIPT_VERSION);
 	  fclose(f);
@@ -105,7 +106,7 @@ int install_dot_file()
   }
     
   chdir(home_dir);
-  if ((f = fopen("dot_cardpeek.tar.gz","wb"))==NULL)
+  if ((f = g_fopen("dot_cardpeek.tar.gz","wb"))==NULL)
   {
 	  log_printf(LOG_ERROR,"Could not create dot_cardpeek.tar.gz in %s (%s)", home_dir, strerror(errno));
 	  gui_question("Could not create dot_cardpeek.tar.gz, aborting.","Ok",NULL);

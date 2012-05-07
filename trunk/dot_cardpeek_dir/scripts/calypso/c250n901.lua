@@ -76,6 +76,7 @@ function navigo_process_events(ctx)
 	    RECORD = ui.tree_find_node(EVENTS,"record",rec_index)
 	    if RECORD==nil then break end
 	    
+	    -- is it RATP or SNCF ?
 	    REF = ui.tree_find_node(RECORD,"EventServiceProvider")
 	    service_provider_value = bytes.tonumber(ui.tree_get_value(REF))
 	    ui.tree_set_alt_value(REF,SERVICE_PROVIDERS[service_provider_value])
@@ -83,23 +84,26 @@ function navigo_process_events(ctx)
 	    REF = ui.tree_find_node(RECORD,"EventCode")
 	    code_value = bytes.tonumber(ui.tree_get_value(REF))
 
+	    -- is it a bus, a tram, a metro, ... ?
 	    code_transport = bit.SHR(code_value,4)
 	    code_transport_string  = TRANSPORT_LIST[code_transport]
 	    if code_transport_string==nil then code_transport_string = code_transport end
 
+	    -- is it an entry, an exit, ... ?
 	    code_transition = bit.AND(code_value,0xF)
-	    code_transition_string = TRANSITION_LIST[code_transition]
+	    code_transition_string = TRANSITION_LIST[code_transition] 	
 	    if (code_transition_string==nil) then code_transition_string = code_transition end
 
 	    ui.tree_set_alt_value(REF,code_transport_string.." - "..code_transition_string)
 
-	    if service_provider_value == 3 and code_transport >= 3 and code_transport <=5 then
+	    -- service_provider_value == RATP and code_transport in { metro, tram, train } ? 
+	    if service_provider_value==3 and code_transport>=3 and code_transport<=5 then
 	       REF = ui.tree_find_node(RECORD,"EventLocationId")
 	       location_id_value = bytes.tonumber(ui.tree_get_value(REF))
 	       sector_id = bit.SHR(location_id_value,9)
 	       station_id = bit.AND(bit.SHR(location_id_value,4),0x1F)
 
-	       if BANLIEUE_LIST[sector_id] and BANLIEUE_LIST[sector_id][station_id] then
+	       if code_transport==5 and BANLIEUE_LIST[sector_id] and BANLIEUE_LIST[sector_id][station_id] then
 		     location_string = "secteur "..sector_id.." - station "..BANLIEUE_LIST[sector_id][station_id]
                else
 	             if METRO_LIST[sector_id]~=nil then

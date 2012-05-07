@@ -40,7 +40,7 @@ win32/resource.o:	win32/resource.rc
 dot_cardpeek.o:		dot_cardpeek_dir script.S
 			rm -rf .cardpeek
 			cp -R dot_cardpeek_dir .cardpeek
-			tar zcvf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
+			tar zcvf dot_cardpeek.tar.gz --exclude="*~" --exclude=.svn .cardpeek
 			rm -rf .cardpeek
 			gcc -c script.S -o $@
 

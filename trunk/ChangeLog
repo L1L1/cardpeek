@@ -1,3 +1,10 @@
+cardpeek-0.7.1: L1L1@gmx.com
+7 May 2012
+- Corrected a bug in the GSM script (spotted by Tyson Key), which made it halt on some USIM cards.
+- Corrected a bug in the EMV script (spotted by geoffrey.bulan): the script didn't parse AFLs corectly on some EMV cards, resulting in a runtime error.
+- Corrected a bug in filename parsing for windows, which occured when filenames contained UTF8 characters.
+- Corrected a bug in metro/RER station name analysis for the Paris Navigo script.
+
 cardpeek-0.7: L1L1@gmx.com
 4 September 2011
 - Added support for the Windows XP OS.

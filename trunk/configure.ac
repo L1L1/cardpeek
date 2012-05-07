@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([cardpeek], [0.7], [L1L1@gmx.com])
-AM_INIT_AUTOMAKE([cardpeek], [0.7])
+AC_INIT([cardpeek], [0.7.1], [L1L1@gmx.com])
+AM_INIT_AUTOMAKE([cardpeek], [0.7.1])
 
 AC_CONFIG_SRCDIR([main.c])
 AM_CONFIG_HEADER([config.h])

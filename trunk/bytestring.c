@@ -23,6 +23,7 @@
 #include "bytestring.h"
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #ifndef _WIN32
 #include <ctype.h>
 #endif

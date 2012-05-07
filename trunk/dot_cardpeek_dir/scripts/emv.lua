@@ -190,6 +190,7 @@ EMV_REFERENCE = {
    ['9F4A'] = {"Static Data Authentication Tag List" }, 
    ['9F4B'] = {"Signed Dynamic Application Data" }, 
    ['9F4C'] = {"Integrated Circuit Card (ICC) Dynamic Number" },
+   ['9F4D'] = {"Log Entry" },
    ['9F4F'] = {"Log Fromat" },
    ['9F51'] = {"Application Currency Code" },
    ['9F52'] = {"Card Verification Results (CVR)" }, 
@@ -218,7 +219,8 @@ function emv_parse(cardenv,tlv)
 	tlv_parse(cardenv,tlv,EMV_REFERENCE)
 end
 
-PSE = "#315041592E5359532E4444463031"
+PPSE = "#325041592E5359532E4444463031"
+PSE  = "#315041592E5359532E4444463031"
 
 AID_LIST = { 
   "#A0000000421010",
@@ -234,6 +236,36 @@ AID_LIST = {
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }
 
 
+function emv_process_ppse(cardenv)
+	local sw, resp
+	local APP
+	local dirent
+	local i
+
+	sw, resp = card.select(PPSE)
+
+	if sw ~= 0x9000 then
+     	   log.print(log.INFO,"No PPSE")
+	   return false
+	end
+
+	-- Construct tree
+	APP = ui.tree_add_node(cardenv,"application","application",PPSE)
+	emv_parse(APP,resp)
+
+	AID_LIST = {}
+
+	dirent = ui.tree_find_all_nodes(APP,nil,"4F")
+
+	for i=1,#dirent do
+	        aid = tostring(ui.tree_get_value(dirent[i]))
+		log.print(log.INFO,"PPSE contains application #" .. aid)
+	        table.insert(AID_LIST,"#"..aid)
+	end
+	return true
+
+end
+
 function emv_process_pse(cardenv)
 	local sw, resp
 	local APP
@@ -248,7 +280,7 @@ function emv_process_pse(cardenv)
 
         sw, resp = card.select(PSE)
 	
-	-- Could it be a french card ?
+	-- Could it be a french card?
 	if sw == 0x6E00 then 
 	   local ATR
 	   card.warm_reset()
@@ -256,6 +288,11 @@ function emv_process_pse(cardenv)
 	   ATR = ui.tree_add_node(cardenv, "block", "ATR", "warm", #warm_atr)
 	   ui.tree_set_value(ATR,warm_atr)
            sw, resp = card.select(PSE)
+	end
+
+	-- could it be a contactless smartcard?
+	if sw == 0x6A82 then
+	   return emv_process_ppse(cardenv)
 	end
 
 	if sw ~= 0x9000 then
@@ -280,6 +317,7 @@ function emv_process_pse(cardenv)
 	        RECORD = ui.tree_add_node(FILE,"record","record",tostring(rec))
 	        emv_parse(RECORD,resp)
 	        aid = tostring(ui.tree_get_value(ui.tree_find_node(RECORD,nil,"4F")))
+		log.print(log.INFO,"PSE contains application #" .. aid)
 	        table.insert(AID_LIST,"#"..aid)
 		rec = rec + 1
              end
@@ -408,15 +446,11 @@ end
 
 function emv_process_application(cardenv,aid)
 	local sw, resp
-	local APP
 	local ref
-	local GPO
 	local pdol
 	local AFL
-	local LOG
 	local extra
 	local j -- counter
-	local logformat
 
 	log.print(log.INFO,"Processing application "..aid)
 
@@ -428,6 +462,8 @@ function emv_process_application(cardenv,aid)
 
 
 	-- Process 'File Control Infomation' and get PDOL
+	local APP
+	
 	APP = ui.tree_add_node(cardenv,"application","application",aid)
 	emv_parse(APP,resp)
 	ref = ui.tree_find_node(APP,nil,"9F38")
@@ -439,6 +475,9 @@ function emv_process_application(cardenv,aid)
 
 
 	-- find LOG INFO
+	local LOG
+	local logformat
+	
 	logformat=nil
 	ref = ui.tree_find_node(APP,nil,"9F4D")
 	-- I've seen this on some cards :
@@ -476,6 +515,9 @@ function emv_process_application(cardenv,aid)
 	end
 
 
+	-- INITIATE get processing options
+	local GPO
+
         if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
             -- Get processing options
             log.print(log.INFO,"Attempting GPO")
@@ -487,41 +529,55 @@ function emv_process_application(cardenv,aid)
                               string.format("GPO with data failed with code %X, retrying GPO without data",sw))
                     sw,resp = card.get_processing_options(nil)	
                 end
-                if sw ~=0x9000 then
-                    log.print(log.ERROR,"GPO Failed")
-                    return false
-                end
-            end
-	    GPO = ui.tree_add_node(APP,"item","processing_options");
-	    emv_parse(GPO,resp)
+           end
+           if sw ~=0x9000 then
+                log.print(log.ERROR,"GPO Failed")
+		ui.question("GET PROCESSING OPTIONS failed, the script will continue to read the card",{"OK"})
+           else
+ 	   	GPO = ui.tree_add_node(APP,"item","processing_options");
+	    	emv_parse(GPO,resp)
+	   end
+	end
 
 
-	    -- find AFL
-	    ref = ui.tree_find_node(GPO,nil,"80")
-	    AFL = ui.tree_get_value(ref)
+	-- find AFL
+	--ref = ui.tree_find_node(GPO,nil,"80")
+	--if (ref) then
+	--	AFL = bytes.sub(ui.tree_get_value(ref),2)
+	--else
+	--	ref = ui.tree_find_node(GPO,nil,"94")
+	--	AFL = ui.tree_get_value(ref)
+	--end
 
-            if AFL then
-	        -- Read all the application data
-	        for i=2,#AFL-1,4 do
-	            local sfi
-	            local rec
-	            log.print(log.INFO,string.format("Reading SFI %i",bit.SHR(AFL[i],3)))
-	            sfi = ui.tree_add_node(APP,"file","file",bit.SHR(AFL[i],3))
-	            for j=AFL[i+1],AFL[i+2] do
-		        log.print(log.INFO,string.format("Reading record %i",j))
-		        sw,resp = card.read_record(bit.SHR(AFL[i],3),j)
-	                if sw ~= 0x9000 then
-		            log.print(log.ERROR,"Read record failed")
-		        else
-		            rec = ui.tree_add_node(sfi,"record","record",j)
-		            emv_parse(rec,resp)
-		        end
-	            end -- for
-	        end -- for
-            else
-                log.print(log.LOG_WARNING,"No AFL (Application File Locator) found in GPO data.")
-            end -- AFL
-	end -- GPO
+	local sfi_index
+	local rec_index
+	local SFI
+	local REC
+	    
+        for sfi_index=1,31 do
+		SFI = nil
+
+		if (logformat==nil or LOG[0]~=sfi_index) then
+
+	    		for rec_index=1,255 do
+				log.print(log.INFO,string.format("Reading SFI %i, record %i",sfi_index, rec_index))
+			        sw,resp = card.read_record(sfi_index,rec_index)
+		                if sw ~= 0x9000 then
+			            log.print(log.WARNING,string.format("Read record failed for SFI %i, record %i",sfi_index,rec_index))
+				    break
+			        else
+				    if (SFI==nil) then
+	   		    		    SFI = ui.tree_add_node(APP,"file","file",sfi_index)
+				    end
+			            REC = ui.tree_add_node(SFI,"record","record",rec_index)
+			            emv_parse(REC,resp)
+		        	end
+	
+		        end -- for rec_index
+
+		end -- if log exists
+
+            end -- for sfi_index
 
 	-- Read logs if they exist
 	if logformat=="EMV" then

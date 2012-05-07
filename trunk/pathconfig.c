@@ -53,7 +53,9 @@ int config_init()
 #ifndef _WIN32
   home = getenv("HOME");
 #else
-  home = getenv("APPDATA");
+  home = getenv("USERDATA");
+  if (home==NULL)
+      home = getenv("USERPROFILE"); 
 #endif
   
   if (home==NULL)

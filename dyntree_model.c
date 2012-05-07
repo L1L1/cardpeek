@@ -1,12 +1,11 @@
 #include "dyntree_model.h"
 #include "misc.h"
+#include <glib/gstdio.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/stat.h> 
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
+
 /*
  * NOTE: Integration of the data model in GTK+ is based on the GtkTreeView 
  * tutorial by Tim-Philipp Müller (thanks!).
@@ -969,18 +968,18 @@ char* dyntree_model_iter_to_xml(DyntreeModel* ct, GtkTreeIter *root, const char 
 
 gboolean dyntree_model_iter_to_xml_file(DyntreeModel* ct, GtkTreeIter *root, const char *xml_name, const char *fname)
 {
-	FILE *save;
+	int output;
 	char *xml;
 	gboolean retval;
 
-	if ((save=fopen(fname,"wb"))==NULL)
+	if ((output = g_open(fname, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR))<0)
 	{
 		log_printf(LOG_ERROR,"Could not open '%s' for output (%s)",fname,strerror(errno));
 		return FALSE;
 	}
 	xml = dyntree_model_iter_to_xml(ct,root,xml_name);
 
-	if (fwrite(xml,strlen(xml),1,save)!=1)
+	if (write(output,xml,strlen(xml))<0)
 	{
 		log_printf(LOG_ERROR,"Output error on '%s' (%s)",fname,strerror(errno));
 		retval = FALSE;
@@ -988,7 +987,7 @@ gboolean dyntree_model_iter_to_xml_file(DyntreeModel* ct, GtkTreeIter *root, con
 	else
 		retval = TRUE;
 	g_free(xml);
-	fclose(save);
+	close(output);
 	return retval;
 }
 
@@ -1237,19 +1236,19 @@ gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *iter, c
 	char *buf_val;
 	int  buf_len;
 	int  rd_len;
-	struct stat st;
+	GStatBuf st;
 	gboolean retval;
 	int input;
 
-	if (stat(fname,&st)!=0)
+	if (g_stat(fname,&st)!=0)
 	{
 		log_printf(LOG_ERROR,"Could not stat '%s' (%s)",fname,strerror(errno));
 		return FALSE;
 	}
 #ifdef _WIN32	
-	if ((input=open(fname,O_RDONLY | O_BINARY))<0)
+	if ((input=g_open(fname,O_RDONLY | O_BINARY,0))<0)
 #else
-	if ((input=open(fname,O_RDONLY))<0)
+	if ((input=g_open(fname,O_RDONLY,0))<0)
 #endif
 	{
 		log_printf(LOG_ERROR,"Could not open '%s' for input (%s)",fname,strerror(errno));

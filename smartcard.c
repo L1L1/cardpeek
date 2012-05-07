@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2011 by 'L1L1'
+* Copyright 2009-2012 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <glib/gstdio.h>
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "iso7816.h"
@@ -328,7 +329,7 @@ int cardreader_log_count_records(const cardreader_t *reader)
 /* this should not be here but in pcsc_driver.c */
 int cardmanager_check_pcscd_is_running()
 {
-  int fd=open("/var/pid/pcscd.pid",O_RDONLY);
+  int fd=g_open("/var/pid/pcscd.pid",O_RDONLY,0);
   if (fd<0) return 0;
   close(fd);
   return 1;

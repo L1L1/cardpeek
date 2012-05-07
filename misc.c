@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2011 by 'L1L1'
+* Copyright 2009-2012 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <glib/gstdio.h>
 
 const char ANSI_RESET[] = "\x1b[0m";
 const char ANSI_RED[]     = "\x1b[31m";
@@ -100,7 +101,7 @@ void log_open_file()
 {
   time_t now = time(NULL);
   
-  LOGFILE = fopen(config_get_string(CONFIG_FILE_LOG),"w+");
+  LOGFILE = g_fopen(config_get_string(CONFIG_FILE_LOG),"w+");
 
   if (LOGFILE)
     fprintf(LOGFILE,"cardpeek log start: %s",ctime(&now));

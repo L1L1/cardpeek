@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2012 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "misc.h"
-
+#include <glib/gstdio.h>
 
 anyemul_t* cardemul_new_item(cardemul_t* ce, int type)
 {
@@ -235,7 +235,7 @@ int cardemul_save_to_file(const cardemul_t* ce, const char *filename)
   char *a;
   char *b;
 
-  if ((f=fopen(filename,"w"))==NULL)
+  if ((f=g_fopen(filename,"w"))==NULL)
     return CARDEMUL_ERROR;
   fprintf(f,"# cardpeek emulator\n");
   fprintf(f,"# version 0\n");
@@ -278,7 +278,7 @@ cardemul_t* cardemul_new_from_file(const char *filename)
   int something_to_read;
   int lineno=0;
 
-  if ((f=fopen(filename,"r"))==NULL)
+  if ((f=g_fopen(filename,"r"))==NULL)
     return NULL;
 
   ce = cardemul_new();

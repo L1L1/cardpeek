@@ -6,6 +6,11 @@
 #include <string.h>
 #include <fcntl.h>
 
+#ifndef GStatBuf
+#include <unistd.h>
+typedef struct stat GStatBuf;
+#endif
+
 /*
  * NOTE: Integration of the data model in GTK+ is based on the GtkTreeView 
  * tutorial by Tim-Philipp Müller (thanks!).

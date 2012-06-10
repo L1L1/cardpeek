@@ -20,8 +20,18 @@
 */
 
 #include <winscard.h>
+
 #ifndef _WIN32
 #include <reader.h>
+  SCARD_IO_REQUEST pioRecvPci_dummy;
+#define SCARD_PCI_NULL (&pioRecvPci_dummy)
+#else
+  /* 
+   * On linux pioRecvPci is expected to point somewhere in the 
+   * SCardTransmit() call but on windows, we must make it NULL. 
+   * So here is an ugly trick. 
+   */
+#define SCARD_PCI_NULL NULL
 #endif
 
 #define MAX_PCSC_READ_LENGTH 270 
@@ -205,8 +215,6 @@ unsigned short pcsc_transmit(cardreader_t* cr,
   pcsc_data_t* pcsc = cr->extra_data;
   BYTE REC_DAT[MAX_PCSC_READ_LENGTH];
   DWORD REC_LEN=MAX_PCSC_READ_LENGTH;
-  SCARD_IO_REQUEST pioRecvPci;
-  /*char *tmp; */
   unsigned short SW;
 
   if (cr->protocol==SCARD_PROTOCOL_T0)
@@ -214,14 +222,16 @@ unsigned short pcsc_transmit(cardreader_t* cr,
     pcsc->status = SCardTransmit(pcsc->hcard,SCARD_PCI_T0,
 	     			 bytestring_get_data(command), 
 				 bytestring_get_size(command),
-	     			 &pioRecvPci, REC_DAT,&REC_LEN);
+	     			 SCARD_PCI_NULL, 
+				 REC_DAT,&REC_LEN);
   }
   else if (cr->protocol==SCARD_PROTOCOL_T1)
   {
     pcsc->status = SCardTransmit(pcsc->hcard,SCARD_PCI_T1,
 				 bytestring_get_data(command), 
                                  bytestring_get_size(command),
-	     			 &pioRecvPci, REC_DAT,&REC_LEN);
+	     			 SCARD_PCI_NULL, 
+				 REC_DAT,&REC_LEN);
 
   }
   else

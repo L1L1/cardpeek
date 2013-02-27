@@ -42,7 +42,7 @@ extern unsigned char _binary_dot_cardpeek_tar_gz_start;
 extern int _binary_dot_cardpeek_tar_gz_size;
 /* extern unsigned char _binary_dot_cardpeek_tar_gz_end; */
 
-int install_dot_file()
+static int install_dot_file(void)
 {
   const char* dot_dir = config_get_string(CONFIG_FOLDER_CARDPEEK);
   const char* home_dir = config_get_string(CONFIG_FOLDER_HOME);
@@ -156,7 +156,7 @@ static char *signature =
 "*****************************************************************"
 ;
 
-void save_what_can_be_saved(int sig_num) 
+static void save_what_can_be_saved(int sig_num) 
 {
   const char *logfile;	
   write(2,message,strlen(message));

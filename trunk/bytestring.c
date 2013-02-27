@@ -63,7 +63,7 @@ bytestring_t* bytestring_new(unsigned element_width)
   return res;
 }
 
-unsigned hex_nibble(const char nibble)
+static unsigned hex_nibble(const char nibble)
 {
   if (nibble<='9' && nibble>='0')
     return nibble-'0';
@@ -185,7 +185,7 @@ int bytestring_copy(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_8_to_4(bytestring_t *bs,
+static int bs_convert_8_to_4(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned u;
@@ -198,7 +198,7 @@ int bs_convert_8_to_4(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_8_to_1(bytestring_t *bs,
+static int bs_convert_8_to_1(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned u;
@@ -220,7 +220,7 @@ int bs_convert_8_to_1(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_4_to_1(bytestring_t *bs,
+static int bs_convert_4_to_1(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned u;
@@ -238,7 +238,7 @@ int bs_convert_4_to_1(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_4_to_8(bytestring_t *bs,
+static int bs_convert_4_to_8(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned des_i;
@@ -267,7 +267,7 @@ int bs_convert_4_to_8(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_1_to_8(bytestring_t *bs,
+static int bs_convert_1_to_8(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned src_i;
@@ -305,7 +305,7 @@ int bs_convert_1_to_8(bytestring_t *bs,
   return BYTESTRING_OK;
 }
 
-int bs_convert_1_to_4(bytestring_t *bs,
+static int bs_convert_1_to_4(bytestring_t *bs,
 		      const bytestring_t *src)
 {
   unsigned src_i;
@@ -650,7 +650,7 @@ int bytestring_substr(bytestring_t* dst,
   return bytestring_assign_data(dst,len,src->data+pos);
 }
 
-void x_bytestring_append_as_printable(a_string_t* dest, const bytestring_t *bs)
+static void x_bytestring_append_as_printable(a_string_t* dest, const bytestring_t *bs)
 {
   unsigned u;
   char octal_form[5];
@@ -669,7 +669,7 @@ void x_bytestring_append_as_printable(a_string_t* dest, const bytestring_t *bs)
 
 const char HEXA[]="0123456789ABCDEF";
 
-void x_bytestring_append_as_digits(a_string_t* dest, const bytestring_t *bs)
+static void x_bytestring_append_as_digits(a_string_t* dest, const bytestring_t *bs)
 {
   unsigned i;
 
@@ -688,37 +688,37 @@ void x_bytestring_append_as_digits(a_string_t* dest, const bytestring_t *bs)
   }
 }
 
-int x_bytestring_set(bytestring_t *bs, int index, unsigned char v)
+static int x_bytestring_set(bytestring_t *bs, int bs_index, unsigned char v)
 {
-  if (index>=bs->len) 
-    bytestring_resize(bs,index+1);
-  bs->data[index]=v;
+  if (bs_index>=bs->len) 
+    bytestring_resize(bs,bs_index+1);
+  bs->data[bs_index]=v;
   
   return BYTESTRING_OK;
 }
-unsigned x_bytestring_get(bytestring_t *bs, int index)
+static unsigned x_bytestring_get(bytestring_t *bs, int bs_index)
 {
-  if (index>=bs->len)
+  if (bs_index>=bs->len)
     return 0;
-  return (unsigned)bs->data[index];
+  return (unsigned)bs->data[bs_index];
 }
 
-int x_bytestring_decimal_mul_add(bytestring_t *bs, unsigned mul_v, unsigned add_v)
+static int x_bytestring_decimal_mul_add(bytestring_t *bs, unsigned mul_v, unsigned add_v)
 {
   unsigned r;
-  int index;
+  int bs_index;
   int i;
 
-  for (index=bs->len-1;index>=0;index--)
+  for (bs_index=bs->len-1;bs_index>=0;bs_index--)
   {
-    r=((unsigned)bs->data[index])*mul_v;
-    x_bytestring_set(bs,index,r%10);
+    r=((unsigned)bs->data[bs_index])*mul_v;
+    x_bytestring_set(bs,bs_index,r%10);
     r/=10;
     i=1;
     while (r)
     {
-      r+=x_bytestring_get(bs,index+i);
-      if (x_bytestring_set(bs,index+i,r%10)!=BYTESTRING_OK)
+      r+=x_bytestring_get(bs,bs_index+i);
+      if (x_bytestring_set(bs,bs_index+i,r%10)!=BYTESTRING_OK)
 	return BYTESTRING_ERROR;
       r/=10;
       i++;
@@ -739,7 +739,7 @@ int x_bytestring_decimal_mul_add(bytestring_t *bs, unsigned mul_v, unsigned add_
   return BYTESTRING_OK;
 }
 
-void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
+static void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
 {
 /*  bytestring_t *src; */
   bytestring_t *b10;

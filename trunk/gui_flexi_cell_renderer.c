@@ -282,7 +282,7 @@ GtkCellRenderer *custom_cell_renderer_flexi_new (gboolean interpret)
  *
  ***************************************************************************/
 
-void internal_get_size_layout(GtkCellRenderer *cell,
+static void internal_get_size_layout(GtkCellRenderer *cell,
 			      GtkWidget       *widget,
 			      PangoLayout     *layout,
 			      GdkRectangle    *cell_area,

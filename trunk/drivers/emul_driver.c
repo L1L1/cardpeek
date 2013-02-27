@@ -21,7 +21,7 @@
 #include <limits.h>
 #include "../emulator.h"
 
-int emul_connect(cardreader_t *cr, unsigned prefered_protocol)
+static int emul_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   cardemul_t* emul = cr->extra_data;
 
@@ -29,21 +29,21 @@ int emul_connect(cardreader_t *cr, unsigned prefered_protocol)
   return cardemul_run_cold_reset(emul);
 }
 
-int emul_disconnect(cardreader_t *cr)
+static int emul_disconnect(cardreader_t *cr)
 {
   cr->connected = 0;
   log_printf(LOG_INFO,"Disconnected reader");
   return 1;
 }
 
-int emul_reset(cardreader_t *cr)
+static int emul_reset(cardreader_t *cr)
 {
   cardemul_t* emul = cr->extra_data;
   log_printf(LOG_INFO,"Reset reader");
   return cardemul_run_warm_reset(emul);
 }
 
-unsigned short emul_transmit(cardreader_t* cr,
+static unsigned short emul_transmit(cardreader_t* cr,
 			     const bytestring_t* command, 
 			     bytestring_t* result)
 {
@@ -55,7 +55,7 @@ unsigned short emul_transmit(cardreader_t* cr,
   return SW;
 }
 
-const bytestring_t* emul_last_atr(cardreader_t* cr)
+static const bytestring_t* emul_last_atr(cardreader_t* cr)
 {
   cardemul_t* emul = cr->extra_data;
 
@@ -64,17 +64,17 @@ const bytestring_t* emul_last_atr(cardreader_t* cr)
   return cr->atr;
 }
 
-char** emul_get_info(cardreader_t* cr,char** parent)
+static char** emul_get_info(cardreader_t* cr,char** parent)
 {
   return parent; /* nothing to add */
 }
 
-int emul_fail(cardreader_t* cr)
+static int emul_fail(cardreader_t* cr)
 {
   return (cr->connected==0);
 }
 
-void emul_finalize(cardreader_t* cr)
+static void emul_finalize(cardreader_t* cr)
 {
   cardemul_t* emul = cr->extra_data;
   free(emul);

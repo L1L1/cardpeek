@@ -31,6 +31,7 @@
 #include "pathconfig.h"
 #include "iso7816.h"
 #include "misc.h"
+#include "lua_ext.h"
 
 /****************************************/
 
@@ -47,7 +48,7 @@
 /* FIXME: this whole file needs cleanup */
 /****************************************/
 
-int print_debug_message(lua_State* L)
+static int print_debug_message(lua_State* L)
 {
   const char* err_msg = lua_tostring(L,1);
   lua_Debug ar;
@@ -71,7 +72,7 @@ int print_debug_message(lua_State* L)
 unsigned line_num = 0;
 char line_buf[1024];
 
-const char* read_chunk(lua_State* L, void* input, size_t* sz)
+static const char* read_chunk(lua_State* L, void* input, size_t* sz)
 {
   if (fgets(line_buf,1024,(FILE*)input)==NULL)
   {
@@ -83,7 +84,7 @@ const char* read_chunk(lua_State* L, void* input, size_t* sz)
   return line_buf;
 }
 
-int run_file(lua_State* L, const char *filename)
+static int run_file(lua_State* L, const char *filename)
 {
   FILE* input = g_fopen(filename,"r");
   if (input==NULL)
@@ -133,7 +134,7 @@ void run_card_shell(lua_State* L)
 
 /******************************************************************/
 
-lua_State* x_lua_begin()
+static lua_State* x_lua_begin(void)
 {
   lua_State* L = lua_open();
   luaL_openlibs(L);
@@ -141,7 +142,7 @@ lua_State* x_lua_begin()
   return L;
 }
 
-int x_lua_end(lua_State* L)
+static int x_lua_end(lua_State* L)
 {
   lua_close(L);
   log_printf(LOG_DEBUG,"Lua has stopped."); 
@@ -200,7 +201,7 @@ void luax_run_command_cb(const char* command)
 }
 
 
-int luax_init()
+int luax_init(void)
 {
   LUA_STATE= x_lua_begin();
 
@@ -217,7 +218,7 @@ int luax_init()
   return 0;
 }
 
-void luax_release()
+void luax_release(void)
 {
   x_lua_end(LUA_STATE);
 }

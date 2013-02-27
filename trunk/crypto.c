@@ -75,7 +75,7 @@ crypto_error_t crypto_create_context(bytestring_t *ctx,
   return CRYPTO_OK;
 }
 
-crypto_error_t crypto_cipher(bytestring_t* dst, 
+static crypto_error_t crypto_cipher(bytestring_t* dst, 
       			     const bytestring_t* ctx,
 			     const bytestring_t* src, 
 			     const bytestring_t* iv,
@@ -145,7 +145,7 @@ crypto_error_t crypto_cipher(bytestring_t* dst,
   return CRYPTO_OK;
 }
 
-crypto_error_t crypto_pad(bytestring_t* dst, const bytestring_t* ctx,const bytestring_t* src)
+static crypto_error_t crypto_pad(bytestring_t* dst, const bytestring_t* ctx,const bytestring_t* src)
 {
   unsigned char e;
   

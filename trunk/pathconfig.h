@@ -36,9 +36,9 @@ enum {
 };
 
 
-int config_init();
+int config_init(void);
 const char *config_get_string(unsigned index);
 int config_set_string(unsigned index, const char *path);
-void config_release();
+void config_release(void);
 
 #endif

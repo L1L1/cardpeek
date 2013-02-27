@@ -47,7 +47,7 @@ typedef struct {
   DyntreeModel* _store;
 } cardtree_t;
 
-cardtree_t* cardtree_new();
+cardtree_t* cardtree_new(void);
 
 gboolean cardtree_node_append(cardtree_t *ct, 
 		GtkTreeIter *child,

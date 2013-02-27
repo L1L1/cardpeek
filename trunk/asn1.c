@@ -78,10 +78,12 @@ int asn1_decode_tag(unsigned *pos, const bytestring_t *tlv, unsigned *tag)
     room--;
   } while (((*tag&0xFF)>0x80) && room>0);
 
-  if (room>=0)
-    return BYTESTRING_OK;
-  log_printf(LOG_WARNING,"Tag length error in tlv");
-  return BYTESTRING_ERROR;
+  if (room==0 && (*tag&0xFF)>0x80)
+  {
+    log_printf(LOG_WARNING,"Tag length error in tlv");
+    return BYTESTRING_ERROR;
+  }    
+  return BYTESTRING_OK;
 }
 
 int asn1_decode_length(unsigned *pos, const bytestring_t *lv, unsigned* len)
@@ -235,19 +237,19 @@ int asn1_encode_tlv(unsigned tag, const bytestring_t *val, bytestring_t *bertlv)
 
 const unsigned ANY_TAG = 0xFFFFFFFF;
 
-int seek_index(unsigned *pos, unsigned max, const bytestring_t *data, unsigned index, unsigned tag)
+static int seek_index(unsigned *pos, unsigned max, const bytestring_t *data, unsigned t_index, unsigned tag)
 {
   unsigned cindex = 0;
   unsigned ctag=0;
   
-  while (cindex<=index && *pos<max)
+  while (cindex<=t_index && *pos<max)
   {
     if (asn1_decode_tag(pos,data,&ctag)!=BYTESTRING_OK)
       return BYTESTRING_ERROR;
 
     if (tag==ANY_TAG || tag==ctag)
     {
-      if (index==cindex)
+      if (t_index==cindex)
 	return BYTESTRING_OK;
       else
 	cindex++;
@@ -258,7 +260,7 @@ int seek_index(unsigned *pos, unsigned max, const bytestring_t *data, unsigned i
   return BYTESTRING_ERROR;
 }
 
-const char *parse_tag(unsigned *tag, const char *s)
+static const char *parse_tag(unsigned *tag, const char *s)
 {
   char s_pos[15];
   int  s_pos_i;
@@ -280,12 +282,12 @@ const char *parse_tag(unsigned *tag, const char *s)
   return NULL;
 }
 
-const char *parse_index(unsigned *index, const char *s)
+static const char *parse_index(unsigned *t_index, const char *s)
 {
   char s_index[15];
   int  s_index_i;
 
-  *index=0;
+  *t_index=0;
   if (*s!='[')
     return NULL;
   s++;
@@ -297,16 +299,16 @@ const char *parse_index(unsigned *index, const char *s)
   s_index[s_index_i]=0;
   if (*s==']')
   {
-    *index=atoi(s_index);
+    *t_index=atoi(s_index);
     return s+1;
   }
   return NULL;
 }
 
-int parse_path_internal(const char* path, unsigned *pos, unsigned max, const bytestring_t *src, bytestring_t *val)
+static int parse_path_internal(const char* path, unsigned *pos, unsigned max, const bytestring_t *src, bytestring_t *val)
 {
   unsigned tag=ANY_TAG;
-  unsigned index=0;
+  unsigned t_index=0;
   unsigned length;
 
   while (*path=='/') path++;
@@ -314,17 +316,17 @@ int parse_path_internal(const char* path, unsigned *pos, unsigned max, const byt
     goto parse_path_fail;
 
   if (*path=='[')
-    path=parse_index(&index,path);
+    path=parse_index(&t_index,path);
   else
   {
     path=parse_tag(&tag,path);
     if (path!=NULL && *path=='[')
-      path=parse_index(&index,path);
+      path=parse_index(&t_index,path);
   }
   if (path==NULL) /* parse error */
     goto parse_path_fail;
   
-  if (seek_index(pos,max,src,index,tag)==BYTESTRING_OK)
+  if (seek_index(pos,max,src,t_index,tag)==BYTESTRING_OK)
   {
     if (*path)
     {

@@ -72,7 +72,7 @@ int cardemul_add_command(cardemul_t* ce,
 
 int cardemul_add_reset(cardemul_t* ce, const bytestring_t* atr);
 
-cardemul_t* cardemul_new();
+cardemul_t* cardemul_new(void);
 
 void cardemul_free(cardemul_t* ce);
 

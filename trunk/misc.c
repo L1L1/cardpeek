@@ -40,6 +40,20 @@ const char ANSI_MAGENTA[] = "\x1b[35m";
 const char ANSI_CYAN[]    = "\x1b[36m";
 const char ANSI_WHITE[]   = "\x1b[37m";
 
+const char *filename_extension(const char *fname)
+{
+	const char* dot = strrchr(fname, '.');
+	if (!dot || dot==fname) return "";
+	return dot; 
+}
+
+const char *filename_base(const char *fname)
+{
+	const char* slash = strrchr(fname, '/');
+	if (!slash) slash = strrchr(fname, '\\');
+	if (!slash) return fname;
+	return slash+1; 
+}
 
 void logstring_default(int,const char *);
 
@@ -97,7 +111,7 @@ void log_set_function(logfunc_t logfunc)
   LOGFUNCTION=logfunc;
 }
 
-void log_open_file()
+void log_open_file(void)
 {
   time_t now = time(NULL);
   
@@ -109,7 +123,7 @@ void log_open_file()
     fprintf(stderr,"Could not open %s for output. Proceeding without a log file.\n",config_get_string(CONFIG_FILE_LOG));
 }
 
-void log_close_file()
+void log_close_file(void)
 {
   time_t now = time(NULL);
 

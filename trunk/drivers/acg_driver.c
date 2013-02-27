@@ -35,17 +35,17 @@
 /*#define BAUDRATE B57600 let's speed things up a bit */
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
-int serial_flush_input(int fd)
+static int serial_flush_input(int fd)
 {
   return tcflush(fd,TCIFLUSH);
 }
 
-int serial_flush_output(int fd)
+static int serial_flush_output(int fd)
 {
   return tcflush(fd,TCOFLUSH);
 }
 
-int serial_send(int fd, char *s)
+static int serial_send(int fd, char *s)
 {
   int len = strlen(s);
   int wr;
@@ -60,7 +60,7 @@ int serial_send(int fd, char *s)
   return wr == len;
 }
 
-const char* serial_recv(int fd)
+static const char* serial_recv(int fd)
 {
   static char buf[1024];
   int rd;
@@ -89,7 +89,7 @@ const char* serial_recv(int fd)
 }
 
 
-int serial_open(const char *dev_name, struct termios *oldtio)
+static int serial_open(const char *dev_name, struct termios *oldtio)
 {
   int fd;
   struct termios newtio;
@@ -179,7 +179,7 @@ int serial_open(const char *dev_name, struct termios *oldtio)
   return fd;
 }
 
-void serial_close(int fd, struct termios *restore)
+static void serial_close(int fd, struct termios *restore)
 {
   tcflush(fd, TCIFLUSH);
   tcflush(fd, TCOFLUSH);
@@ -209,7 +209,7 @@ enum {
   ACG_READER_TYPE_LFX
 };
 
-int acg_end_continuous_read_mode(int line)
+static int acg_end_continuous_read_mode(int line)
 {
   const char *res;
   int i;
@@ -222,7 +222,7 @@ int acg_end_continuous_read_mode(int line)
  return 0;
 }
 
-const char *acg_reset_device(int line)
+static const char *acg_reset_device(int line)
 {
   const char *res;
   static char name[1024];
@@ -247,7 +247,7 @@ const char *acg_reset_device(int line)
   return NULL;
 }
 
-const char *acg_detect(const char *dev_name)
+static const char *acg_detect(const char *dev_name)
 {
   struct termios tio;
   int line=serial_open(dev_name,&tio);
@@ -305,7 +305,7 @@ enum {
 
 #define TAG_LFX_START TAG_LFX_EM4X02
 
-int acg_connect(cardreader_t *cr, unsigned prefered_protocol)
+static int acg_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   bytestring_t *tmp;
   unsigned char checksum,element;
@@ -457,7 +457,7 @@ int acg_connect(cardreader_t *cr, unsigned prefered_protocol)
 }
 
 
-int acg_disconnect(cardreader_t *cr)
+static int acg_disconnect(cardreader_t *cr)
 {
   acg_data_t* extra = cr->extra_data;
 
@@ -470,13 +470,13 @@ int acg_disconnect(cardreader_t *cr)
   return SMARTCARD_OK;
 }
 
-int acg_reset(cardreader_t *cr)
+static int acg_reset(cardreader_t *cr)
 {
   acg_disconnect(cr);
   return acg_connect(cr,cr->protocol);
 }
 
-unsigned short acg_transmit_pcsc_emulation(cardreader_t* cr,
+static unsigned short acg_transmit_pcsc_emulation(cardreader_t* cr,
 					   const bytestring_t* command,
 					   bytestring_t* result)
 {
@@ -487,7 +487,7 @@ unsigned short acg_transmit_pcsc_emulation(cardreader_t* cr,
   return CARDPEEK_ERROR_SW;
 }
 
-unsigned short acg_transmit(cardreader_t* cr,
+static unsigned short acg_transmit(cardreader_t* cr,
 			     const bytestring_t* command, 
 			     bytestring_t* result)
 {
@@ -563,12 +563,12 @@ unsigned short acg_transmit(cardreader_t* cr,
   return SW;
 }
 
-const bytestring_t* acg_last_atr(cardreader_t* cr)
+static const bytestring_t* acg_last_atr(cardreader_t* cr)
 {
   return cr->atr;
 }
 
-char **acg_get_info(cardreader_t* cr, char** parent)
+static char **acg_get_info(cardreader_t* cr, char** parent)
 {
   acg_data_t* extra = cr->extra_data;
   char **res;
@@ -586,13 +586,13 @@ char **acg_get_info(cardreader_t* cr, char** parent)
   return parent;
 }
 
-int acg_fail(cardreader_t* cr)
+static int acg_fail(cardreader_t* cr)
 {
   acg_data_t* extra = cr->extra_data;
   return (extra->status!=SMARTCARD_OK);
 }
 
-void acg_finalize(cardreader_t* cr)
+static void acg_finalize(cardreader_t* cr)
 {
   acg_data_t* extra = cr->extra_data;
   bytestring_free(extra->serial);

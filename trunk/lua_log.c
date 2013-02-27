@@ -26,7 +26,7 @@
  * LOG FUNCTIONS
  */
 
-int subr_log_print(lua_State* L)
+static int subr_log_print(lua_State* L)
 {
   int level = lua_tointeger(L,1);
   const char *message = luaL_checkstring(L,2);

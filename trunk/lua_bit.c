@@ -26,7 +26,7 @@
  * - Binary integer ops that LUA lacks 
  */
 
-int subr_bit_and(lua_State* L)
+static int subr_bit_and(lua_State* L)
 {
   unsigned a = (unsigned)lua_tointeger(L,1);
   unsigned b = (unsigned)lua_tointeger(L,2);
@@ -34,7 +34,7 @@ int subr_bit_and(lua_State* L)
   return 1;
 }
 
-int subr_bit_or(lua_State* L)
+static int subr_bit_or(lua_State* L)
 {
   unsigned a = (unsigned)lua_tointeger(L,1);
   unsigned b = (unsigned)lua_tointeger(L,2);
@@ -42,7 +42,7 @@ int subr_bit_or(lua_State* L)
   return 1;
 }
 
-int subr_bit_xor(lua_State* L)
+static int subr_bit_xor(lua_State* L)
 {
   unsigned a = (unsigned)lua_tointeger(L,1);
   unsigned b = (unsigned)lua_tointeger(L,2);
@@ -58,7 +58,7 @@ int subr_bit_shl(lua_State* L)
   return 1;
 }
 
-int subr_bit_shr(lua_State* L)
+static int subr_bit_shr(lua_State* L)
 {
   unsigned a = (unsigned)lua_tointeger(L,1);
   unsigned b = (unsigned)lua_tointeger(L,2);

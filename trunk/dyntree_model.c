@@ -594,7 +594,7 @@ gboolean dyntree_model_iter_attribute_set_by_name(DyntreeModel *m,
 	return FALSE;
 }
 
-int dyntree_model_iter_n_attributes(DyntreeModel *m, GtkTreeIter *iter)
+static int dyntree_model_iter_n_attributes(DyntreeModel *m, GtkTreeIter *iter)
 {
 	int attr_index;
 	int attr_count = 0;
@@ -647,7 +647,7 @@ gboolean dyntree_model_iter_attribute_get_by_name(DyntreeModel *m,
 	return FALSE;
 }
 
-DyntreeModelNode* dyntree_model_node_new(DyntreeModel *ctm)
+static DyntreeModelNode* dyntree_model_node_new(DyntreeModel *ctm)
 {
 	DyntreeModelNode* node = g_try_new0(DyntreeModelNode,1);
 
@@ -663,7 +663,7 @@ DyntreeModelNode* dyntree_model_node_new(DyntreeModel *ctm)
 	return node;
 }
 
-void dyntree_model_node_reindex_from_parent(DyntreeModel *ct, DyntreeModelNode *parent)
+static void dyntree_model_node_reindex_from_parent(DyntreeModel *ct, DyntreeModelNode *parent)
 {
 	int n = 0;
 	DyntreeModelNode *cur_node;
@@ -817,7 +817,7 @@ row_inserted:
   	gtk_tree_path_free(path);
 }
 
-gboolean dyntree_model_iter_attributes_setv(DyntreeModel *ctm,
+static gboolean dyntree_model_iter_attributes_setv(DyntreeModel *ctm,
 		GtkTreeIter *iter,
 		va_list al)
 {
@@ -849,7 +849,7 @@ gboolean dyntree_model_iter_attributes_set(DyntreeModel *ctm,
 	return retval;
 }
 
-gboolean dyntree_model_iter_attributes_getv(DyntreeModel *ctm,
+static gboolean dyntree_model_iter_attributes_getv(DyntreeModel *ctm,
 		GtkTreeIter *iter,
 		va_list al)
 {
@@ -881,7 +881,7 @@ gboolean dyntree_model_iter_attributes_get(DyntreeModel *ctm,
 
 /* XML EXPORT */
 
-gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTreeIter *iter, int depth)
+static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTreeIter *iter, int depth)
 {
 	int i,attr_index;
 	GtkTreeIter child;
@@ -1023,7 +1023,7 @@ typedef struct {
   int           ctx_state;
 } xml_context_data_t;
 
-void xml_start_element_cb  (GMarkupParseContext *context,
+static void xml_start_element_cb  (GMarkupParseContext *context,
 			    const gchar         *element_name,
 		 	    const gchar        **attribute_names,
 			    const gchar        **attribute_values,
@@ -1116,7 +1116,7 @@ void xml_start_element_cb  (GMarkupParseContext *context,
 	}
 }
 
-void xml_end_element_cb  (GMarkupParseContext *context,
+static void xml_end_element_cb  (GMarkupParseContext *context,
 			  const gchar         *element_type,
 			  gpointer             user_data,
 			  GError             **error)
@@ -1145,7 +1145,7 @@ void xml_end_element_cb  (GMarkupParseContext *context,
 	}
 }
 
-void xml_text_cb  (GMarkupParseContext *context,
+static void xml_text_cb  (GMarkupParseContext *context,
 		   const gchar         *text,
 		   gsize                text_len,  
 		   gpointer             user_data,
@@ -1182,7 +1182,7 @@ void xml_text_cb  (GMarkupParseContext *context,
 	g_free(value);
 }
 
-void xml_error_cb  (GMarkupParseContext *context,
+static void xml_error_cb  (GMarkupParseContext *context,
 		    GError              *error,
 		    gpointer             user_data)
 {
@@ -1284,7 +1284,7 @@ gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *iter, c
 
 /* searching */
 
-gboolean internal_dyntree_model_iter_match(DyntreeModel *ctm,
+static gboolean internal_dyntree_model_iter_match(DyntreeModel *ctm,
 		GtkTreeIter *iter,
 		int *indices,
 		const char **str,

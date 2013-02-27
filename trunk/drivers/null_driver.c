@@ -20,18 +20,18 @@
 */
 
 
-int null_error(cardreader_t *cr)
+static int null_error(cardreader_t *cr)
 {
   log_printf(LOG_ERROR,"Operation failed: no connected reader selected");
   return 0;
 }
 
-int null_connect(cardreader_t *cr, unsigned prefered_protocol)
+static int null_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   return null_error(cr);
 }
 
-unsigned short null_transmit(cardreader_t* cr,
+static unsigned short null_transmit(cardreader_t* cr,
 			     const bytestring_t* command, 
 			     bytestring_t* result)
 {
@@ -39,17 +39,17 @@ unsigned short null_transmit(cardreader_t* cr,
   return CARDPEEK_ERROR_SW;
 }
 
-const bytestring_t* null_last_atr(cardreader_t* cr)
+static const bytestring_t* null_last_atr(cardreader_t* cr)
 {
   return cr->atr;
 }
 
-int null_fail(cardreader_t* cr)
+static int null_fail(cardreader_t* cr)
 {
   return 1;
 }
 
-void null_finalize(cardreader_t* cr)
+static void null_finalize(cardreader_t* cr)
 {
   null_error(cr);
 }

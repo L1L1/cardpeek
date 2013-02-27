@@ -27,7 +27,7 @@
  * BASIC CRYPTO FUNCTIONS
  */
 
-int subr_crypto_create_context(lua_State* L)
+static int subr_crypto_create_context(lua_State* L)
 {
   int alg           = luaL_checkinteger(L,1);
   bytestring_t* bs;
@@ -49,7 +49,7 @@ int subr_crypto_create_context(lua_State* L)
   return 1;
 }
 
-int subr_crypto_encrypt(lua_State* L)
+static int subr_crypto_encrypt(lua_State* L)
 {
   bytestring_t* ctx = luaL_checkbytestring(L,1);
   bytestring_t* src = luaL_checkbytestring(L,2);
@@ -72,7 +72,7 @@ int subr_crypto_encrypt(lua_State* L)
   return 1;
 }
 
-int subr_crypto_decrypt(lua_State* L)
+static int subr_crypto_decrypt(lua_State* L)
 {
   bytestring_t* ctx = luaL_checkbytestring(L,1);
   bytestring_t* src = luaL_checkbytestring(L,2);
@@ -95,7 +95,7 @@ int subr_crypto_decrypt(lua_State* L)
   return 1;
 }
 
-int subr_crypto_mac(lua_State* L)
+static int subr_crypto_mac(lua_State* L)
 {
   bytestring_t* ctx = luaL_checkbytestring(L,1);
   bytestring_t* src = luaL_checkbytestring(L,2);
@@ -112,7 +112,7 @@ int subr_crypto_mac(lua_State* L)
   return 1;
 }
 
-int subr_crypto_digest(lua_State* L)
+static int subr_crypto_digest(lua_State* L)
 {
   bytestring_t* ctx = luaL_checkbytestring(L,1);
   bytestring_t* src = luaL_checkbytestring(L,2);

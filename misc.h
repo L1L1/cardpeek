@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -29,15 +29,18 @@
 
 #define is_blank(a)     (a==' ' || a=='\t' || a=='\r' || a=='\n')
 
+const char *filename_extension(const char *fname);
+const char *filename_base(const char *fname);
+
 typedef void (*logfunc_t)(int,const char*);
 
 int log_printf(int level, const char *format, ...);
 
 void log_set_function(logfunc_t logfunc);
 
-void log_open_file();
+void log_open_file(void);
 
-void log_close_file();
+void log_close_file(void);
 
 enum {
   LOG_DEBUG,

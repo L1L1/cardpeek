@@ -34,11 +34,11 @@ int gui_init(int *argc, char ***argv);
 int gui_create(application_callback_t run_script_cb,
 	       application_callback_t run_command_cb);
 
-int gui_run();
+int gui_run(void);
 
 void gui_update(int lag_allowed);
 
-void gui_expand_view();
+void gui_expand_view(void);
 
 char* gui_select_reader(unsigned list_size, const char** list);
 
@@ -53,7 +53,7 @@ char** gui_select_file(const char *title,
    		       const char *path,
    		       const char *filename);
 
-void gui_about();
+void gui_about(void);
 
 void gui_reader_print_data(unsigned event,
 			   const bytestring_t *command,

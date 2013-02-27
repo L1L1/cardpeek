@@ -24,7 +24,7 @@
 #include "lua_bytes.h"
 #include "misc.h"
 
-int subr_asn1_split(lua_State* L)
+static int subr_asn1_split(lua_State* L)
 {
   const bytestring_t *tlv = luaL_checkbytestring(L,1);
   unsigned tag;
@@ -60,7 +60,7 @@ int subr_asn1_split(lua_State* L)
   return 3;
 }
 
-int subr_asn1_split_tag(lua_State* L)
+static int subr_asn1_split_tag(lua_State* L)
 {
   const bytestring_t *tlv = luaL_checkbytestring(L,1);
   unsigned tag;
@@ -91,7 +91,7 @@ int subr_asn1_split_tag(lua_State* L)
   return 2;
 }
 
-int subr_asn1_split_length(lua_State* L)
+static int subr_asn1_split_length(lua_State* L)
 {
   const bytestring_t *tlv = luaL_checkbytestring(L,1);
   unsigned len;
@@ -124,7 +124,7 @@ int subr_asn1_split_length(lua_State* L)
 }
 
 
-int subr_asn1_join(lua_State* L)
+static int subr_asn1_join(lua_State* L)
 {
   unsigned tag;
   bytestring_t *value;
@@ -169,7 +169,7 @@ int subr_asn1_join(lua_State* L)
   return 1;
 }
 
-int subr_asn1_enable_single_byte_length(lua_State* L)
+static int subr_asn1_enable_single_byte_length(lua_State* L)
 {
   int enable = lua_toboolean(L,1);
   asn1_force_single_byte_length_parsing(enable);

@@ -46,7 +46,7 @@ int cardmanager_search_acg_readers(cardmanager_t *cm);
  * CARDMANAGER
  */
 
-cardmanager_t *cardmanager_new()
+cardmanager_t *cardmanager_new(void)
 {
   cardmanager_t *cm = (cardmanager_t *)malloc(sizeof(cardmanager_t));
   memset(cm,0,sizeof(cardmanager_t));
@@ -327,7 +327,7 @@ int cardreader_log_count_records(const cardreader_t *reader)
 /************************************************/
 
 /* this should not be here but in pcsc_driver.c */
-int cardmanager_check_pcscd_is_running()
+static int cardmanager_check_pcscd_is_running(void)
 {
   int fd=g_open("/var/pid/pcscd.pid",O_RDONLY,0);
   if (fd<0) return 0;
@@ -411,7 +411,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   return cm->readers_count;
 }
 
-int select_clf(const struct dirent* de)
+static int select_clf(const struct dirent* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".clf")==0)

@@ -43,7 +43,7 @@ typedef struct {
   long         status;
 } pcsc_data_t;
 
-const char *pcsc_stringify_protocol(DWORD proto)
+static const char *pcsc_stringify_protocol(DWORD proto)
 {
 	static char proto_string[32];
 
@@ -59,7 +59,7 @@ const char *pcsc_stringify_protocol(DWORD proto)
 	return proto_string;
 }
 
-const char *pcsc_stringify_state(DWORD state)
+static const char *pcsc_stringify_state(DWORD state)
 {
 	static char state_string[500];
 	int state_string_len;
@@ -102,7 +102,7 @@ const char *pcsc_stringify_state(DWORD state)
 	return state_string;
 }
 
-int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
+static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   DWORD attr_maxinput;
   DWORD attr_maxinput_len = sizeof(unsigned int);
@@ -169,7 +169,7 @@ int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   return 1;
 }
 
-int pcsc_disconnect(cardreader_t *cr)
+static int pcsc_disconnect(cardreader_t *cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
 
@@ -186,7 +186,7 @@ int pcsc_disconnect(cardreader_t *cr)
   return 0;
 }
 
-int pcsc_reset(cardreader_t *cr)
+static int pcsc_reset(cardreader_t *cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
   
@@ -208,7 +208,7 @@ int pcsc_reset(cardreader_t *cr)
   return 0;
 }
 
-unsigned short pcsc_transmit(cardreader_t* cr,
+static unsigned short pcsc_transmit(cardreader_t* cr,
 			     const bytestring_t* command, 
 			     bytestring_t* result)
 {
@@ -254,7 +254,7 @@ unsigned short pcsc_transmit(cardreader_t* cr,
   return SW;
 }
 
-const bytestring_t* pcsc_last_atr(cardreader_t* cr)
+static const bytestring_t* pcsc_last_atr(cardreader_t* cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
   DWORD state;
@@ -287,18 +287,18 @@ const bytestring_t* pcsc_last_atr(cardreader_t* cr)
   return cr->atr;
 }
 
-char **pcsc_get_info(cardreader_t* cr, char** parent)
+static char **pcsc_get_info(cardreader_t* cr, char** parent)
 {
   return parent;
 }
 
-int pcsc_fail(cardreader_t* cr)
+static int pcsc_fail(cardreader_t* cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
   return (pcsc->status!=SCARD_S_SUCCESS);
 }
 
-void pcsc_finalize(cardreader_t* cr)
+static void pcsc_finalize(cardreader_t* cr)
 {
   pcsc_data_t* pcsc = cr->extra_data;
   free(pcsc);

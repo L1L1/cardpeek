@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = gnu
 
-AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
+AM_CFLAGS=-Wall -g -O2 -Wextra -pipe -funsigned-char -fstrict-aliasing -Wchar-subscripts -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wunused -Wuninitialized -Wpointer-arith -Wredundant-decls -Winline -Wformat -Wformat-security -Wswitch-enum -Winit-self -Wmissing-include-dirs -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition -Wbad-function-cast -Wnested-externs -Wmissing-declarations @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
 
 #AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 

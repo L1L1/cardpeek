@@ -113,7 +113,7 @@ int iso7816_describe_apdu(apdu_descriptor_t *ad, const bytestring_t* apdu)
 		   ((c)>='A' && (c)<='F') || \
 		   ((c)>='a' && (c)<='f'))
 
-int is_hex4(const char* s)
+static int is_hex4(const char* s)
 {
   if (strlen(s)<4)
     return 0;

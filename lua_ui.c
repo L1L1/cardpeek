@@ -33,14 +33,14 @@
  * USER INTERFACE FUNCTIONS
  */
 
-GtkTreeIter* luaL_check_node_ref(lua_State *L, int p)
+static GtkTreeIter* luaL_check_node_ref(lua_State *L, int p)
 {
   void *ud = luaL_checkudata(L,p,"node_ref.type");
   luaL_argcheck(L, ud != NULL, p, "`node_ref' expected");
   return (GtkTreeIter *)ud;
 }
 
-void lua_push_node_ref(lua_State *L, GtkTreeIter *iter)
+static void lua_push_node_ref(lua_State *L, GtkTreeIter *iter)
 {
   GtkTreeIter *dst;
 
@@ -56,7 +56,7 @@ void lua_push_node_ref(lua_State *L, GtkTreeIter *iter)
 }
 
 
-int subr_ui_tree_add_node(lua_State* L)
+static int subr_ui_tree_add_node(lua_State* L)
 {
 	GtkTreeIter *parent;            /*1*/
 	const char *classname;  	/*2*/
@@ -104,7 +104,7 @@ int subr_ui_tree_add_node(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_set_attribute(lua_State* L)
+static int subr_ui_tree_set_attribute(lua_State* L)
 {
   GtkTreeIter *iter;
   const char *attribute_name;
@@ -122,7 +122,7 @@ int subr_ui_tree_set_attribute(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_get_attribute(lua_State* L)
+static int subr_ui_tree_get_attribute(lua_State* L)
 {
   GtkTreeIter *iter;
   const char *attribute_name;
@@ -141,7 +141,7 @@ int subr_ui_tree_get_attribute(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_set_value(lua_State* L)
+static int subr_ui_tree_set_value(lua_State* L)
 {
 	GtkTreeIter *iter;
 	char *value;
@@ -165,7 +165,7 @@ int subr_ui_tree_set_value(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_get_value(lua_State* L)
+static int subr_ui_tree_get_value(lua_State* L)
 {
 	GtkTreeIter *iter;
 	const char *value;
@@ -182,7 +182,7 @@ int subr_ui_tree_get_value(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_set_alt_value(lua_State* L)
+static int subr_ui_tree_set_alt_value(lua_State* L)
 {
   GtkTreeIter *iter;
   const char *attribute_value;
@@ -199,7 +199,7 @@ int subr_ui_tree_set_alt_value(lua_State* L)
 	
 }
 
-int subr_ui_tree_get_alt_value(lua_State* L)
+static int subr_ui_tree_get_alt_value(lua_State* L)
 {
 	GtkTreeIter *iter;
 	const char *value;
@@ -216,7 +216,7 @@ int subr_ui_tree_get_alt_value(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_get_node(lua_State* L)
+static int subr_ui_tree_get_node(lua_State* L)
 { 
 	GtkTreeIter *iter;
 	const char *attr_name;
@@ -242,7 +242,7 @@ int subr_ui_tree_get_node(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_child_node(lua_State *L)
+static int subr_ui_tree_child_node(lua_State *L)
 {
 	GtkTreeIter *iter = luaL_check_node_ref(L,1);
 	GtkTreeIter ret;
@@ -254,7 +254,7 @@ int subr_ui_tree_child_node(lua_State *L)
 	return 1;
 }
 
-int subr_ui_tree_next_node(lua_State *L)
+static int subr_ui_tree_next_node(lua_State *L)
 {
 	GtkTreeIter *iter = luaL_check_node_ref(L,1);
 	GtkTreeIter ret = *iter;
@@ -266,7 +266,7 @@ int subr_ui_tree_next_node(lua_State *L)
 	return 1;
 }
 
-int subr_ui_tree_parent_node(lua_State *L)
+static int subr_ui_tree_parent_node(lua_State *L)
 {
 	GtkTreeIter *iter = luaL_check_node_ref(L,1);
 	GtkTreeIter ret;
@@ -279,7 +279,7 @@ int subr_ui_tree_parent_node(lua_State *L)
 }
 
 
-int subr_ui_tree_delete_node(lua_State* L)
+static int subr_ui_tree_delete_node(lua_State* L)
 {
   GtkTreeIter* iter = luaL_check_node_ref(L,1);
 
@@ -292,7 +292,7 @@ int subr_ui_tree_delete_node(lua_State* L)
   return 1;
 }
 
-int subr_ui_find_node(lua_State* L)
+static int subr_ui_find_node(lua_State* L)
 {
   GtkTreeIter* iter; 
   const char *label;
@@ -323,7 +323,7 @@ int subr_ui_find_node(lua_State* L)
   return 1;
 }
 
-int subr_ui_find_all_nodes(lua_State* L)
+static int subr_ui_find_all_nodes(lua_State* L)
 {
 	GtkTreeIter* iter; 
 	const char *label;
@@ -366,7 +366,7 @@ int subr_ui_find_all_nodes(lua_State* L)
 	return 1;
 }
 
-int subr_ui_tree_to_xml(lua_State* L)
+static int subr_ui_tree_to_xml(lua_State* L)
 {
   GtkTreeIter *iter;
   char *res;
@@ -390,7 +390,7 @@ int subr_ui_tree_to_xml(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_save(lua_State* L)
+static int subr_ui_tree_save(lua_State* L)
 {
   const char *filename;
 
@@ -412,21 +412,30 @@ int subr_ui_tree_save(lua_State* L)
   return 1;
 }
 
-int subr_ui_tree_load(lua_State* L)
+static int subr_ui_tree_load(lua_State* L)
 {
   const char *filename;
   int retval;
 
   if (lua_isnoneornil(L,1))
     return luaL_error(L,"Expecting one parameter: a filename (string)");
-  
+
   filename = lua_tostring(L,1);
+
+  if (strcmp(filename_extension(filename),".lua")==0)
+  {
+    log_printf(LOG_WARNING,"%s seems to be a card LUA script: perhaps you should use the 'Analyzer'"
+        " menu instead to open this file.",filename_base(filename));
+  }
+
   retval =  cardtree_from_xml_file(CARDTREE,NULL,filename);
+
+
   lua_pushboolean(L,retval);
   return 1;
 }
 
-int subr_ui_question(lua_State* L)
+static int subr_ui_question(lua_State* L)
 {
   const char* message;
   const char** items;
@@ -464,7 +473,7 @@ int subr_ui_question(lua_State* L)
   return 1;
 }
  
-int subr_ui_readline(lua_State* L)
+static int subr_ui_readline(lua_State* L)
 {
   const char* message;
   unsigned len;
@@ -492,7 +501,7 @@ int subr_ui_readline(lua_State* L)
   return 1;
 }
 
-int subr_ui_select_file(lua_State* L)
+static int subr_ui_select_file(lua_State* L)
 {
   const char* title;
   const char* path;
@@ -527,7 +536,7 @@ int subr_ui_select_file(lua_State* L)
   return 2;
 }
 
-int subr_ui_about(lua_State* L)
+static int subr_ui_about(lua_State* L)
 {
   gui_about();
   return 0;

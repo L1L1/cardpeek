@@ -46,7 +46,7 @@
 
 GHashTable *WIDGET_TABLE = NULL;
 
-guint stringhash(gconstpointer str)
+static guint stringhash(gconstpointer str)
 {
 	const unsigned char *s = str;
 	guint res=0;
@@ -58,28 +58,28 @@ guint stringhash(gconstpointer str)
 	return res;
 }
 
-gint stringcompare(gconstpointer a, gconstpointer b)
+static gint stringcompare(gconstpointer a, gconstpointer b)
 {
 	return (strcmp(a,b)==0);
 }
 
-gboolean gui_widget_table_init()
+static gboolean gui_widget_table_init(void)
 {
 	WIDGET_TABLE = g_hash_table_new(stringhash,stringcompare);
 	return TRUE;
 }
 
-void gui_widget_table_release()
+static void gui_widget_table_release(void)
 {
 	g_hash_table_destroy(WIDGET_TABLE);
 }
 
-GtkWidget *gui_widget_table_lookup(const gchar *name)
+static GtkWidget *gui_widget_table_lookup(const gchar *name)
 {
 	return (GtkWidget *)g_hash_table_lookup(WIDGET_TABLE,name);
 }
 
-void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
+static void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
 {
 	g_hash_table_insert(WIDGET_TABLE,(gpointer)name,(gpointer)widget);	
 }
@@ -97,7 +97,7 @@ typedef struct {
 #define TOOLBAR_ITEM_EXPANDER "expander"
 
 
-GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
+static GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 {
 	GtkWidget	*toolbar;
 	GtkToolItem	*item;
@@ -163,7 +163,7 @@ guint STATUS_BAR_CONTEXT_ID=0;
 /* JUST ONE SIMPLE FUNC TO ESCAPE LUA STRINGS ************/
 /*********************************************************/
 
-char *lua_escape_string(const char *src)
+static char *lua_escape_string(const char *src)
 {
 	char *res;
 	const char *s;
@@ -204,7 +204,7 @@ struct menu_script {
         struct menu_script* prev;
 };
 
-void gui_logfunction(int log_level, const char* str)
+static void gui_logfunction(int log_level, const char* str)
 {
   GtkTextIter iter;
   GtkAdjustment* adj;
@@ -247,7 +247,7 @@ void gui_logfunction(int log_level, const char* str)
 
 /***************************************************************/
 
-void gui_run_script_cb(GtkWidget *widget,
+static void gui_run_script_cb(GtkWidget *widget,
                        gpointer callback_data,
                        guint callback_action)
 {
@@ -257,7 +257,7 @@ void gui_run_script_cb(GtkWidget *widget,
   gui_update(0);
 }
 
-void gui_run_command_cb(GtkWidget *widget,
+static void gui_run_command_cb(GtkWidget *widget,
                         GtkWidget *entry )
 {
   GtkTreeIter iter;
@@ -268,14 +268,14 @@ void gui_run_command_cb(GtkWidget *widget,
   gui_update(0);
 }
 
-void menu_card_view_clear_cb(GtkWidget *w, gpointer user_data)
+static void menu_card_view_clear_cb(GtkWidget *w, gpointer user_data)
 {
   cardtree_node_remove(CARDTREE,NULL);
   RUN_LUA_COMMAND("card.CLA=0");
   log_printf(LOG_INFO,"Cleared card data tree");
 }
 
-void menu_card_view_open_cb(GtkWidget *w, gpointer user_data)
+static void menu_card_view_open_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
@@ -296,7 +296,7 @@ void menu_card_view_open_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
-void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
+static void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
@@ -317,7 +317,7 @@ void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
-void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
+static void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
 	       			    gpointer           user_data) 
 {
   GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
@@ -334,7 +334,7 @@ void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
   }
 }
 
-gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
+static gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 		   		     gint        x,
 				     gint        y,
 				     gboolean    keyboard_mode,
@@ -353,7 +353,7 @@ gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 }
 
 
-void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer userdata)
+static void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer userdata)
 /* Callback responding to right click context menu item to change 3rd column format */ 
 {
   /* GtkTreeView *treeview = GTK_TREE_VIEW(userdata); */
@@ -373,7 +373,7 @@ void menu_cardview_context_menu_change_value_type(GtkWidget *menuitem, gpointer 
 }
 
 
-void menu_cardview_context_menu_expand_all(GtkWidget *menuitem, gpointer userdata)
+static void menu_cardview_context_menu_expand_all(GtkWidget *menuitem, gpointer userdata)
 /* Callback responding to right click context menu item to expand current branch */ 
 {
   GtkTreeView *treeview = GTK_TREE_VIEW(userdata);
@@ -390,7 +390,7 @@ void menu_cardview_context_menu_expand_all(GtkWidget *menuitem, gpointer userdat
   }
 }
 
-void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 /* Create a right click context menu */
 {
   GtkWidget *menu, *menuitem;
@@ -427,7 +427,7 @@ void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *event, gpoi
 		 gdk_event_get_time((GdkEvent*)event));
 }
 
-gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
+static gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
 {
   GtkTreeSelection *selection;
   GtkTreePath *path;
@@ -456,7 +456,7 @@ gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventButton *e
   return FALSE;
 }
 
-void menu_pos_func(GtkMenu *menu,
+static void menu_pos_func(GtkMenu *menu,
 		   gint *x,
 		   gint *y,
 		   gboolean *push_in,
@@ -470,7 +470,7 @@ void menu_pos_func(GtkMenu *menu,
   *y += button->allocation.height;
 }
 
-void menu_card_view_analyzer_cb(GtkWidget *w, gpointer user_data)
+static void menu_card_view_analyzer_cb(GtkWidget *w, gpointer user_data)
 {
   GtkWidget* menu=(GtkWidget*)user_data;
   if (menu)
@@ -483,7 +483,7 @@ void menu_card_view_analyzer_cb(GtkWidget *w, gpointer user_data)
     log_printf(LOG_ERROR,"No menu to display");
 }
 
-void menu_run_command_cb(GtkWidget *w, gpointer user_data)
+static void menu_run_command_cb(GtkWidget *w, gpointer user_data)
 {
   if (user_data)
     RUN_LUA_COMMAND((char *)user_data);
@@ -491,7 +491,7 @@ void menu_run_command_cb(GtkWidget *w, gpointer user_data)
     log_printf(LOG_ERROR,"No command to execute");
 }
 
-void menu_card_view_analyzer_load_cb(GtkWidget *w, gpointer user_data)
+static void menu_card_view_analyzer_load_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
 
@@ -506,7 +506,7 @@ void menu_card_view_analyzer_load_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
-void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
+static void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 {
   char** select_info;
   a_string_t *command;
@@ -530,7 +530,7 @@ void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 /* CONSTRUTION OF MAIN UI ********************************/
 /*********************************************************/
 
-int select_lua(const struct dirent* de)
+static int select_lua(const struct dirent* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".lua")==0)
@@ -538,7 +538,7 @@ int select_lua(const struct dirent* de)
   return 0;
 }
 
-GtkWidget *create_analyzer_menu()
+static GtkWidget *create_analyzer_menu(void)
 {
   GtkItemFactory *item_factory;
   GtkItemFactoryEntry fentry;
@@ -621,21 +621,21 @@ GtkWidget *create_analyzer_menu()
 
 toolbar_item_t TB_CARD_VIEW[] = {
 	{ "card-view-analyzer", "cardpeek-smartcard", "Analyzer", G_CALLBACK(menu_card_view_analyzer_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_card_view_clear_cb), NULL },
 	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_card_view_open_cb), NULL },
 	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_card_view_save_as_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_EXPANDER },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(menu_run_command_cb), "ui.about()" },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL },
 
 	/* END MARKER : */
-	{ NULL, 		NULL }
+	{ NULL, 		NULL, NULL, NULL, NULL }
 };
 
 
-GtkWidget *create_card_view(cardtree_t *cardtree)
+static GtkWidget *create_card_view(cardtree_t *cardtree)
 {
   GtkCellRenderer     *renderer;
   GtkWidget           *scrolled_window;
@@ -775,14 +775,14 @@ toolbar_item_t TB_READER_VIEW[] = {
 	{ "reader-view-connect", 	GTK_STOCK_CONNECT, "Connect", G_CALLBACK(menu_run_command_cb), "card.connect()" },
 	{ "reader-view-reset", 		GTK_STOCK_REDO, "Reset", G_CALLBACK(menu_run_command_cb), "card.warm_reset()" },
 	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, "Disconnect", G_CALLBACK(menu_run_command_cb), "card.disconnect()" },
-	{ NULL,				TOOLBAR_ITEM_SEPARATOR },
+	{ NULL,				TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "reader-view-clear", 		GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_run_command_cb), "card.log_clear()" },
 	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, "Save as", G_CALLBACK(menu_reader_save_as_cb), NULL },	
-	{ NULL, 			NULL }
+	{ NULL, 			NULL, NULL, NULL, NULL }
 };
 
 
-GtkWidget *create_reader_view()
+static GtkWidget *create_reader_view(void)
 {
   GtkWidget           *view;
   GtkWidget           *scrolled_window;
@@ -840,7 +840,7 @@ GtkWidget *create_reader_view()
 }
 
 
-GtkWidget *create_log_view()
+static GtkWidget *create_log_view(void)
 {
   GtkWidget *scrolled_window;
   GtkWidget *view;
@@ -884,7 +884,7 @@ GtkWidget *create_log_view()
   return scrolled_window;
 }
 
-GtkWidget *create_command_entry()
+static GtkWidget *create_command_entry(void)
 {
   GtkWidget *label;
   GtkWidget *hbox;
@@ -920,7 +920,7 @@ GtkWidget *create_command_entry()
 /* GUI_* FUNCTIONS ***************************************/
 /*********************************************************/
 
-void gui_expand_view()
+void gui_expand_view(void)
 {
   gtk_tree_view_expand_all (GTK_TREE_VIEW(CARDVIEW));
 }
@@ -1107,7 +1107,7 @@ char** gui_select_file(const char *title,
   return ret_values;
 }
 
-void gui_about()
+void gui_about(void)
 {
   GtkWidget *dialog;
 
@@ -1349,7 +1349,7 @@ int gui_create(application_callback_t run_script_cb,
 }
 
 
-int gui_run()
+int gui_run(void)
 {
   struct menu_script *it;
   
@@ -1373,7 +1373,7 @@ int gui_run()
 }
 
 char HEX_CHAR[17]="0123456789ABCDEF";
-const char* hex_pretty_print(int indent, const bytestring_t *bs,int add_ascii)
+static const char* hex_pretty_print(int indent, const bytestring_t *bs,int add_ascii)
 {
   static char retval[1500];
   int i;

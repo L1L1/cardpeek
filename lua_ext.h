@@ -27,8 +27,8 @@
 void luax_set_card_reader(cardreader_t* r);
 void luax_run_script_cb(const char* scriptname);
 void luax_run_command_cb(const char* command);
-int luax_init();
-void luax_release();
+int luax_init(void);
+void luax_release(void);
 const char *luax_get_string_value(const char *identifier);
 
 #endif

@@ -44,7 +44,7 @@ typedef struct {
   unsigned readers_count;
 } cardmanager_t;
 
-cardmanager_t *cardmanager_new();
+cardmanager_t *cardmanager_new(void);
 
 void cardmanager_free(cardmanager_t* cm);
 

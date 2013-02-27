@@ -34,7 +34,7 @@
 #define FG_COLOR1 "#2F2F7F"
 #define FG_COLOR2 "#2F2FFF"
 
-cardtree_t* cardtree_new()
+cardtree_t* cardtree_new(void)
 {
 	cardtree_t* ct = g_new0(cardtree_t,1);
 
@@ -58,7 +58,7 @@ cardtree_t* cardtree_new()
 	return ct;
 }
 
-void internal_cardtree_create_icon_markup_label_id(DyntreeModel *dm, GtkTreeIter* iter)
+static void internal_cardtree_create_icon_markup_label_id(DyntreeModel *dm, GtkTreeIter* iter)
 {
 	a_string_t *markup_label_id;
 	const char *classname;
@@ -103,7 +103,7 @@ void internal_cardtree_create_icon_markup_label_id(DyntreeModel *dm, GtkTreeIter
 	a_strfree(markup_label_id);
 }
 
-char *internal_cardtree_create_markup_text(const char* src, int full, int is_bytes)
+static char *internal_cardtree_create_markup_text(const char* src, int full, int is_bytes)
 {
 	a_string_t *markup_value;
 	int linepos,i,len,max,offset;
@@ -172,7 +172,7 @@ char *internal_cardtree_create_markup_text(const char* src, int full, int is_byt
 	return a_strfinalize(markup_value);
 }
 
-void internal_cardtree_create_markup_val(DyntreeModel *dm, GtkTreeIter* iter)
+static void internal_cardtree_create_markup_val(DyntreeModel *dm, GtkTreeIter* iter)
 {
 	const char *value;
 	char *markup;
@@ -363,7 +363,7 @@ gboolean cardtree_to_xml_file(cardtree_t* ct, GtkTreeIter *root, const char *fna
 	return dyntree_model_iter_to_xml_file(ct->_store,root,"cardtree",fname);
 }
  
-gboolean internal_node_update_func(DyntreeModel *dm, GtkTreeIter *iter, gpointer user_data)
+static gboolean internal_node_update_func(DyntreeModel *dm, GtkTreeIter *iter, gpointer user_data)
 {
 	internal_cardtree_create_icon_markup_label_id(dm,iter);
 	internal_cardtree_create_markup_val(dm,iter);

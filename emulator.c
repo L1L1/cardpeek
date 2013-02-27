@@ -25,7 +25,7 @@
 #include "misc.h"
 #include <glib/gstdio.h>
 
-anyemul_t* cardemul_new_item(cardemul_t* ce, int type)
+static anyemul_t* cardemul_new_item(cardemul_t* ce, int type)
 {
   emul_t emul;
 
@@ -80,7 +80,7 @@ int cardemul_add_reset(cardemul_t* ce, const bytestring_t* atr)
   return CARDEMUL_OK;
 } 
 
-cardemul_t* cardemul_new()
+cardemul_t* cardemul_new(void)
 {
   cardemul_t* ce=(cardemul_t*)malloc(sizeof(cardemul_t));
   ce -> start.any = ce -> pos.any = ce -> atr.any = NULL;

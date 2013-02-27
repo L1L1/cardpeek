@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include "iso7816.h"
 #include "misc.h"
+#include "lua_ext.h"
 
 cardreader_t* READER=NULL;
 
@@ -33,7 +34,7 @@ void luax_set_card_reader(cardreader_t* r)
   READER = r;
 }
 
-int subr_card_connect(lua_State* L)
+static int subr_card_connect(lua_State* L)
 {
   if(!cardreader_connect(READER,PROTOCOL_T0 | PROTOCOL_T1))
     lua_pushboolean(L,0);
@@ -42,7 +43,7 @@ int subr_card_connect(lua_State* L)
   return 1;
 }
 
-int subr_card_disconnect(lua_State* L)
+static int subr_card_disconnect(lua_State* L)
 {
   cardreader_disconnect(READER);
   
@@ -50,7 +51,7 @@ int subr_card_disconnect(lua_State* L)
   return 1;
 }
 
-int subr_card_warm_reset(lua_State* L)
+static int subr_card_warm_reset(lua_State* L)
 {
   if (cardreader_warm_reset(READER))
     lua_pushboolean(L,1);
@@ -59,7 +60,7 @@ int subr_card_warm_reset(lua_State* L)
   return 1;
 }
 
-int subr_card_last_atr(lua_State* L)
+static int subr_card_last_atr(lua_State* L)
 {
   const bytestring_t *atr = cardreader_last_atr(READER);
 
@@ -67,7 +68,7 @@ int subr_card_last_atr(lua_State* L)
   return 1;
 }
 
-int subr_card_info(lua_State* L)
+static int subr_card_info(lua_State* L)
 {
   char **info=cardreader_get_info(READER);
   int index;
@@ -86,7 +87,7 @@ int subr_card_info(lua_State* L)
   return 1;
 }
 
-int subr_card_send(lua_State* L)
+static int subr_card_send(lua_State* L)
 {
   bytestring_t *command = luaL_checkbytestring(L,1);
   bytestring_t *result = bytestring_new(8);
@@ -99,14 +100,14 @@ int subr_card_send(lua_State* L)
   return 2;
 }
 
-int subr_card_set_command_interval(lua_State* L)
+static int subr_card_set_command_interval(lua_State* L)
 {
   unsigned interval=(unsigned)lua_tointeger(L,1);
   cardreader_set_command_interval(READER,interval);
   return 0;
 }
 
-int subr_card_make_file_path(lua_State* L)
+static int subr_card_make_file_path(lua_State* L)
 {
   int path_type;
   bytestring_t *file_path = bytestring_new(8);
@@ -131,7 +132,7 @@ int subr_card_make_file_path(lua_State* L)
   return 2;
 }
 
-int subr_card_log_save(lua_State* L)
+static int subr_card_log_save(lua_State* L)
 {
   const char *filename;
 
@@ -153,7 +154,7 @@ int subr_card_log_save(lua_State* L)
   return 1;  
 }
 
-int subr_card_log_clear(lua_State* L)
+static int subr_card_log_clear(lua_State* L)
 {
   cardreader_log_clear(READER);
   return 0;  

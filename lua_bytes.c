@@ -34,7 +34,7 @@ bytestring_t* luaL_checkbytestring(lua_State *L, int p)
   return (bytestring_t *)ud;
 }
 
-void stack_dump(lua_State *L)
+static void stack_dump(lua_State *L)
 {
   unsigned i;
 
@@ -55,7 +55,7 @@ void stack_dump(lua_State *L)
   }
 }
 
-bytestring_t* luaL_newbytestring(lua_State *L, unsigned width)
+static bytestring_t* luaL_newbytestring(lua_State *L, unsigned width)
 {
   bytestring_t *bs;
   bs = (bytestring_t *)lua_newuserdata(L, sizeof(bytestring_t));
@@ -86,7 +86,7 @@ void lua_pushbytestring(lua_State *L, bytestring_t* bs)
   }
 }
 
-bytestring_t* x_bytes_create(lua_State *L, unsigned width, int start, int end)
+static bytestring_t* x_bytes_create(lua_State *L, unsigned width, int start, int end)
 {
   bytestring_t *bs=bytestring_new(width);
   int p;

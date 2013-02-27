@@ -43,7 +43,7 @@ const char *CONFIG_OPTIONS[]={
 char *CONFIG_STRING[NUM_CONFIG_OPTIONS];
 
 
-int config_init()
+int config_init(void)
 {
   char config_path[PATH_MAX];
   char cwd_path[PATH_MAX];
@@ -95,7 +95,7 @@ int config_set_string(unsigned index, const char *path)
   return 1;
 }
 
-void config_release()
+void config_release(void)
 {
   unsigned i;
   for (i=0;i<NUM_CONFIG_OPTIONS;i++)

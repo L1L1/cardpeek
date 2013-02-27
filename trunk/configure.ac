@@ -8,6 +8,9 @@ AM_INIT_AUTOMAKE([cardpeek], [0.7.1])
 AC_CONFIG_SRCDIR([main.c])
 AM_CONFIG_HEADER([config.h])
 
+# silent build by default
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_MAKE_SET

@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([cardpeek], [0.7.1], [L1L1@gmx.com])
-AM_INIT_AUTOMAKE([cardpeek], [0.7.1])
+AC_INIT([cardpeek], [0.7.2], [L1L1@gmx.com])
+AM_INIT_AUTOMAKE([cardpeek], [0.7.2])
 
 AC_CONFIG_SRCDIR([main.c])
 AM_CONFIG_HEADER([config.h])
@@ -108,6 +108,7 @@ AC_CHECK_HEADERS([fcntl.h limits.h stdlib.h string.h sys/time.h termios.h unistd
 AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
+AC_CHECK_TYPES([GStatBuf],[],[],[#include <glib/gstdio.h>])
 
 # Checks for library functions.
 AC_FUNC_MALLOC

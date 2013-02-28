@@ -6,7 +6,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#ifndef GStatBuf
+#ifndef HAVE_GSTATBUF
 #include <unistd.h>
 typedef struct stat GStatBuf;
 #endif
@@ -30,7 +30,7 @@ static void dyntree_model_finalize (GObject *object);
 static GtkTreeModelFlags dyntree_model_get_flags (GtkTreeModel *tree_model);
 
 static GType dyntree_model_get_column_type (GtkTreeModel *tree_model, 
-		gint index);
+		gint c_index);
 
 static gboolean dyntree_model_get_iter (GtkTreeModel *tree_model, 
 		GtkTreeIter *iter, 
@@ -139,11 +139,11 @@ int dyntree_model_column_name_to_index(DyntreeModel *ctm, const char *column_nam
 	return GPOINTER_TO_INT(g_hash_table_lookup(ctm->columns_by_name,(gpointer)column_name))-1;
 }
 
-const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int index)
+const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int c_index)
 {
-	if (index<0 || index>=ctm->n_columns) 
+	if (c_index<0 || c_index>=ctm->n_columns) 
 		return NULL;
-	return ctm->columns_by_index[index].name;
+	return ctm->columns_by_index[c_index].name;
 }
 
 int dyntree_model_column_register(DyntreeModel *ctm, 
@@ -220,10 +220,10 @@ gint dyntree_model_get_n_columns (GtkTreeModel *tree_model)
 *
 *****************************************************************************/
 static GType dyntree_model_get_column_type (GtkTreeModel *tree_model, 
-		gint index)
+		gint c_index)
 {
 	g_return_val_if_fail (DYNTREE_IS_MODEL(tree_model), G_TYPE_INVALID);
-	g_return_val_if_fail (index < DYNTREE_MODEL(tree_model)->n_columns && index >= 0, G_TYPE_INVALID);
+	g_return_val_if_fail (c_index < DYNTREE_MODEL(tree_model)->n_columns && c_index >= 0, G_TYPE_INVALID);
 	return G_TYPE_STRING;
 }
 
@@ -537,7 +537,7 @@ DyntreeModel *dyntree_model_new (void)
 
 gboolean dyntree_model_iter_attribute_set(DyntreeModel *m, 
 		GtkTreeIter *iter, 
-		unsigned index, 
+		unsigned c_index, 
 		const char *str)
 {
 	int i,pos;
@@ -546,11 +546,11 @@ gboolean dyntree_model_iter_attribute_set(DyntreeModel *m,
 
 	g_return_val_if_fail ( iter!=NULL , FALSE );
 
-	g_return_val_if_fail ( index < m->n_columns && index >= 0 , FALSE);
+	g_return_val_if_fail ( c_index < m->n_columns, FALSE);
 
 	node = (DyntreeModelNode *)iter->user_data;
 
-	if (index>=node->max_attributes)
+	if (c_index>=node->max_attributes)
 	{
 		pos = node->max_attributes;
 		node->max_attributes = m->max_columns;
@@ -563,13 +563,13 @@ gboolean dyntree_model_iter_attribute_set(DyntreeModel *m,
 		}
 	}
 
-	if (node->attributes[index].value)
-		g_free(node->attributes[index].value);
+	if (node->attributes[c_index].value)
+		g_free(node->attributes[c_index].value);
 
 	if (str==NULL)
-		node->attributes[index].value = NULL;
+		node->attributes[c_index].value = NULL;
 	else
-		node->attributes[index].value = g_strdup(str);
+		node->attributes[c_index].value = g_strdup(str);
 
 	/* fprintf(stderr,"Node[%i]=[%p]\n",index,node->attributes[index].value); */
 
@@ -609,7 +609,7 @@ static int dyntree_model_iter_n_attributes(DyntreeModel *m, GtkTreeIter *iter)
 
 gboolean dyntree_model_iter_attribute_get(DyntreeModel *m, 
 				      GtkTreeIter *iter, 
-				      unsigned index, 
+				      unsigned c_index, 
 				      const char **str)
 {
 	DyntreeModelNode *node;
@@ -620,10 +620,10 @@ gboolean dyntree_model_iter_attribute_get(DyntreeModel *m,
 	
 	node = (DyntreeModelNode *)iter->user_data;
 
-	g_return_val_if_fail (index < m->n_columns && index >= 0, FALSE);
+	g_return_val_if_fail (c_index < m->n_columns, FALSE);
 
-	if (index < node->max_attributes)
-		*str = node->attributes[index].value;
+	if (c_index < node->max_attributes)
+		*str = node->attributes[c_index].value;
 	else
 		*str = NULL;
 
@@ -1007,7 +1007,7 @@ enum {
   ND_ADEF
 };
 
-char *ND_STATE[5] = {
+const char *ND_STATE[5] = {
   "file",
   "root",
   "<node>",
@@ -1155,7 +1155,7 @@ static void xml_text_cb  (GMarkupParseContext *context,
 	char *value;
 	int line_number;
 	int char_number;
-	int i;
+	unsigned i;
 
 	g_markup_parse_context_get_position(context,&line_number,&char_number);
 

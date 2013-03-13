@@ -83,6 +83,7 @@ GType custom_cell_renderer_flexi_get_type (void)
       sizeof (CustomCellRendererFlexi),
       0,                                                        /* n_preallocs */
       (GInstanceInitFunc) custom_cell_renderer_flexi_init,
+      NULL,
     };
 
     /* Derive from GtkCellRenderer */

@@ -304,7 +304,7 @@ static void pcsc_finalize(cardreader_t* cr)
   free(pcsc);
 }
 
-int pcsc_initialize(cardreader_t *reader)
+static int pcsc_initialize(cardreader_t *reader)
 {
   pcsc_data_t* pcsc = malloc(sizeof(pcsc_data_t));
   

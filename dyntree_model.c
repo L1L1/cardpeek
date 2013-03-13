@@ -90,7 +90,8 @@ GType dyntree_model_get_type (void)
 			NULL, /* class_data */
 			sizeof (DyntreeModel),
 			0, /* n_preallocs */
-			(GInstanceInitFunc) dyntree_model_init
+			(GInstanceInitFunc) dyntree_model_init,
+			NULL,
 		};
 		dyntree_model_type = g_type_register_static (G_TYPE_OBJECT, "DyntreeModel",
 				&dyntree_model_info, (GTypeFlags)0);

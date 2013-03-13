@@ -54,7 +54,7 @@ static void null_finalize(cardreader_t* cr)
   null_error(cr);
 }
 
-int null_initialize(cardreader_t *reader)
+static int null_initialize(cardreader_t *reader)
 {
   reader->connect      = null_connect;
   reader->disconnect   = null_error;

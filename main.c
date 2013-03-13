@@ -140,7 +140,7 @@ static int install_dot_file(void)
 }
 
 
-static char *message = 
+static const char *message = 
 "***************************************************************\n"
 " Oups...                                                       \n"
 "  Cardpeek has encoutered a problem and has exited abnormally. \n"
@@ -149,7 +149,7 @@ static char *message =
 "  "
 ;
 
-static char *signature =
+static const char *signature =
 "\n"
 "                                                               \n"
 "  L1L1@gmx.com                                                 \n"

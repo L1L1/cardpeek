@@ -285,7 +285,7 @@ const char *CRYTPO_ERROR_STRING[] = {
 
 const char *crypto_stringify_error(crypto_error_t err)
 {
-  if (err>=0 && err<CRYPTO_ERROR_UNKNOWN)
+  if (err<CRYPTO_ERROR_UNKNOWN)
     return CRYTPO_ERROR_STRING[err];
   return CRYTPO_ERROR_STRING[CRYPTO_ERROR_UNKNOWN];
 }

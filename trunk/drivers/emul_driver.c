@@ -80,7 +80,7 @@ static void emul_finalize(cardreader_t* cr)
   free(emul);
 }
 
-int emul_initialize(cardreader_t *reader)
+static int emul_initialize(cardreader_t *reader)
 {
   char fname[PATH_MAX];
   cardemul_t* emul = cardemul_new_from_file(fname);

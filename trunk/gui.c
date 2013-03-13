@@ -74,10 +74,12 @@ static void gui_widget_table_release(void)
 	g_hash_table_destroy(WIDGET_TABLE);
 }
 
+#ifdef _DEAD_CODE_
 static GtkWidget *gui_widget_table_lookup(const gchar *name)
 {
 	return (GtkWidget *)g_hash_table_lookup(WIDGET_TABLE,name);
 }
+#endif
 
 static void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
 {

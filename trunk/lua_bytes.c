@@ -34,6 +34,7 @@ bytestring_t* luaL_checkbytestring(lua_State *L, int p)
   return (bytestring_t *)ud;
 }
 
+#ifdef _DEAD_CODE
 static void stack_dump(lua_State *L)
 {
   unsigned i;
@@ -54,6 +55,7 @@ static void stack_dump(lua_State *L)
     }
   }
 }
+#endif
 
 static bytestring_t* luaL_newbytestring(lua_State *L, unsigned width)
 {
@@ -277,13 +279,13 @@ static int subr_bytes_format(lua_State *L)
 static int subr_bytes_index(lua_State *L)
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  int index=luaL_checkint(L,2);
+  int b_index=luaL_checkint(L,2);
   unsigned char c;
 
-  if (bytestring_get_element(&c,bs,index)!=BYTESTRING_OK)
+  if (bytestring_get_element(&c,bs,b_index)!=BYTESTRING_OK)
   {
     log_printf(LOG_WARNING,"bytestring index must be between 0 and %d",bytestring_get_size(bs)-1);
-    return luaL_error(L,"index %d is out of range",index);
+    return luaL_error(L,"index %d is out of range",b_index);
   }
   lua_pushnumber(L,c);
   return 1;
@@ -292,11 +294,11 @@ static int subr_bytes_index(lua_State *L)
 static int subr_bytes_newindex(lua_State *L)
 {
   bytestring_t *bs = luaL_checkbytestring(L, 1);
-  int index=luaL_checkint(L,2);
+  int b_index=luaL_checkint(L,2);
   unsigned val=luaL_checkint(L,3);
 
-  if (bytestring_set_element(bs,index,val)!=BYTESTRING_OK)
-    return luaL_error(L,"index %d out of range",index);
+  if (bytestring_set_element(bs,b_index,val)!=BYTESTRING_OK)
+    return luaL_error(L,"index %d out of range",b_index);
   lua_pushnumber(L,val);
   return 1;
 }

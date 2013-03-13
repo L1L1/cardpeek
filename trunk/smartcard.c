@@ -74,10 +74,10 @@ unsigned cardmanager_count_readers(cardmanager_t* cm)
   return cm->readers_count;
 }
 
-const char *cardmanager_reader_name(cardmanager_t* cm, unsigned index)
+const char *cardmanager_reader_name(cardmanager_t* cm, unsigned n_index)
 {
-  if (index<cm->readers_count)
-    return cm->readers[index];
+  if (n_index<cm->readers_count)
+    return cm->readers[n_index];
   return NULL;
 }
 

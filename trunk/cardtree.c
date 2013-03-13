@@ -64,7 +64,7 @@ static void internal_cardtree_create_icon_markup_label_id(DyntreeModel *dm, GtkT
 	const char *classname;
 	const char *id;
 	const char *label;
-	char *icon_name = NULL;
+	const char *icon_name = NULL;
 
 	dyntree_model_iter_attributes_get(dm,
 			iter,
@@ -197,7 +197,7 @@ static void internal_cardtree_create_markup_alt(DyntreeModel *dm, GtkTreeIter* i
 {
 	char *markup;
 	const char *value;
-	char *color;
+	const char *color;
 	int is_bytes;
 
 	dyntree_model_iter_attributes_get(dm,iter,
@@ -292,24 +292,24 @@ gint cardtree_attribute_count(cardtree_t* ct)
 	return dyntree_model_get_n_columns(GTK_TREE_MODEL(ct->_store));
 }
 
-const char *cardtree_attribute_name(cardtree_t* ct, int index)
+const char *cardtree_attribute_name(cardtree_t* ct, int c_index)
 {
-	return dyntree_model_column_index_to_name(ct->_store, index);
+	return dyntree_model_column_index_to_name(ct->_store, c_index);
 }
 
 
 gboolean cardtree_attribute_set(cardtree_t* ct,
 				GtkTreeIter *iter,
-                            	int index,
+                            	int c_index,
                             	const char *str)
 {
-	if (index<0)
+	if (c_index<0)
 	       return FALSE;
 
-	if (dyntree_model_iter_attribute_set(ct->_store,iter,index,str)==FALSE)
+	if (dyntree_model_iter_attribute_set(ct->_store,iter,c_index,str)==FALSE)
 		return FALSE;
 
-	switch (index) {
+	switch (c_index) {
 		case CC_ID:
 		case CC_LABEL:
 		case CC_CLASSNAME:
@@ -332,17 +332,17 @@ gboolean cardtree_attribute_set_by_name(cardtree_t* ct,
                             	const char *name,
                             	const char *str)
 {
-	int index = dyntree_model_column_name_to_index(ct->_store,name);
+	int c_index = dyntree_model_column_name_to_index(ct->_store,name);
 
-	return cardtree_attribute_set(ct,iter,index,str);
+	return cardtree_attribute_set(ct,iter,c_index,str);
 }
 
 gboolean cardtree_attribute_get(cardtree_t* ct, 
 				GtkTreeIter *iter,
-                            	int index,
+                            	int c_index,
                             	const char **str)
 {
-	return dyntree_model_iter_attribute_get(ct->_store,iter,index,str);
+	return dyntree_model_iter_attribute_get(ct->_store,iter,c_index,str);
 }
 
 gboolean cardtree_attribute_get_by_name(cardtree_t* ct, 

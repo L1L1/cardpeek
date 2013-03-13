@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2010 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ static int subr_bit_xor(lua_State* L)
   return 1;
 }
 
-int subr_bit_shl(lua_State* L)
+static int subr_bit_shl(lua_State* L)
 {
   unsigned a = (unsigned)lua_tointeger(L,1);
   unsigned b = (unsigned)lua_tointeger(L,2);

@@ -45,7 +45,7 @@ static int serial_flush_output(int fd)
   return tcflush(fd,TCOFLUSH);
 }
 
-static int serial_send(int fd, char *s)
+static int serial_send(int fd, const char *s)
 {
   int len = strlen(s);
   int wr;
@@ -599,7 +599,7 @@ static void acg_finalize(cardreader_t* cr)
   free(extra);
 }
 
-int acg_initialize(cardreader_t *reader)
+static int acg_initialize(cardreader_t *reader)
 {
   acg_data_t* extra = malloc(sizeof(acg_data_t));
 

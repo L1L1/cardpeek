@@ -28,6 +28,7 @@
 #include "bytestring.h"
 #include "lua_bytes.h"
 #include <glib.h>
+#include <glib/gprintf.h>
 
 /***********************************************************
  * USER INTERFACE FUNCTIONS
@@ -542,7 +543,7 @@ static int subr_ui_about(lua_State* L)
   return 0;
 }
 
-int subr_node_ref_tostring(lua_State* L)
+static int subr_node_ref_tostring(lua_State* L)
 {
   GtkTreeIter *iter;
   char buf[20];

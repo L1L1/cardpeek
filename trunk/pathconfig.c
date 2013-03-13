@@ -75,23 +75,23 @@ int config_init(void)
   return 1;
 }
 
-const char *config_get_string(unsigned index)
+const char *config_get_string(unsigned c_index)
 {
-  if (index>NUM_CONFIG_OPTIONS)
+  if (c_index>NUM_CONFIG_OPTIONS)
     return NULL;
-  return CONFIG_STRING[index];
+  return CONFIG_STRING[c_index];
 }
 
-int config_set_string(unsigned index, const char *path)
+int config_set_string(unsigned c_index, const char *path)
 {
-  if (index>NUM_CONFIG_OPTIONS)
+  if (c_index>NUM_CONFIG_OPTIONS)
     return 0;
-  if (CONFIG_STRING[index])
-    free(CONFIG_STRING[index]);
+  if (CONFIG_STRING[c_index])
+    free(CONFIG_STRING[c_index]);
   if (path)
-    CONFIG_STRING[index]=strdup(path);
+    CONFIG_STRING[c_index]=strdup(path);
   else
-    CONFIG_STRING[index]=strdup("");
+    CONFIG_STRING[c_index]=strdup("");
   return 1;
 }
 

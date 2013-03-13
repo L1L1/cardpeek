@@ -17,6 +17,7 @@ AC_PROG_MAKE_SET
 
 # Our own checks
 
+AM_PATH_GLIB_2_0([2.12.0])
 AM_PATH_GTK_2_0([2.12.0])
 
 AC_DEFUN([AM_PATH_PACKAGE],

@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = gnu
 
-AM_CFLAGS=-Wall -g -O2 -Wextra -pipe -funsigned-char -fstrict-aliasing -Wchar-subscripts -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wunused -Wuninitialized -Wpointer-arith -Wredundant-decls -Winline -Wformat -Wformat-security -Wswitch-enum -Winit-self -Wmissing-include-dirs -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition -Wbad-function-cast -Wnested-externs -Wmissing-declarations @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
+AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GTK_CFLAGS@
 
 #AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
@@ -33,21 +33,22 @@ dist-hook:
 			rm -rf `find $(distdir)/ -name .svn`
 
 dot_cardpeek.$(OBJEXT):	dot_cardpeek_dir
-			rm -rf .cardpeek
-			cp -R dot_cardpeek_dir .cardpeek
-			tar cvzf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
-			rm -rf .cardpeek
+			@rm -rf .cardpeek
+			@cp -R dot_cardpeek_dir .cardpeek
+			tar czf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
+			@rm -rf .cardpeek
 			$(COMPILE) -c script.S -o $@
 
 icons.c:		icons/
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        icons/item.png > icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_card        icons/drive.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_application icons/application.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_file        icons/document.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
-			$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
+			@echo "Storing icons in icon.c"
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        icons/item.png > icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_card        icons/drive.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_application icons/application.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_file        icons/document.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
 			touch gui.c
 
 gui.$(OBJEXT):		gui.c gui.h icons.c
@@ -55,5 +56,4 @@ gui.$(OBJEXT):		gui.c gui.h icons.c
 
 smartcard.$(OBJEXT):	smartcard.c smartcard.h $(DRIVERS)
 			$(COMPILE) -c $<
-
 

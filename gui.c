@@ -211,7 +211,7 @@ static void gui_logfunction(int log_level, const char* str)
   GtkTextIter iter;
   GtkAdjustment* adj;
   const char* tag;
-  char tmp[80];
+  char status_bar_text[160];
 
   if (!LOG_BUFFER) 
     return;
@@ -238,11 +238,14 @@ static void gui_logfunction(int log_level, const char* str)
   }
   if (STATUS_BAR)
   {
-    strncpy(tmp,str,80);
-    tmp[79]=0;
-    if (tmp[strlen(tmp)-1]<32) tmp[strlen(tmp)-1]=0;
+    strncpy(status_bar_text,str,160);
+    status_bar_text[159]=0;
+    
+    if (status_bar_text[strlen(status_bar_text)-1]<' ') 
+	    status_bar_text[strlen(status_bar_text)-1]=0;
+
     gtk_statusbar_pop (STATUS_BAR, STATUS_BAR_CONTEXT_ID);
-    gtk_statusbar_push (STATUS_BAR, STATUS_BAR_CONTEXT_ID,tmp);
+    gtk_statusbar_push (STATUS_BAR, STATUS_BAR_CONTEXT_ID,status_bar_text);
   }
   gui_update(1);
 }
@@ -1118,7 +1121,7 @@ void gui_about(void)
 				   GTK_MESSAGE_INFO,
 				   GTK_BUTTONS_OK,
 				   "cardpeek, version %s\n"
-				   "Copyright 2009-2011, by 'L1L1'\n"
+				   "Copyright 2009-2013, by 'L1L1'\n"
 				   "Licenced under the GPL 3\n\n"
 				   "Path to scripts is:\n%s",
 				   VERSION,config_get_string(CONFIG_FOLDER_SCRIPTS));

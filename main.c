@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2012 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "script_version.h"
+#include "system_info.h"
 #include <errno.h>
 #ifndef _WIN32
 #include <sys/wait.h>
@@ -182,8 +183,10 @@ int main(int argc, char **argv)
   log_open_file();
 
   gui_init(&argc,&argv);
-  
+   
   gui_create(luax_run_script_cb,luax_run_command_cb);
+
+  log_printf(LOG_INFO,"Running %s",system_string_info());
 
   install_dot_file(); 
 
@@ -191,7 +194,8 @@ int main(int argc, char **argv)
 
   CTX = cardmanager_new();
 
-  reader_name = gui_select_reader(cardmanager_count_readers(CTX),cardmanager_reader_name_list(CTX));
+  reader_name = gui_select_reader(cardmanager_count_readers(CTX),
+		                  cardmanager_reader_name_list(CTX));
 
   READER = cardreader_new(reader_name);
   if (reader_name) g_free(reader_name);

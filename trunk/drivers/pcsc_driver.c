@@ -114,8 +114,9 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   				       &(pcsc->hcontext));
   if (pcsc->status!=SCARD_S_SUCCESS)
   {
-    log_printf(LOG_ERROR,"Failed to establish PCSC card manager context [%s]",
-	       pcsc_stringify_error(pcsc->status));
+    log_printf(LOG_ERROR,"Failed to establish PCSC card manager context: %s (error 0x%08x).",
+		    pcsc_stringify_error(pcsc->status),
+		    pcsc->status );
     return 0;
   }
 
@@ -125,8 +126,9 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   pcsc->status = SCardGetStatusChange(pcsc->hcontext,INFINITE,&reader_state,1);
   if (pcsc->status != SCARD_S_SUCCESS)
   {
-     log_printf(LOG_ERROR,"Failed to query reader status before connecting [%s]",
-                          pcsc_stringify_error(pcsc->status));
+     log_printf(LOG_ERROR,"Failed to query reader status before connecting: %s (error 0x%08x).",
+			pcsc_stringify_error(pcsc->status),
+			pcsc->status );
      return 0;
   }
 
@@ -138,8 +140,9 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
      pcsc->status = SCardGetStatusChange(pcsc->hcontext,3000,&reader_state,1);
      if (pcsc->status != SCARD_S_SUCCESS && pcsc->status != SCARD_E_TIMEOUT)
      {
-	log_printf(LOG_ERROR,"Failed to query reader status change before connecting [%s]",
-			     pcsc_stringify_error(pcsc->status));
+	log_printf(LOG_ERROR,"Failed to query reader status change before connecting: %s (error 0x%08x).",
+			pcsc_stringify_error(pcsc->status),
+			pcsc->status );
 	return 0;
      }
   }
@@ -154,8 +157,9 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
   
   if (pcsc->status!=SCARD_S_SUCCESS)
   {
-    log_printf(LOG_ERROR,"Connection failed [%s]",
-	       pcsc_stringify_error(pcsc->status));
+    log_printf(LOG_ERROR,"Connection failed: %s (error 0x%08x).",
+		    pcsc_stringify_error(pcsc->status),
+		    pcsc->status );
     return 0;
   }
 
@@ -181,8 +185,9 @@ static int pcsc_disconnect(cardreader_t *cr)
     return 1;
   }
 
-  log_printf(LOG_ERROR,"Failed to disconnect reader [%s]",
-	     pcsc_stringify_error(pcsc->status));
+  log_printf(LOG_ERROR,"Failed to disconnect reader: %s (error 0x%08x).",
+		  pcsc_stringify_error(pcsc->status),
+		  pcsc->status );	
   return 0;
 }
 
@@ -202,8 +207,9 @@ static int pcsc_reset(cardreader_t *cr)
     return 1;
   }
 
-  log_printf(LOG_ERROR,"Failed to reconnect reader [%s]",
-	     pcsc_stringify_error(pcsc->status));
+  log_printf(LOG_ERROR,"Failed to reconnect reader: %s (error 0x%08x).",
+		  pcsc_stringify_error(pcsc->status),
+		  pcsc->status );
   cr->connected=0;
   return 0;
 }
@@ -242,8 +248,9 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
 
   if (pcsc->status!=SCARD_S_SUCCESS)
   {
-    log_printf(LOG_ERROR,"Failed to transmit command to card [%s]",
-	       pcsc_stringify_error(pcsc->status));
+    log_printf(LOG_ERROR,"Failed to transmit command to card: %s (error 0x%08x).",
+		    pcsc_stringify_error(pcsc->status),
+		    pcsc->status );
     return CARDPEEK_ERROR_SW;
   }
 
@@ -281,8 +288,9 @@ static const bytestring_t* pcsc_last_atr(cardreader_t* cr)
   else
   {
     bytestring_clear(cr->atr);
-    log_printf(LOG_ERROR,"Failed to query card status [%s]",
-	       pcsc_stringify_error(pcsc->status));
+    log_printf(LOG_ERROR,"Failed to query card status: %s (error 0x%08x).",
+		    pcsc_stringify_error(pcsc->status),
+		    pcsc->status );
   }
   return cr->atr;
 }

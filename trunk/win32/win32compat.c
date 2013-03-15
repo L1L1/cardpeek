@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "winscard.h"
+#include <windows.h>
 
 SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
 SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
@@ -63,6 +64,33 @@ const char *PCSC_ERROR[] = {
 /* 69 */ 	"The smart card has been removed, so further communication is not possible"
 };
 
+static const char *system_stringify_error(DWORD err)
+{
+	static char error_string[256];
+	char *p;
+
+	if (!FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
+				NULL, 
+				err, 
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+				(LPSTR)error_string, 
+				255, 
+				NULL))
+	{
+		sprintf(error_string,"Unknown system error (0x%08X)",(unsigned)err); 
+	}
+	else
+	{
+		for (p = error_string;*p!='\0';p++) 
+			if (*p<' ') 
+			{
+				*p='\0';
+				break;
+			}
+	}
+	return error_string; 
+}
+
 const char *pcsc_stringify_error(long err)
 {
 	static char default_buf[64];
@@ -75,9 +103,14 @@ const char *pcsc_stringify_error(long err)
 		if (index>=0x66 || index<=0x69)
 			return PCSC_ERROR[index-0x66+0x30];
 	}
+	else if (err<1700)
+	{
+		return system_stringify_error(err);
+	}
 	sprintf(default_buf,"Unknown error (0x%08X)",(unsigned)err);
 	return default_buf;
 }
+
 
 int scandir(const char *dir, struct dirent ***namelist,
 		int (*select)(const struct dirent *),
@@ -113,3 +146,5 @@ int alphasort (const struct dirent **a, const struct dirent **b)
 {
 	return strcmp((*a)->d_name,(*b)->d_name);
 }
+
+

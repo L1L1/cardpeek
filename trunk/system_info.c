@@ -23,7 +23,7 @@
 #ifndef _WIN32
 #include <string.h>
 #include <stdio.h>
-#include "win32/config.h"
+#include "config.h"
 
 const char *system_string_info()
 {

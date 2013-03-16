@@ -19,7 +19,7 @@ ICONS=icons/drive.png icons/item.png icons/card.png icons/smartcard.png icons/fo
 
 CLEANFILES=icons.c dot_cardpeek.tar.gz 
 
-EXTRA_DIST=script.S $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
+EXTRA_DIST=script.S $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
 
 GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
 

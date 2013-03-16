@@ -1,12 +1,12 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
-AC_INIT([cardpeek], [0.7.2], [L1L1@gmx.com])
+AC_PREREQ([2.67])
+AC_INIT([cardpeek],[0.7.2],[L1L1@gmx.com])
 AM_INIT_AUTOMAKE([cardpeek], [0.7.2])
 
 AC_CONFIG_SRCDIR([main.c])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # silent build by default
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -116,7 +116,6 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
-AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero getcwd memmove memset select strcasecmp strdup strerror strncasecmp strrchr strtol])

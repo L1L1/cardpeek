@@ -1,3 +1,12 @@
+cardpeek-0.7.2: L1L1@gmx.com
+17 March 2013
+- This is a bugfix release. No new features / scripts were added.
+- Fixed many compiler, and C coding standards compliance issues (many thanks to Ludovic Rousseau).
+- Produce a windows version that seems to work both for 32 and 64 bit platforms 
+- Added proper compile flag detection for GLIB.
+- Added source of PDF documentation in doc/ directory.
+- Some other minor correction
+
 cardpeek-0.7.1: L1L1@gmx.com
 7 May 2012
 - Corrected a bug in the GSM script (spotted by Tyson Key), which made it halt on some USIM cards.

@@ -32,9 +32,9 @@ require('lib.strict')
 function card.get_processing_options(pdol)
 	local command;
         if pdol and #pdol>0 then
-	   command = bytes.new(8,"80 A8 00 00",#pdol+2,0x83,#pdol,pdol)
+	   command = bytes.new(8,"80 A8 00 00",#pdol+2,0x83,#pdol,pdol,"00")
 	else
-	   command = bytes.new(8,"80 A8 00 00 02 83 00")
+	   command = bytes.new(8,"80 A8 00 00 02 83 00 00")
 	end
 	return card.send(command)
 end

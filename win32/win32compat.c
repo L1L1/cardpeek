@@ -81,8 +81,9 @@ static const char *system_stringify_error(DWORD err)
 	}
 	else
 	{
+		/* FIXME: not UT8 clean */
 		for (p = error_string;*p!='\0';p++) 
-			if (*p<' ') 
+			if (*p=='\n' || *p=='\r') 
 			{
 				*p='\0';
 				break;

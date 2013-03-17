@@ -99,6 +99,8 @@ function card.select(file_path,return_what,length)
 
 	if length~=nil then
 	   bytes.append(command,length)
+	else
+	   bytes.append(command,"00")
 	end
 
 	return card.send(command)

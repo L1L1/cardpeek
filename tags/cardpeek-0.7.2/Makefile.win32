@@ -1,0 +1,53 @@
+CC = gcc 
+GDK_PIXBUF_CSOURCE = gdk-pixbuf-csource
+
+OBJECTS = dyntree_model.o dot_cardpeek.o asn1.o attributes.o \
+        bytestring.o cardtree.o crypto.o \
+        emulator.o iso7816.o \
+        lua_asn1.o lua_bit.o lua_bytes.o \
+        lua_card.o lua_crypto.o lua_ext.o \
+        lua_log.o lua_ui.o main.o \
+        misc.o pathconfig.o smartcard.o gui.o \
+	win32/win32compat.o win32/resource.o \
+	system_info.o
+
+LIBS = `pkg-config --libs gtk+-2.0` -L/usr/lib -lssl -lcrypto -llua5.1 -L./win32/ -lwinscard
+
+CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-2.0`
+
+all:		cardpeek
+
+cardpeek:	$(OBJECTS) win32/libwinscard.a
+		$(CC) -mwindows -o cardpeek $(OBJECTS) $(LIBS)
+
+icons.c:		icons/
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        icons/item.png > icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_card        icons/drive.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_application icons/application.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_file        icons/document.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
+			@touch gui.c
+			@echo "COMPILED ICONS"
+
+gui.o:			gui.c gui.h icons.c
+			$(CC) $(CFLAGS) -c gui.c
+
+win32/resource.o:	win32/resource.rc
+			windres win32/resource.rc -O coff -o win32/resource.o
+
+dot_cardpeek.o:		dot_cardpeek_dir script.S
+			rm -rf .cardpeek
+			cp -R dot_cardpeek_dir .cardpeek
+			tar zcvf dot_cardpeek.tar.gz --exclude="*~" --exclude=.svn .cardpeek
+			rm -rf .cardpeek
+			gcc -c script.S -o $@
+
+win32/libwinscard.a:	win32/winscard.def win32/winscard.h
+			dlltool.exe -k -d win32/winscard.def -l win32/libwinscard.a c:/WINDOWS/system32/winscard.dll
+
+clean:			
+			rm -f $(OBJECTS) cardpeek.exe win32/libwinscard.a icons.c dot_cardpeek.tar.gz *~
+

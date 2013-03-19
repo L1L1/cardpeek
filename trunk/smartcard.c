@@ -355,9 +355,9 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
     log_printf(LOG_INFO,"Failed to establish PCSC card manager context");
     log_printf(LOG_INFO,"PCSC error code 0x%08X: %s",status,pcsc_stringify_error(status));
     if (cardmanager_check_pcscd_is_running()==0)
-      log_printf(LOG_INFO,"The pcscd deamon does not seem to be running.");
+      log_printf(LOG_INFO,"The pcscd daemon does not seem to be running.");
     else
-      log_printf(LOG_INFO,"The pcscd deamon seems to be running.");
+      log_printf(LOG_INFO,"The pcscd daemon seems to be running.");
     return 0;
   }
 

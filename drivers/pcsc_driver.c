@@ -22,7 +22,9 @@
 #include <winscard.h>
 
 #ifndef _WIN32
+#ifndef __APPLE__
 #include <reader.h>
+#endif
   SCARD_IO_REQUEST pioRecvPci_dummy;
 #define SCARD_PCI_NULL (&pioRecvPci_dummy)
 #else
@@ -32,6 +34,10 @@
    * So here is an ugly trick. 
    */
 #define SCARD_PCI_NULL NULL
+#endif
+#ifdef __APPLE__
+#include <wintypes.h>
+#define SCARD_ATTR_MAXINPUT 0x7A007
 #endif
 
 #define MAX_PCSC_READ_LENGTH 270 

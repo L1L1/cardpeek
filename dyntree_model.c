@@ -1,3 +1,4 @@
+#include "config.h"
 #include "dyntree_model.h"
 #include "misc.h"
 #include <glib/gstdio.h>

@@ -1,5 +1,5 @@
 	.data
-#ifdef _WIN32
+#if defined _WIN32 || defined __APPLE__
 	.globl	__binary_dot_cardpeek_tar_gz_start
 	.globl  __binary_dot_cardpeek_tar_gz_size
 	.globl	__binary_dot_cardpeek_tar_gz_end

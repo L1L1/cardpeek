@@ -14,6 +14,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_MAKE_SET
+AC_CANONICAL_HOST
 
 # Our own checks
 
@@ -57,10 +58,17 @@ dnl
   AC_SUBST([$2_LIBS])
 ])
 
+case "${host}" in
+  *-*-darwin*)
+    PCSC_CFLAGS='-framework PCSC -I/System/Library/Frameworks/PCSC.framework/Headers'
+    ;;
+  *)
 AM_PATH_PACKAGE([libpcsclite],[PCSC],,AC_MSG_ERROR([
 Could not find libpcsclite-dev. 
 This program requires the libpcsclite library. 
 Please install the libpcsclite library first.]))
+    ;;
+esac
 
 AM_PATH_PACKAGE([lua-5.1],[LUA],,[
   AM_PATH_PACKAGE([lua5.1],[LUA],,[
@@ -109,6 +117,7 @@ AC_CHECK_HEADERS([fcntl.h limits.h stdlib.h string.h sys/time.h termios.h unistd
 AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
+CFLAGS="$GLIB_CFLAGS $CFLAGS"
 AC_CHECK_TYPES([GStatBuf],[],[],[#include <glib/gstdio.h>])
 
 # Checks for library functions.

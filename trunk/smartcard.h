@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009i-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 * along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+
+#include <stdint.h>
 
 #ifndef SMARTCARD_H
 #define SMARTCARD_H
@@ -75,8 +77,8 @@ typedef struct _cardreader_t cardreader_t;
 struct _cardreader_t {
   char           *name;
   unsigned       connected;
-  unsigned long  protocol;
-  unsigned short sw;
+  uint32_t  	 protocol;
+  uint16_t 	 sw;
   unsigned       command_interval;
   bytestring_t   *atr;
   void           *extra_data;

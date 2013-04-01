@@ -6,7 +6,7 @@
 
 
 #include <gtk/gtk.h>
-
+#include "a_string.h"
 
 #define CUSTOM_TYPE_CELL_RENDERER_FLEXI             (custom_cell_renderer_flexi_get_type())
 #define CUSTOM_CELL_RENDERER_FLEXI(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),  CUSTOM_TYPE_CELL_RENDERER_FLEXI, CustomCellRendererFlexi))
@@ -25,23 +25,28 @@ struct _CustomCellRendererFlexi
 {
   GtkCellRenderer   parent;
 
-  gboolean	interpret;
-  char		*text;
-  char		*fallback;
-  char  	*mime_type;
-  /* GValue	*value; */ 
-  /* PangoAttrList *text_attr; */
+  gboolean	is_raw;
+  a_string_t	*raw_value;
+  a_string_t	*alt_text;
+  a_string_t  	*mime_type;
+  a_string_t  	*rendering;
+  /* GValue	*value; */
+  int		default_width; 
 };
 
 
 struct _CustomCellRendererFlexiClass
 {
   GtkCellRendererClass  parent_class;
+  //PangoFontDescription* font;
 };
 
 GType                custom_cell_renderer_flexi_get_type (void);
 
-GtkCellRenderer     *custom_cell_renderer_flexi_new (gboolean interpret);
+GtkCellRenderer     *custom_cell_renderer_flexi_new (gboolean is_raw);
 
+void custom_cell_renderer_flexi_set_format(GtkCellRenderer *crenderer, gboolean is_raw);
+
+gboolean custom_cell_renderer_flexi_get_format(GtkCellRenderer *crenderer);
 
 #endif

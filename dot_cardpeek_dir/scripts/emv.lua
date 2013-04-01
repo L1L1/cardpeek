@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2012 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 -- Aug 08 2010: Corrected bug in AFL data processing
 -- Mar 27 2011: Added CVM patch from Adam Laurie.
 -- Jan 23 2012: Added UK Post Office Card Account in AID list from Tyson Key.
+-- Mar 25 2012: Added a few AIDs
 
 require('lib.tlv')
 require('lib.strict')
@@ -216,21 +217,30 @@ EMV_REFERENCE = {
 }
 
 function emv_parse(cardenv,tlv)
-	tlv_parse(cardenv,tlv,EMV_REFERENCE)
+	return tlv_parse(cardenv,tlv,EMV_REFERENCE)
 end
 
 PPSE = "#325041592E5359532E4444463031"
 PSE  = "#315041592E5359532E4444463031"
 
+-- AID_LIST enhanced with information from Wikipedia
+-- http://en.wikipedia.org/wiki/EMV
+
 AID_LIST = { 
-  "#A0000000421010",
-  "#A0000000422010",
-  "#A0000000031010",
-  "#A0000000032010",
-  "#A0000000041010",
-  "#A0000000042010",
+  "#A0000000421010", -- French CB
+  "#A0000000422010", -- French CB
+  "#A0000000031010", -- Visa credit or debit
+  "#A0000000032010", -- Visa electron
+  "#A0000000032020", -- V pay
+  "#A0000000032010", -- Visa electron
+  "#A0000000041010", -- Mastercard credit or debit 
+  "#A0000000042010", -- 
+  "#A0000000043060", -- Mastercard Maestro
+  "#A0000000046000", -- Mastercard Cirrus 
   "#A00000006900",   -- FR Moneo
   "#A0000001850002", -- UK Post Office Card Account card
+  "#A00000002501",   -- American Express
+  "#A0000001523010", -- Diners club
 }
 
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }
@@ -570,7 +580,9 @@ function emv_process_application(cardenv,aid)
 	   		    		    SFI = ui.tree_add_node(APP,"file","file",sfi_index)
 				    end
 			            REC = ui.tree_add_node(SFI,"record","record",rec_index)
-			            emv_parse(REC,resp)
+			            if (emv_parse(REC,resp)==false) then
+					    ui.tree_set_value(REC,resp)    
+				    end
 		        	end
 	
 		        end -- for rec_index

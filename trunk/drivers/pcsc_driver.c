@@ -21,24 +21,43 @@
 
 #include <winscard.h>
 
-#ifndef _WIN32
-#ifndef __APPLE__
-#include <reader.h>
-#endif
-  SCARD_IO_REQUEST pioRecvPci_dummy;
-#define SCARD_PCI_NULL (&pioRecvPci_dummy)
-#else
+#ifdef _WIN32
   /* 
    * On linux pioRecvPci is expected to point somewhere in the 
    * SCardTransmit() call but on windows, we must make it NULL. 
    * So here is an ugly trick. 
    */
-#define SCARD_PCI_NULL NULL
+  #define SCARD_PCI_NULL NULL
+#elif __APPLE__
+  SCARD_IO_REQUEST pioRecvPci_dummy;
+  #define SCARD_PCI_NULL (&pioRecvPci_dummy)
+  #include <wintypes.h>
+  #define SCARD_ATTR_MAXINPUT 0x7A007
+#else /* Linux et al. */
+  SCARD_IO_REQUEST pioRecvPci_dummy;
+  #define SCARD_PCI_NULL (&pioRecvPci_dummy)
+  #include <reader.h>
 #endif
-#ifdef __APPLE__
-#include <wintypes.h>
-#define SCARD_ATTR_MAXINPUT 0x7A007
-#endif
+
+/* #ifndef _WIN32
+ * #ifndef __APPLE__
+ * #include <reader.h>
+ * #endif
+ *  SCARD_IO_REQUEST pioRecvPci_dummy;
+ * #define SCARD_PCI_NULL (&pioRecvPci_dummy)
+ * #else
+ * * 
+   * On linux pioRecvPci is expected to point somewhere in the 
+   * SCardTransmit() call but on windows, we must make it NULL. 
+   * So here is an ugly trick. 
+   *
+ * #define SCARD_PCI_NULL NULL
+ * #endif
+ * #ifdef __APPLE__
+ * #include <wintypes.h>
+ * #define SCARD_ATTR_MAXINPUT 0x7A007
+ * #endif
+ */
 
 #define MAX_PCSC_READ_LENGTH 270 
 

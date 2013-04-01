@@ -1,15 +1,15 @@
 CC = gcc 
 GDK_PIXBUF_CSOURCE = gdk-pixbuf-csource
 
-OBJECTS = dyntree_model.o dot_cardpeek.o asn1.o attributes.o \
+OBJECTS = dyntree_model.o dot_cardpeek.o asn1.o \
         bytestring.o cardtree.o crypto.o \
-        emulator.o iso7816.o \
+        emulator.o gui_flexi_cell_renderer.o iso7816.o \
         lua_asn1.o lua_bit.o lua_bytes.o \
         lua_card.o lua_crypto.o lua_ext.o \
         lua_log.o lua_ui.o main.o \
         misc.o pathconfig.o smartcard.o gui.o \
 	win32/win32compat.o win32/resource.o \
-	system_info.o
+	system_info.o a_string.o
 
 LIBS = `pkg-config --libs gtk+-2.0` -L/usr/lib -lssl -lcrypto -llua5.1 -L./win32/ -lwinscard
 
@@ -22,12 +22,12 @@ cardpeek:	$(OBJECTS) win32/libwinscard.a
 
 icons.c:		icons/
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        icons/item.png > icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_card        icons/drive.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_application icons/application.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_file        icons/document.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      icons/card.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       icons/block.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   icons/smartcard.png >> icons.c
+			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_analyzer    icons/analyzer.png >> icons.c
 			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    icons/cardpeek.png >> icons.c
 			@touch gui.c
 			@echo "COMPILED ICONS"

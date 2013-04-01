@@ -38,7 +38,6 @@ struct _CustomCellRendererFlexi
 struct _CustomCellRendererFlexiClass
 {
   GtkCellRendererClass  parent_class;
-  //PangoFontDescription* font;
 };
 
 GType                custom_cell_renderer_flexi_get_type (void);

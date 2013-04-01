@@ -52,19 +52,27 @@ static int print_debug_message(lua_State* L)
 {
   const char* err_msg = lua_tostring(L,1);
   lua_Debug ar;
+  int depth = 1;
 
-  log_printf(LOG_ERROR,"(DEBUG) %s",err_msg);
+  log_printf(LOG_ERROR,"%s",err_msg);
 
-  lua_getstack(L,1,&ar);
-  if (lua_getinfo(L,"n",&ar))
+  while (lua_getstack(L,depth++,&ar))
   {
-	if (ar.name)
-		log_printf(LOG_ERROR,"Called from %s",ar.name);
-  	else
-		log_printf(LOG_ERROR,"Called form main body of script");
+	  if (lua_getinfo(L,"lnS",&ar))
+	  {
+		  if (ar.name)
+		  {
+			if (ar.currentline>=0)
+				log_printf(LOG_ERROR,"backtrace: called from %s() in %s[%i]",ar.name,ar.short_src,ar.currentline);
+			else
+				log_printf(LOG_ERROR,"backtrace: called from %s()",ar.name);
+		  }
+		  else
+			  log_printf(LOG_ERROR,"backtrace: called at %s",ar.short_src);
+	  }
+	  else
+		  log_printf(LOG_ERROR,"backtrace: no further information available");
   }
-  else
-    log_printf(LOG_ERROR,"No further information available");
 
   return 0;
 }
@@ -102,7 +110,6 @@ static int run_file(lua_State* L, const char *filename)
   fclose(input);
   if (lua_pcall(L, 0, LUA_MULTRET, -2)!=0)
   {
-    log_printf(LOG_ERROR,"Runtime error in %s",filename);
     lua_pop(L,1);
     return 0;
   }

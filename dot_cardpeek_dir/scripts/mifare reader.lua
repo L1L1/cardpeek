@@ -74,9 +74,21 @@ function MIFARE_trailer_sector(trailer,data)
 		   tostring(bytes.sub(ac,4,7)) .. ", " ..
 		   tostring(bytes.sub(ac,8,11))
 
-	trailer:append("item","Key A",nil,#key_a):setVal(key_a)
-	trailer:append("item","Access bits",nil,#ac_full):setVal(ac_full):setAlt(ac_split)
-	trailer:append("item","Key B or data",nil,#key_b):setVal(key_b)
+	trailer:append{ classname="item",
+			label="Key A",
+			size=#key_a,
+			val=key_a }
+
+	trailer:append{ classname="item",
+			label="Access bits",
+			size=#ac_full,
+			val=ac_ful,
+			alt=ac_split }
+
+	trailer:append{ classname="item",
+			label="Key B or data",
+			size=#key_b,
+			val=key_b }
 end
 
 function MIFARE_first_sector(init,data)
@@ -87,9 +99,21 @@ function MIFARE_first_sector(init,data)
 	UID  = bytes.sub(data,0,3)
 	cc   = bytes.sub(data,4,4)
 	manu = bytes.sub(data,5,15)
-	init:append("item","UID",nil,#UID):setVal(UID)
-	init:append("item","Check byte",nil,#cc):setVal(cc)
-	init:append("item","Manufacturer data",nil,#manu):setVal(manu)
+
+	init:append{ classname="item",
+		     label="UID",
+		     size=#UID,
+		     vale=UID }
+
+	init:append{ classname="item",
+		     label="Check byte",
+		     size=#cc,
+		     val=cc }
+
+	init:append{ classname="item",
+		     label="Manufacturer data",
+		     size=#manu, 
+		     vale=manu }
 	
 end
 
@@ -102,7 +126,7 @@ function MIFARE_scan(root)
 
 	sw, resp = mifare_read_uid()
 	if sw == 0x9000 then
-		root:append("block","UID"):setVal(resp):setAlt(bytes.tonumber(resp))
+		root:append{ classname="block", label="UID", val=resp, alt=bytes.tonumber(resp) }
 	end
 
 	root:append("block","last sector")
@@ -125,13 +149,16 @@ function MIFARE_scan(root)
 		
 		if sw == 0x9000 then
 			last_sector = sector
-			SECTOR = root:append("record","sector",sector)
-			SECTOR:append("item","access key"):setVal(bytes.new(8,key))
+			SECTOR = root:append{ classname="record", label="sector", id=sector }
+			SECTOR:append{ classname="item", label="access key", val=bytes.new(8,key) }
 			for block = 0,3 do
 				sw, resp = mifare_read_binary(sector*4+block,16)
 				if sw == 0x9000 then
-					SECTOR	:append("record","block",block,#resp)
-						:setVal(resp)
+					SECTOR	:append{ classname="record", 
+						         label="block", 
+							 id=block, 
+							 size=#resp,
+							 val=resp }
 					if block == 3 then
 						MIFARE_trailer_sector(SECTOR:children():last(),resp)
 					elseif block+sector == 0 then
@@ -145,7 +172,7 @@ function MIFARE_scan(root)
 		end
 	end
 	if last_sector then
-		_("last sector"):setVal(bytes.new(8,last_sector))
+		_n("last sector"):val(bytes.new(8,last_sector))
 	end
 end
 
@@ -155,6 +182,6 @@ if card.connect() then
    mifare_load_key(0xA,MIFARE_STD_KEYS[0xA])
    mifare_load_key(0xB,MIFARE_STD_KEYS[0xB])
    mifare_load_key(0xF,MIFARE_STD_KEYS[0xF])
-   MIFARE_scan(_(CARD))
+   MIFARE_scan(_n(CARD))
    card.disconnect()
 end

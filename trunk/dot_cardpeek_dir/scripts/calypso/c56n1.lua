@@ -26,7 +26,7 @@
 
 require('lib.strict')
 require('lib.en1545')
-require('lib.treeflex')
+require('lib.tnode')
 require('etc.brussels-metro')
 require('etc.brussels-bus')
 
@@ -84,12 +84,14 @@ function mobib_TRANSPORT(source)
 	end
 end
 
-function mobib_process_block(REC,label,beginp,endp,block,func)
+function mobib_process_block(ref,label,beginp,endp,block,func)
 	local data = bytes.sub(block,beginp,endp)
 	local res = func(data)
-	_(REC):append("item",label,nil,endp-beginp+1)
-	       :setVal(data)
-		:setAlt(res)
+	_n(ref):append{ classname="item",
+	 	        label=label,
+		        size=endp-beginp+1,
+		        val=data,
+		        alt=res }
 	return res
 end
 
@@ -110,7 +112,7 @@ function mobib_process_event(i,ref)
 	local ref2
 
 	if bytes.is_all(block,0) then
-		_(ref):setAlt("NO EVENT RECORDED")
+		_n(ref):alt("NO EVENT RECORDED")
 		return false
 	end
 	mobib_process_block(ref,"EventDataDateStamp",6,19,block,en1545_DATE)
@@ -122,7 +124,7 @@ function mobib_process_event(i,ref)
 	transport_type = mobib_process_block(ref,"EventTransportType",99,104,block,mobib_TRANSPORT)
 	if transport_type=="metro" or transport_type=="premetro" then
 		mobib_process_block(ref,"EventLocationId",104,120,block,mobib_TRANSPORT_METRO)
-		ref2 = _(ref):find("EventLocationId"):get(1)	
+		ref2 = _n(ref):find("EventLocationId"):get(1)	
 		mobib_process_block(ref2,"EventLocationZone",104,109,block,en1545_NUMBER)
 		mobib_process_block(ref2,"EventLocationSubZone",110,113,block,en1545_NUMBER)
 		mobib_process_block(ref2,"EventLocationStation",114,120,block,en1545_NUMBER)
@@ -136,42 +138,45 @@ end
 function mobib_process_env(i,ref)
 	local block = bytes.convert(1,ui.tree_get_value(ref))
 	if bytes.is_all(block,0) then
-		_(ref):setAlt("NO ENVIRONMENT DATA")
+		_n(ref):alt("NO ENVIRONMENT DATA")
 	        return false
 	end
 	mobib_process_block(ref,"EnvNetworkId",13,36,block,en1545_NETWORKID)
 	return true
 end
 
-function mobib_process(APP)
-	local HOLDER_EXT
-	local RECORD_1
-	local RECORD_2
+function mobib_process(cardenv)
+	local record1_node
+	local record2_node
 	local data
 
-	RECORD_1=_(APP):find("Holder Extended"):find("record#1")
-	if RECORD_1:size()==0 then 
+	record1_node = cardenv:find("Holder Extended"):find("record#1")
+	if record1_node:length()==0 then 
 		log.print(LOG_ERROR,"Could not find record 1 in 'Holder Extended' file")
 		return false
 	end
-	RECORD_2=_(APP):find("Holder Extended"):find("record#2")
-	if RECORD_2:size()==0 then 
+
+	record2_node= cardenv:find("Holder Extended"):find("record#2")
+	if record2_node:length()==0 then 
 		log.print(LOG_ERROR,"Could not find record 2 in 'Holder Extended' file")
 		return false
 	end
 	
-	data = RECORD_1:val() .. RECORD_2:val()
+	data = record1_node:val() .. record2_node:val()
 	
-	RECORD_2:remove()
-	RECORD_1:remove()
+	record1_node:remove()
+	record2_node:remove()
 
-	_(APP):find("Holder Extended")
-		:append("record","record","1+2",#data)
-    		:setVal(data)
+	cardenv:find("Holder Extended")
+		:append({ classname = "record", 
+			  label = "record",
+			  id = "1+2",
+			  size = #data,
+			  val = data })
 		:each(mobib_process_holderext)
 
-	_(APP):find("Event logs"):find("record"):each(mobib_process_event)
-	_(APP):find("Environment"):find("record"):each(mobib_process_env)
+	cardenv:find("Event logs"):find("record"):each(mobib_process_event)
+	cardenv:find("Environment"):find("record"):each(mobib_process_env)
 end
 
 mobib_process(CARD)

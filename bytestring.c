@@ -28,6 +28,7 @@
 #include <ctype.h>
 #endif
 #include "misc.h"
+#include "a_string.h"
 
 int bytestring_init(bytestring_t *bs, unsigned element_width)
 {
@@ -193,7 +194,7 @@ static int bs_convert_8_to_4(bytestring_t *bs,
   for (u=0;u<src->len;u++)
   {
     bs->data[u*2]=src->data[u]>>4;
-    bs->data[u*2+1]=src->data[u]&&0xF;
+    bs->data[u*2+1]=src->data[u]&0xF;
   }
   return BYTESTRING_OK;
 }

@@ -1,6 +1,7 @@
 #include "config.h"
 #include "dyntree_model.h"
 #include "misc.h"
+#include "a_string.h"
 #include <glib/gstdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -151,29 +152,34 @@ const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int c_index)
 int dyntree_model_column_register(DyntreeModel *ctm, 
 		                  const char *column_name)
 {
-	int c;
+	int col;
 
-	if ((c = dyntree_model_column_name_to_index(ctm,column_name))<0)
+	if ((col = dyntree_model_column_name_to_index(ctm,column_name))<0)
 	{
-		c = ctm->n_columns++;
-		if (c==ctm->max_columns) 
+		col = ctm->n_columns++;
+		if (col==ctm->max_columns) 
 		{
 			ctm->max_columns<<=1;
 			ctm->columns_by_index = g_realloc(ctm->columns_by_index, 
-						         sizeof(DyntreeModelAttributeDescriptor)*ctm->max_columns);
+						      sizeof(DyntreeModelAttributeDescriptor)*ctm->max_columns);
 		}
-		ctm->columns_by_index[c].name       = g_strdup(column_name);
-		/* we add 1 to c so that c==0 is stored as 1 and not NULL */
-		g_hash_table_insert(ctm->columns_by_name,(gpointer)ctm->columns_by_index[c].name,GINT_TO_POINTER(c+1));
+		ctm->columns_by_index[col].name       = g_strdup(column_name);
+		/* we add 1 to col so that col==0 is stored as 1 and not NULL */
+		g_hash_table_insert(ctm->columns_by_name,(gpointer)ctm->columns_by_index[col].name,GINT_TO_POINTER(col+1));
 	}
-	return c;
+	return col;
 }
 
 static void dyntree_model_init (DyntreeModel *ctm)
 {
 	ctm->root = NULL;
+
 	ctm->columns_by_name = g_hash_table_new(cstring_hash,cstring_equal);
-	ctm->columns_by_index = g_malloc(sizeof(char *)*16);
+        g_assert(ctm->columns_by_name != NULL);
+
+	ctm->columns_by_index = g_try_malloc(sizeof(char *)*16);
+        g_assert(ctm->columns_by_index != NULL);
+
 	ctm->max_columns = 16;
 	ctm->n_columns = 0; 
 	ctm->stamp = g_random_int(); /* Random int to check whether an iter belongs to our model */
@@ -429,6 +435,8 @@ static gint dyntree_model_iter_n_children (GtkTreeModel *tree_model,
 	
 	ctm = DYNTREE_MODEL(tree_model);
 
+	/* if we are at the root of ctm, we can't rely on node->n_children so
+	   we manually count them */
 	if (iter==NULL)
 	{
 		node = ctm->root;
@@ -556,10 +564,11 @@ gboolean dyntree_model_iter_attribute_set(DyntreeModel *m,
 	{
 		pos = node->max_attributes;
 		node->max_attributes = m->max_columns;
+		
 		node->attributes = g_realloc(node->attributes,
 					     sizeof(DyntreeModelAttributeValue)*m->max_columns);
-		g_assert(node->attributes != NULL);
-		for (i=pos;i<node->max_attributes;i++) /* FIXME: is this already done by realloc ? */
+		
+ 		for (i=pos;i<node->max_attributes;i++) 
 		{
 			node->attributes[i].value = NULL;
 		}
@@ -572,8 +581,6 @@ gboolean dyntree_model_iter_attribute_set(DyntreeModel *m,
 		node->attributes[c_index].value = NULL;
 	else
 		node->attributes[c_index].value = g_strdup(str);
-
-	/* fprintf(stderr,"Node[%i]=[%p]\n",index,node->attributes[index].value); */
 
 	
 	path = dyntree_model_get_path(GTK_TREE_MODEL(m), iter);
@@ -590,9 +597,9 @@ gboolean dyntree_model_iter_attribute_set_by_name(DyntreeModel *m,
 		const char *attr_name, 
 		const char *str)
 {
- 	int c = dyntree_model_column_register(m,attr_name);
-	if (c>=0)
-		return dyntree_model_iter_attribute_set(m,iter,c,str);
+ 	int col = dyntree_model_column_register(m,attr_name);
+	if (col>=0)
+		return dyntree_model_iter_attribute_set(m,iter,col,str);
 	return FALSE;
 }
 
@@ -629,12 +636,6 @@ gboolean dyntree_model_iter_attribute_get(DyntreeModel *m,
 	else
 		*str = NULL;
 
-	/* if (*str)
-		fprintf(stderr,"Requested attribute[%i] in %s : %s\n",index,node->attributes[1].value,*str);
-	else
-		fprintf(stderr,"Requested attribute[%i] in %s : NULL\n",index,node->attributes[1].value);
-		*/
-
 	return TRUE;
 }
 
@@ -643,24 +644,18 @@ gboolean dyntree_model_iter_attribute_get_by_name(DyntreeModel *m,
 		const char *attr_name, 
 		const char **str)
 {
- 	int c = dyntree_model_column_name_to_index(m,attr_name);
-	if (c>=0)
-		return dyntree_model_iter_attribute_get(m,iter,c,str);
+ 	int col = dyntree_model_column_name_to_index(m,attr_name);
+	if (col>=0)
+		return dyntree_model_iter_attribute_get(m,iter,col,str);
 	return FALSE;
 }
 
 static DyntreeModelNode* dyntree_model_node_new(DyntreeModel *ctm)
 {
-	DyntreeModelNode* node = g_try_new0(DyntreeModelNode,1);
-
-	/* fprintf(stderr,"Created node %p\n",(void*)node); */
-
-	g_assert(node != NULL); 
+	DyntreeModelNode* node = g_new0(DyntreeModelNode,1);
 
 	node->max_attributes = 8;
-	node->attributes = g_try_new0(DyntreeModelAttributeValue,node->max_attributes);
-
-	g_assert(node->attributes != NULL); 
+	node->attributes = g_new0(DyntreeModelAttributeValue,node->max_attributes);
 
 	return node;
 }
@@ -802,7 +797,7 @@ void dyntree_model_iter_append (DyntreeModel *ctm,
 	pred_node->next = node;
 	node->prev = pred_node;
 	
-	node->sibling_index = node->sibling_index+1;
+	node->sibling_index = pred_node->sibling_index+1;
 	node->parent = parent_node;
 	
 	child->stamp = ctm->stamp;
@@ -907,7 +902,6 @@ static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTr
 
 			for (attr_index=0;attr_index<store->n_columns && attr_index<node->max_attributes;attr_index++)
 			{
-				/* fprintf(stderr,"Processing attr %i of node %p at depth %i: ",attr_index,(void *)node,depth); */
 				col_name = dyntree_model_column_index_to_name(store,attr_index);
 				if (node->attributes[attr_index].value && col_name[0]!='-')
 				{

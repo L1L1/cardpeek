@@ -49,10 +49,11 @@ TRANSITION_LIST = {
   [7] = "Interchange (exit)"
 }
 
-function navigo_process_events(ctx)
-	local EVENTS
-	local RECORD
-	local REF
+function navigo_process_events(cardenv)
+	local event_node
+	local record_node
+	local ref_node
+
 	local rec_index
 	local code_value
 	local code_transport
@@ -66,23 +67,26 @@ function navigo_process_events(ctx)
 	local station_id
 	local location_string
 
-	EVENTS = ui.tree_find_node(ctx,"Event logs, parsed");
-	if EVENTS==nil then 
+	event_node = cardenv:find("Event logs, parsed")
+
+	if event_node:length()==0 then 
 	   log.print(log.WARNING,"No event found in card")
 	   return 0 
 	end
 
 	for rec_index=1,16 do
-	    RECORD = ui.tree_find_node(EVENTS,"record",rec_index)
-	    if RECORD==nil then break end
+	  
+	    record_node = event_node:find("record",rec_index)
+
+	    if record_node:length()==0 then break end
 	    
 	    -- is it RATP or SNCF ?
-	    REF = ui.tree_find_node(RECORD,"EventServiceProvider")
-	    service_provider_value = bytes.tonumber(ui.tree_get_value(REF))
-	    ui.tree_set_alt_value(REF,SERVICE_PROVIDERS[service_provider_value])
+	    ref_node = record_node:find("EventServiceProvider")
+	    service_provider_value = bytes.tonumber(ref_node:val())
+	    ref_node:alt(SERVICE_PROVIDERS[service_provider_value])
 	    
-	    REF = ui.tree_find_node(RECORD,"EventCode")
-	    code_value = bytes.tonumber(ui.tree_get_value(REF))
+	    ref_node = record_node:find("EventCode")
+	    code_value = bytes.tonumber(ref_node:val())
 
 	    -- is it a bus, a tram, a metro, ... ?
 	    code_transport = bit.SHR(code_value,4)
@@ -94,12 +98,12 @@ function navigo_process_events(ctx)
 	    code_transition_string = TRANSITION_LIST[code_transition] 	
 	    if (code_transition_string==nil) then code_transition_string = code_transition end
 
-	    ui.tree_set_alt_value(REF,code_transport_string.." - "..code_transition_string)
+	    ref_node:alt(code_transport_string.." - "..code_transition_string)
 
 	    -- service_provider_value == RATP and code_transport in { metro, tram, train } ? 
 	    if service_provider_value==3 and code_transport>=3 and code_transport<=5 then
-	       REF = ui.tree_find_node(RECORD,"EventLocationId")
-	       location_id_value = bytes.tonumber(ui.tree_get_value(REF))
+	       ref_node = record_node:find("EventLocationId")
+	       location_id_value = bytes.tonumber(ref_node:val())
 	       sector_id = bit.SHR(location_id_value,9)
 	       station_id = bit.AND(bit.SHR(location_id_value,4),0x1F)
 
@@ -118,7 +122,7 @@ function navigo_process_events(ctx)
 		     end
 	       end
 	       
-               ui.tree_set_alt_value(REF,location_string)
+	       ref_node:alt(location_string)
 
 	    end
 	end

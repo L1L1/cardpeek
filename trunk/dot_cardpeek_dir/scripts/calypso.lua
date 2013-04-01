@@ -37,6 +37,7 @@ SEL_BY_LFI  = 2
 sel_method  = SEL_BY_LFI
 
 require('lib.strict')
+require('lib.tnode')
 require('lib.country_codes')
 
 function bytes.is_all(bs,byte)
@@ -73,13 +74,13 @@ LFI_LIST = {
   { "Holder Extended",  "/3F1C",      "file" }
 }
 
-function calypso_select(ctx,desc,path,classname)
+function calypso_select(ctx,desc,path,klass)
 	local path_parsed = card.make_file_path(path)
 	local lfi = bytes.sub(path_parsed,-2)
 	local resp, sw
 	local r,item
-	local PARENT_REF=ctx
-	local FILE_REF=nil
+	local parent_node=ctx
+	local file_node=nil
 
 	if sel_method==SEL_BY_LFI then
 		sw,resp = card.select(bytes.format("#%D",lfi))
@@ -90,36 +91,33 @@ function calypso_select(ctx,desc,path,classname)
 	if sw==0x9000 then
 		for r=0,(#path_parsed/2)-1 do
 			item = bytes.format("%D",bytes.sub(path_parsed,r*2,r*2+1))
-			FILE_REF = ui.tree_find_node(PARENT_REF,nil,item)
-			if FILE_REF==nil then
-				FILE_REF = ui.tree_add_node(PARENT_REF,
-							    classname,
-							    desc,
-							    item,
-							    nil)
+			
+			file_node = parent_node:find("#"..item)
+			if file_node:length()==0 then
+				file_node = parent_node:append{ classname = klass,
+		                                                label = desc,
+							        id = item }
 			end
-			PARENT_REF = FILE_REF
+			parent_node = file_node
 		end
-		return FILE_REF
+		return file_node
 	end
 	return nil
 end
 
-function calypso_guess_network(APP)
+function calypso_guess_network(cardenv)
 	local country_bin
 	local network_bin
-	local ENV_REF
-	local RECORD_REF
-	--local DATA_REF
+	local env_node
+	local record_node
 	local data
 
-	ENV_REF    = ui.tree_find_node(APP,"Environment")
+	env_node = cardenv:find("Environment")
 
-	if ENV_REF then
-		RECORD_REF = ui.tree_find_node(ENV_REF,"record",1)
-		--DATA_REF   = ui.tree_find_node(RECORD_REF,"raw data")
-		if RECORD_REF then
-			data = bytes.convert(1,ui.tree_get_value(RECORD_REF))
+	if env_node then
+		record_node = env_node:find("record#1")
+		if record_node then
+			data = bytes.convert(1,record_node:val())
 			if #data > 36 then
 				country_bin = bytes.sub(data,13,24)
 				network_bin = bytes.sub(data,25,36)
@@ -141,25 +139,27 @@ end
 function calypso_process(cardenv)
 	local lfi_index
 	local lfi_desc
-	local LFI
-	local REC
+	local lfi_node
+	local rec_node
 	local sw, resp
-	local NODE
 	local country, network
 	local filename, file
 
 	for lfi_index,lfi_desc in ipairs(LFI_LIST) do
-		LFI = calypso_select(cardenv,lfi_desc[1],lfi_desc[2], lfi_desc[3])
-		if LFI then
-	        	local r
-			for r=1,255 do
-				sw,resp=card.read_record(0,r,0x1D)
+		lfi_node = calypso_select(cardenv,lfi_desc[1],lfi_desc[2], lfi_desc[3])
+		
+		if lfi_node then
+	        	local record
+			for record=1,255 do
+				sw,resp=card.read_record(0,record,0x1D)
 				if sw ~= 0x9000 then
 					break
 				end
-				REC = ui.tree_add_node(LFI,"record","record",r,#resp)
-                        	--NODE = ui.tree_add_node(REC,"item","raw data")
-	                	ui.tree_set_value(REC,resp)
+				rec_node = lfi_node:append{ classname = "record", 
+							    label = "record", 
+							    size = #resp, 
+							    id = record,
+							    val = resp }
 			end
 		end
 	end
@@ -182,22 +182,29 @@ function calypso_process(cardenv)
 	else
 		log.print(log.LOG_INFO,"Could not find "..filename)
 	end
-
 end
 
 local atr, hex_card_num, card_num
 
 if card.connect() then 
 
-  CARD = card.tree_startup("CALYPSO")
+  CARD = _n(card.tree_startup("CALYPSO"))
   atr = card.last_atr();
   hex_card_num = bytes.sub(atr,-7,-4)
   card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
 
-  local ref = ui.tree_add_node(CARD,"block","Card number",nil,4)
-  ui.tree_set_value(ref,hex_card_num)
-  ui.tree_set_alt_value(ref,card_num)
+  CARD:append{ classname = "block", 
+  	       label="Card number", 
+               size=4,
+	       val = hex_card_num,
+	       alt = card_num }
+  --local ref = ui.tree_add_node(CARD,"block","Card number",nil,4)
+  --ui.tree_set_value(ref,hex_card_num)
+  --ui.tree_set_alt_value(ref,card_num)
+  --ref:val(hex_card_num)
+  --ref:alt(card_num)
 
+  
   sw = card.select("#2010")
   if sw==0x9000 then
      sel_method = SEL_BY_LFI
@@ -212,7 +219,7 @@ if card.connect() then
   end 
 
   calypso_process(CARD)
-
+ 
   card.disconnect()
 else
   ui.question("Connection to card failed. Are you sure a card is inserted in the reader or in proximity of a contactless reader?\n\nNote: French 'navigo' cards cannot be accessed through a contactless interface.",{"OK"});

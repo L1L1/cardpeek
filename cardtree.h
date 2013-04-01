@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -32,11 +32,7 @@ enum {
 	CC_SIZE,
 	CC_VAL,
 	CC_ALT,    		/* 5 */
-	CC_ICON,
-	CC_MARKUP_LABEL_ID,
-	CC_MARKUP_VAL,
-	CC_MARKUP_ALT,		
-	CC_INITIAL_COUNT	/* 10 */
+	CC_INITIAL_COUNT	/* 6 */
 };
 
 #define CARDTREE_COUNT_ICONS 6

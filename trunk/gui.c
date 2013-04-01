@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2011 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -323,7 +323,7 @@ static void menu_card_view_save_as_cb(GtkWidget *w, gpointer user_data)
 }
 
 static void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
-	       			    gpointer           user_data) 
+	       			           gpointer user_data) 
 {
   GtkTreeViewColumn* column2 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
   GtkTreeViewColumn* column3 = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
@@ -336,7 +336,7 @@ static void menu_cardview_column_activated(GtkTreeViewColumn *treeviewcolumn,
   {
     gtk_tree_view_column_set_visible (column3,FALSE);
     gtk_tree_view_column_set_visible (column2,TRUE);
-  }
+  } 
 }
 
 static gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
@@ -382,7 +382,7 @@ static void menu_cardview_context_menu_expand_all(GtkWidget *menuitem, gpointer 
 /* Callback responding to right click context menu item to expand current branch */ 
 {
   GtkTreeView *treeview = GTK_TREE_VIEW(userdata);
-  GtkTreeSelection *selection = gtk_tree_view_get_selection(treeview);
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreePath *path;
@@ -535,7 +535,7 @@ static void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 /* CONSTRUTION OF MAIN UI ********************************/
 /*********************************************************/
 
-static int select_lua(const struct dirent* de)
+static int select_lua(struct dirent* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".lua")==0)
@@ -625,12 +625,12 @@ static GtkWidget *create_analyzer_menu(void)
 }
 
 toolbar_item_t TB_CARD_VIEW[] = {
-	{ "card-view-analyzer", "cardpeek-smartcard", "Analyzer", G_CALLBACK(menu_card_view_analyzer_cb), NULL },
+	{ "card-view-analyzer", "cardpeek-analyzer", "Analyzer", G_CALLBACK(menu_card_view_analyzer_cb), NULL },
 	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_card_view_clear_cb), NULL },
 	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_card_view_open_cb), NULL },
 	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_card_view_save_as_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
+	{ NULL, 		TOOLBAR_ITEM_EXPANDER, NULL, NULL, NULL },
 	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(menu_run_command_cb), "ui.about()" },
 	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
 	{ "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL },
@@ -638,6 +638,69 @@ toolbar_item_t TB_CARD_VIEW[] = {
 	/* END MARKER : */
 	{ NULL, 		NULL, NULL, NULL, NULL }
 };
+
+static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
+                           GtkCellRenderer   *renderer,
+                           GtkTreeModel      *model,
+                           GtkTreeIter       *iter,
+                           gpointer           user_data)
+{
+        const char *classname;
+        const char *icon_name = NULL;
+
+        gtk_tree_model_get(GTK_TREE_MODEL(model),
+			iter,
+                        CC_CLASSNAME, &classname,
+                        -1);
+
+        switch (classname[0]) {
+                case 'c': if (strcmp("card",classname)==0)        icon_name="cardpeek-smartcard";   break;
+                case 'a': if (strcmp("application",classname)==0) icon_name="cardpeek-application"; break;
+                case 'f': if (strcmp("file",classname)==0)        icon_name="cardpeek-file";        break;
+                case 'r': if (strcmp("record",classname)==0)      icon_name="cardpeek-record";      break;
+                case 'b': if (strcmp("block",classname)==0)       icon_name="cardpeek-block";       break;
+                default: icon_name="cardpeek-item";     
+        }
+
+	g_object_set(renderer, "stock-id", icon_name, NULL);
+}
+
+static void internal_cell_renderer_markup_cb (GtkTreeViewColumn *col,
+                           GtkCellRenderer   *renderer,
+                           GtkTreeModel      *model,
+                           GtkTreeIter       *iter,
+                           gpointer           user_data)
+{
+        a_string_t *markup_label_id;
+        const char *classname;
+        const char *id;
+        const char *label;
+
+        gtk_tree_model_get(GTK_TREE_MODEL(model),
+                        iter,
+                        CC_CLASSNAME, &classname,
+                        CC_LABEL, &label,
+                        CC_ID, &id,
+                        -1);
+
+
+        markup_label_id = a_strnew(NULL);
+
+        if (label) 
+                a_sprintf(markup_label_id,"<b>%s</b>",label);
+        else
+                a_sprintf(markup_label_id,"<b>%s</b>",classname);
+
+        if (id)
+        {
+                a_strcat(markup_label_id," ");
+                a_strcat(markup_label_id,id);
+        }
+
+	g_object_set(renderer, "markup", a_strval(markup_label_id), NULL);
+        
+	a_strfree(markup_label_id);
+}
 
 
 static GtkWidget *create_card_view(cardtree_t *cardtree)
@@ -696,15 +759,17 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
 
   renderer = gtk_cell_renderer_pixbuf_new();
   gtk_tree_view_column_pack_start(column, renderer, FALSE);
-  gtk_tree_view_column_set_attributes(column,renderer,
-				      "stock-id", CC_ICON,
-				      NULL);
+  //gtk_tree_view_column_set_attributes(column,renderer,
+  //				      "stock-id", CC_ICON,
+  //				      NULL);
+  gtk_tree_view_column_set_cell_data_func(column, renderer, internal_cell_renderer_icon_cb, NULL, NULL);
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_column_pack_start(column, renderer, TRUE);
-  gtk_tree_view_column_set_attributes(column,renderer,
-				      "markup", CC_MARKUP_LABEL_ID,
-				      NULL);
+  //gtk_tree_view_column_set_attributes(column,renderer,
+  //				      "markup", CC_MARKUP_LABEL_ID,
+  //				      NULL);
+  gtk_tree_view_column_set_cell_data_func(column, renderer, internal_cell_renderer_markup_cb, NULL, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(CARDVIEW), column);
 
   /* --- Column #1 --- */
@@ -725,12 +790,14 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
                NULL);
   /* --- Column #2 --- */
 
-  renderer = gtk_cell_renderer_text_new ();
+  //APT: renderer = gtk_cell_renderer_text_new ();
+  renderer = custom_cell_renderer_flexi_new(TRUE);
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,
                                                NULL,  
                                                renderer,
-                                               "markup", CC_MARKUP_VAL,
+  //APT:                                       "markup", CC_MARKUP_VAL,
+                                               "raw-value", CC_VAL,
                                                NULL);
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
   gtk_tree_view_column_set_resizable(column,TRUE);
@@ -749,12 +816,14 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
 
    /* --- Column #3 --- */
 
-  renderer = gtk_cell_renderer_text_new ();
+  //renderer = gtk_cell_renderer_text_new ();
+  renderer = custom_cell_renderer_flexi_new(FALSE);
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,
                                                NULL,  
                                                renderer,
-                                               "markup", CC_MARKUP_ALT,
+					       "raw-value", CC_VAL,
+                                               "alt_text", CC_ALT,
                                                NULL);
 
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),3);
@@ -1147,6 +1216,13 @@ int gui_init(int *argc, char ***argv)
   return 1;
 }
 
+void gui_exit(void)
+{
+	/* FIXME: UGLY EXIT */
+	log_close_file();
+	gtk_exit(0);
+}
+
 char* gui_select_reader(unsigned list_size, const char** list)
 {
   GtkWidget *dialog;
@@ -1273,6 +1349,10 @@ int gui_create(application_callback_t run_script_cb,
   icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
   gtk_icon_factory_add(icon_factory,"cardpeek-item",icon_set);
 
+  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_analyzer, FALSE, NULL);
+  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
+  gtk_icon_factory_add(icon_factory,"cardpeek-analyzer",icon_set);
+
   gtk_icon_factory_add_default(icon_factory);
 
   /* main window start */
@@ -1345,6 +1425,8 @@ int gui_create(application_callback_t run_script_cb,
   gtk_box_pack_start (GTK_BOX (vbox), status, FALSE, TRUE, 0);
  
   /* main window finish */
+
+  gtk_window_set_icon(GTK_WINDOW(MAIN_WINDOW), gdk_pixbuf_new_from_inline (-1, icon_cardpeek, FALSE, NULL));
  
   gtk_container_add (GTK_CONTAINER (MAIN_WINDOW), vbox);
 

@@ -20,6 +20,7 @@
 */
 
 #include "smartcard.h"
+#include "a_string.h"
 #include "misc.h"
 #include <string.h>
 #include <stdlib.h>
@@ -103,26 +104,26 @@ cardreader_t* cardreader_new(const char *card_reader_name)
   cardreader_t* reader = (cardreader_t *)malloc(sizeof(cardreader_t));
   memset(reader,0,sizeof(cardreader_t));
 
-  if (card_reader_name==NULL)
+  if (card_reader_name==NULL || strcmp(card_reader_name,"none")==0)
   {
     reader->name=strdup("(none)");
-    null_initialize(reader);
+    if (null_initialize(reader)==0) return NULL;
   }
   else if (strncmp(card_reader_name,"pcsc://",7)==0)
   {
     reader->name=strdup(card_reader_name);
-    pcsc_initialize(reader);
+    if (pcsc_initialize(reader)==0) return NULL;
   }
   else if (strncmp(card_reader_name,"emulator://",11)==0)
   {
     reader->name=strdup(card_reader_name);
-    emul_initialize(reader);
+    if (emul_initialize(reader)==0) return NULL;
   }
 #ifndef _WIN32
   else if (strncmp(card_reader_name,"acg://",6)==0)
   {
     reader->name=strdup(card_reader_name);
-    acg_initialize(reader);
+    if (acg_initialize(reader)==0) return NULL;
   }
 #endif
   else {
@@ -411,7 +412,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   return cm->readers_count;
 }
 
-static int select_clf(const struct dirent* de)
+static int select_clf(struct dirent* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".clf")==0)

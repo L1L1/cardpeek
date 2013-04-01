@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([cardpeek],[0.7.2],[L1L1@gmx.com])
-AM_INIT_AUTOMAKE([cardpeek], [0.7.2])
+AC_INIT([cardpeek],[0.8],[L1L1@gmx.com])
+AM_INIT_AUTOMAKE
 
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
@@ -18,8 +18,8 @@ AC_CANONICAL_HOST
 
 # Our own checks
 
-AM_PATH_GLIB_2_0([2.12.0])
-AM_PATH_GTK_2_0([2.12.0])
+AM_PATH_GLIB_2_0([2.12.0],,	AC_MSG_ERROR([Please install GLIB dev libraries.]))
+AM_PATH_GTK_2_0([2.12.0],, 	AC_MSG_ERROR([Please install GTK+2.0 dev libraries.]))
 
 AC_DEFUN([AM_PATH_PACKAGE],
 [
@@ -60,7 +60,8 @@ dnl
 
 case "${host}" in
   *-*-darwin*)
-    PCSC_CFLAGS='-framework PCSC -I/System/Library/Frameworks/PCSC.framework/Headers'
+    PCSC_CFLAGS='-Wno-deprecated-declarations -I/System/Library/Frameworks/PCSC.framework/Headers'
+    PCSC_LIBS='-framework PCSC'
     ;;
   *)
 AM_PATH_PACKAGE([libpcsclite],[PCSC],,AC_MSG_ERROR([

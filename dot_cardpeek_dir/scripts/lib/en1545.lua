@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -85,13 +85,24 @@ end
 en1545_BITMAP = 1
 en1545_REPEAT = 2
 
+--[[ 
+	in en1545_parse_item, the "format" parameter is a table with entries containing 3 or 4 elements:
+	 - format[1]: the type of the entry, which is either
+			a) en1545_BITMAP: indicates a bitmap field (1 => field is present)
+			b) en1545_REPEAT: indicates the field is repeated n times.
+			c) en1545_XXXXXX: a function to call on the data for further processing.
+	- format[2]: the length of the entry in bits.
+	- format[3]: the name of the entry
+	- format[4]: used only for en1545_BITMAP, points to a sub-table of entries.
+
+--]]
+
 function en1545_parse_item(ctx, format, data, position, reference_index)
         local parsed = 0
         local index
-        local NODE
-        local BITMAP_NODE
+        local item_node
+        local bitmap_node
         local bitmap_size
-        local hex_info
         local item
 
         if format == nil then
@@ -99,28 +110,41 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
         end
 
         parsed = format[2]
+
         item = bytes.sub(data,position,position+parsed-1)
-        NODE = ui.tree_add_node(ctx,"item",format[3],reference_index)
+
+	item_node = ctx:append{ classname="item", 
+				label=format[3], 
+				id=reference_index }
 
         if format[1] == en1545_BITMAP then
+
            bitmap_size = parsed
            parsed = bitmap_size
-           BITMAP_NODE = ui.tree_add_node(NODE,"item","("..format[3].."Bitmap)")
-           ui.tree_set_value(BITMAP_NODE,item);
+           item_node:append{ classname="item", 
+			     label="("..format[3].."Bitmap)", 
+			     val=item }
+
            for index=0,format[2]-1 do
                if data[position+bitmap_size-index-1]~=0 then
-                  parsed = parsed + en1545_parse_item(NODE, format[4][index], data, position+parsed, index)
+                  parsed = parsed + en1545_parse_item(item_node, format[4][index], data, position+parsed, index)
                end
            end
+
         elseif format[1] == en1545_REPEAT then
-           ui.tree_set_value(NODE,item);
-           ui.tree_set_alt_value(NODE,bytes.tonumber(item))
+
+           item_node:val(item)
+           item_node:alt(bytes.tonumber(item))
+
            for index=1,bytes.tonumber(item) do
                parsed = parsed + en1545_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
            end
+
         else
-           ui.tree_set_value(NODE,item);
-           ui.tree_set_alt_value(NODE,format[1](item))
+
+           item_node:val(item)
+           item_node:alt(format[1](item))
+
         end
         return parsed
 end
@@ -136,17 +160,15 @@ function en1545_parse(ctx, format, data)
 end
 
 function en1545_unparsed(ctx, data)
-        local NODE
         if bytes.tonumber(data)>0 then
-                NODE = ui.tree_add_node(ctx,"item","(remaining unparsed data)");
-                ui.tree_set_value(NODE,data)
+		ctx:append{ classname="item", 
+			    label="(remaining unparsed data)", 
+			    val=data }
         end
 end
 
-function en1545_map(ctx, data_type, ...)
-        local NODE_REFS
-	local RECORD_REF
-        local NODE_REF
+function en1545_map(cardenv, data_type, ...)
+        local record_node
         local data
         local bits
         local index
@@ -155,55 +177,32 @@ function en1545_map(ctx, data_type, ...)
         local block
 	local foo
 
-	NODE_REFS = ui.tree_find_all_nodes(ctx,data_type)
+	files = cardenv:find(data_type)
 
-        for foo,NODE_REF in ipairs(NODE_REFS) do
-                if NODE_REF==nil then break end
+	for foo,file in ipairs(files:toArray()) do
+
+                if file==nil then return end
+
                 for index=1,15 do
-                        RECORD_REF=ui.tree_find_node(NODE_REF,"record",index)
-                        if RECORD_REF==nil then break end
-                        data = ui.tree_get_value(RECORD_REF)
+                        record_node = _n(file):find("record#"..index)
+
+                        if record_node:length()==0 then break end
+
+                        data = record_node:val()
                         bits = bytes.convert(1,data)
                         parsed = 0
                         for i,template in ipairs({...}) do
                                 block = bytes.sub(bits,parsed)
                                 if bytes.is_all(block,0)==false then
-                                        parsed = parsed + en1545_parse(RECORD_REF,template,block)
+                                        parsed = parsed + en1545_parse(record_node,template,block)
                                 end
                         end
-                        en1545_unparsed(RECORD_REF,bytes.sub(bits,parsed))
+
+                        en1545_unparsed(record_node,bytes.sub(bits,parsed))
                 end
-                ui.tree_set_attribute(NODE_REF,"label",data_type..", parsed")
+
+		_n(file):attr("label",data_type..", parsed")
 	end
 end
 
---[[
-function en1545_guess_network(APP)
-        local country_bin
-	local network_bin
-        local ENV_REF
-        local RECORD_REF
-        local DATA_REF
-        local data
-
-        ENV_REF    = ui.tree_find_node(APP,"Environment")
-
-        if ENV_REF then
-                RECORD_REF = ui.tree_find_node(ENV_REF,"record",1)
-                DATA_REF   = ui.tree_find_node(RECORD_REF,"raw data")
-                if DATA_REF then
-                        data = bytes.convert(1,ui.tree_get_value(DATA_REF))
-			country_bin = bytes.sub(data,13,24)
-			network_bin = bytes.sub(data,25,36)
-			print(bytes.convert(4,country_bin),bytes.convert(4,network_bin))			
-			return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
-                else
-                        log.print(log.WARNING,"Could not find data in 'Environement/record 1/'")
-                end
-	else
-		log.print(log.WARNING,"Could not find data in 'Environement'")
-        end
-	return false
-end
---]]
 

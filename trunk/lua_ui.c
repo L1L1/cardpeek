@@ -112,8 +112,8 @@ static int subr_ui_tree_set_attribute(lua_State* L)
   const char *attribute_value;
 
   iter = luaL_check_node_ref(L,1);
-  attribute_name  = lua_tostring(L,2);
-  attribute_value = lua_tostring(L,3);
+  attribute_name  = luaL_checkstring(L,2);
+  attribute_value = luaL_checkstring(L,3);
 
   if (cardtree_attribute_set_by_name(CARDTREE,iter,attribute_name,attribute_value))
     lua_pushboolean(L,1);
@@ -130,7 +130,7 @@ static int subr_ui_tree_get_attribute(lua_State* L)
   const char *attribute_value;
 
   iter  	  = luaL_check_node_ref(L,1);
-  attribute_name  = lua_tostring(L,2);
+  attribute_name  = luaL_checkstring(L,2);
 
   if (cardtree_attribute_get_by_name(CARDTREE,iter,attribute_name,&attribute_value))
   {
@@ -543,6 +543,12 @@ static int subr_ui_about(lua_State* L)
   return 0;
 }
 
+static int subr_ui_exit(lua_State* L)
+{
+  gui_exit(); 
+  return 0;
+}
+
 static int subr_node_ref_tostring(lua_State* L)
 {
   GtkTreeIter *iter;
@@ -582,6 +588,7 @@ static const struct luaL_reg uilib [] = {
   {"question",subr_ui_question },
   {"select_file",subr_ui_select_file },
   {"about", subr_ui_about },
+  {"exit", subr_ui_exit },
   {NULL,NULL}  /* sentinel */
 };
 

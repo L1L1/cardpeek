@@ -759,16 +759,10 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
 
   renderer = gtk_cell_renderer_pixbuf_new();
   gtk_tree_view_column_pack_start(column, renderer, FALSE);
-  //gtk_tree_view_column_set_attributes(column,renderer,
-  //				      "stock-id", CC_ICON,
-  //				      NULL);
   gtk_tree_view_column_set_cell_data_func(column, renderer, internal_cell_renderer_icon_cb, NULL, NULL);
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_tree_view_column_pack_start(column, renderer, TRUE);
-  //gtk_tree_view_column_set_attributes(column,renderer,
-  //				      "markup", CC_MARKUP_LABEL_ID,
-  //				      NULL);
   gtk_tree_view_column_set_cell_data_func(column, renderer, internal_cell_renderer_markup_cb, NULL, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(CARDVIEW), column);
 
@@ -790,13 +784,11 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
                NULL);
   /* --- Column #2 --- */
 
-  //APT: renderer = gtk_cell_renderer_text_new ();
   renderer = custom_cell_renderer_flexi_new(TRUE);
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,
                                                NULL,  
                                                renderer,
-  //APT:                                       "markup", CC_MARKUP_VAL,
                                                "raw-value", CC_VAL,
                                                NULL);
   column = gtk_tree_view_get_column(GTK_TREE_VIEW (CARDVIEW),2);
@@ -816,7 +808,6 @@ static GtkWidget *create_card_view(cardtree_t *cardtree)
 
    /* --- Column #3 --- */
 
-  //renderer = gtk_cell_renderer_text_new ();
   renderer = custom_cell_renderer_flexi_new(FALSE);
   gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (CARDVIEW),
                                                -1,

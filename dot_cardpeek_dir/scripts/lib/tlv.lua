@@ -230,7 +230,7 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
             tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
 	    
 	    if tlv_tag==nil or tlv_tag==0 then 
-	       break
+	       return false
 	    end--if
 
             tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
@@ -242,7 +242,10 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
 	    ref = ui.tree_add_node(cardenv,"item",tostring(tlv_name),string.format('%X',tlv_tag), #tlv_value)
 
             if (tlv_tag_is_compound(tlv_tag)) then
-               internal_tlv_parse(ref,tlv_value,reference,tlv_tag)
+	       if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
+		  ui.tree_delete_node(ref)
+		  return false
+	       end
             else
 	       if tlv_ui_func then
 	          tlv_ui_func(ref,tlv_value)
@@ -252,12 +255,13 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
             end--if
 	    tlv = tlv_tail
         end--while
+	return true
 end
 
 function tlv_parse(cardenv,tlv,reference)
 	if reference == nil then
 	   reference = {}
 	end
-	internal_tlv_parse(cardenv,tlv,reference,0)
+	return internal_tlv_parse(cardenv,tlv,reference,0)
 end
 

@@ -28,6 +28,7 @@
 #include <glib/gstdio.h>
 #include "smartcard.h"
 #include "misc.h"
+#include "a_string.h"
 #include "gui.h"
 #include "pathconfig.h"
 #include "lua_ext.h"
@@ -38,6 +39,7 @@
 #include <sys/wait.h>
 #endif
 #include <signal.h> 
+#include <getopt.h>
 
 extern unsigned char _binary_dot_cardpeek_tar_gz_start;
 extern int _binary_dot_cardpeek_tar_gz_size;
@@ -168,13 +170,21 @@ static void save_what_can_be_saved(int sig_num)
   exit(-2);
 } 
 
+static struct option long_options[] = {
+            {"reader",  required_argument, 0,  'r' },
+            {"exec",    required_argument, 0,  'e' },
+            {0,         0,                 0,  0 }
+        };
 
 int main(int argc, char **argv)
 {
   cardmanager_t* CTX;
   cardreader_t* READER;
-  /*int i;*/
-  char* reader_name;
+  int opt;
+  int opt_index = 0;
+  int options_ok = 1;
+  char* reader_name = NULL;
+  char* exec_command = NULL;
 
   signal(SIGSEGV, save_what_can_be_saved); 
   
@@ -183,37 +193,68 @@ int main(int argc, char **argv)
   log_open_file();
 
   gui_init(&argc,&argv);
+
+  while ((opt = getopt_long(argc,argv,"r:e:",long_options,&opt_index))!=-1) 
+  {
+	  switch (opt) {
+		case 'r':
+			reader_name = g_strdup(optarg);
+                        break;
+		case 'e':
+			exec_command = optarg;
+			break;
+		default:
+			log_printf(LOG_ERROR, "Usage: %s [-r|--reader reader-name] [-e|--exec lua_command]\n",
+				argv[0]);
+			options_ok = 0;
+	  }
+  }
    
-  gui_create(luax_run_script_cb,luax_run_command_cb);
+  if (options_ok)
+  {
+	  gui_create(luax_run_script_cb,luax_run_command_cb);
 
-  log_printf(LOG_INFO,"Running %s",system_string_info());
+	  log_printf(LOG_INFO,"Running %s",system_string_info());
 
-  install_dot_file(); 
+	  install_dot_file(); 
 
-  luax_init();
+	  luax_init();
 
-  CTX = cardmanager_new();
+	  CTX = cardmanager_new();
 
-  reader_name = gui_select_reader(cardmanager_count_readers(CTX),
-		                  cardmanager_reader_name_list(CTX));
+	  if (reader_name == NULL)
+	  {
+		  reader_name = gui_select_reader(cardmanager_count_readers(CTX),
+				                  cardmanager_reader_name_list(CTX));
+	  }
 
-  READER = cardreader_new(reader_name);
+	  READER = cardreader_new(reader_name);
+	  cardmanager_free(CTX);
+	  if (READER)
+	  {
+		  luax_set_card_reader(READER);
+
+		  cardreader_set_callback(READER,gui_reader_print_data,NULL);
+
+		  if (exec_command) luax_run_command_cb(exec_command);
+
+		  gui_run();
+
+		  cardreader_free(READER);
+	  }
+	  else
+	  {
+		  fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
+		  log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
+	  }
+	  luax_release();
+  }
+
   if (reader_name) g_free(reader_name);
-  cardmanager_free(CTX);
-
-  luax_set_card_reader(READER);
-
-  cardreader_set_callback(READER,gui_reader_print_data,NULL);
-
-  gui_run();
-
-  luax_release();
-
+  
   log_close_file();
 
   config_release();  
-
-  cardreader_free(READER);
 
   return 0;
 }

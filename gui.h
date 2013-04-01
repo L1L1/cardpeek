@@ -36,6 +36,8 @@ int gui_create(application_callback_t run_script_cb,
 
 int gui_run(void);
 
+void gui_exit(void);
+
 void gui_update(int lag_allowed);
 
 void gui_expand_view(void);

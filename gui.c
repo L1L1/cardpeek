@@ -535,7 +535,7 @@ static void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 /* CONSTRUTION OF MAIN UI ********************************/
 /*********************************************************/
 
-static int select_lua(struct dirent* de)
+static int select_lua(const struct dirent* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".lua")==0)

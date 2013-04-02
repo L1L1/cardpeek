@@ -77,7 +77,11 @@ typedef struct _cardreader_t cardreader_t;
 struct _cardreader_t {
   char           *name;
   unsigned       connected;
+#ifdef __APPLE__
   uint32_t  	 protocol;
+#else
+  unsigned long  protocol;
+#endif
   uint16_t 	 sw;
   unsigned       command_interval;
   bytestring_t   *atr;

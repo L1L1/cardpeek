@@ -20,6 +20,7 @@
 */
 
 #include "gui.h"
+#include "gui_about.h"
 #include "gui_flexi_cell_renderer.h"
 #include <dirent.h>
 #include "misc.h"
@@ -31,6 +32,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "iso7816.h"
+
 #ifndef _WIN32
 #include "config.h"
 #else
@@ -535,7 +537,7 @@ static void menu_reader_save_as_cb(GtkWidget *w, gpointer user_data)
 /* CONSTRUTION OF MAIN UI ********************************/
 /*********************************************************/
 
-static int select_lua(const struct dirent* de)
+static int select_lua(DIRENT_T* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".lua")==0)
@@ -1170,23 +1172,6 @@ char** gui_select_file(const char *title,
   }
   gtk_widget_destroy (filew);
   return ret_values;
-}
-
-void gui_about(void)
-{
-  GtkWidget *dialog;
-
-  dialog = gtk_message_dialog_new (NULL,
-				   GTK_DIALOG_DESTROY_WITH_PARENT,
-				   GTK_MESSAGE_INFO,
-				   GTK_BUTTONS_OK,
-				   "cardpeek, version %s\n"
-				   "Copyright 2009-2013, by 'L1L1'\n"
-				   "Licenced under the GPL 3\n\n"
-				   "Path to scripts is:\n%s",
-				   VERSION,config_get_string(CONFIG_FOLDER_SCRIPTS));
-  gtk_dialog_run (GTK_DIALOG (dialog));
-  gtk_widget_destroy (dialog);
 }
 
 void gui_update(int lag_allowed)

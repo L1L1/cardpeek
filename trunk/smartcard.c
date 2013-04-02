@@ -412,7 +412,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   return cm->readers_count;
 }
 
-static int select_clf(const struct dirent* de)
+static int select_clf(DIRENT_T* de)
 {
   char *ext=rindex(de->d_name,'.');
   if (ext && strcmp(ext,".clf")==0)

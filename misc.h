@@ -23,6 +23,14 @@
 #define MISC_H
 #include <glib.h>
 
+
+#ifdef __APPLE__
+#define DIRENT_T struct dirent
+#else
+#define DIRENT_T const struct dirent
+#endif
+
+
 #define is_hex(a)       ((a>='0' && a<='9') || \
                          (a>='A' && a<='F') || \
 			 (a>='a' && a<='f'))

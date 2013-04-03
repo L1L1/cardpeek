@@ -18,7 +18,7 @@ AC_CANONICAL_HOST
 
 # Our own checks
 
-AM_PATH_GLIB_2_0([2.12.0],,	AC_MSG_ERROR([Please install GLIB dev libraries.]))
+AM_PATH_GLIB_2_0([2.32.0],,	AC_MSG_ERROR([Please install GLIB dev libraries.]))
 AM_PATH_GTK_2_0([2.12.0],, 	AC_MSG_ERROR([Please install GTK+2.0 dev libraries.]))
 
 AC_DEFUN([AM_PATH_PACKAGE],
@@ -95,16 +95,25 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 			  This program requires the openssl dev. library.
 			  Please install it first.]))
 
-AC_PATH_PROG(GDK_PIXBUF_CSOURCE,[gdk-pixbuf-csource],no)
+AC_PATH_PROG(GLIB_COMPILE_RESOURCES,[glib-compile-resources],no)
 
-if test x$GDK_PIXBUF_CSOURCE = xno ; then
-AC_MSG_ERROR([gdk-pixbuf-csource cannot be found in PATH. 
-It is usually included with GTK 2.0 dev. libraries.
+if test x$GLIB_COMPILE_RESOURCES = xno ; then
+AC_MSG_ERROR([glib-compile-resources cannot be found in PATH. 
+It is usually included with GTK+2.0 dev. libraries.
 Please install this tool first.
 ])
 fi
 
-AC_SUBST(GDK_PIXBUF_CSOURCE)
+AC_SUBST(GLIB_COMPILE_RESOURCES)
+
+AC_PATH_PROG(GDK_PIXBUF_PIXDATA,[gdk-pixbuf-pixdata],no)
+
+if test x$GDK_PIXBUF_PIXDATA = xno ; then
+AC_MSG_ERROR([gdk-pixbuf-pixdata cannot be found in PATH. 
+It is usually included with GTK+2.0 dev. libraries and is needed by glib-compile-resources.
+Please install this tool first.
+])
+fi
 
 # Checks for libraries.
 

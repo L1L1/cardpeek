@@ -10,18 +10,18 @@ cardpeek_SOURCES = asn1.c asn1.h bytestring.c bytestring.h gui_flexi_cell_render
 
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
-cardpeek_LDADD=dot_cardpeek.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@
+cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@
 
 dist_man_MANS=cardpeek.1
 
 DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
 ICONS=icons/analyzer.png icons/item.png icons/card.png icons/smartcard.png icons/folder.png icons/cardpeek.png icons/application.png icons/document.png icons/block.png
 
-CLEANFILES=icons.c dot_cardpeek.tar.gz 
+CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz 
 
-EXTRA_DIST=script.S $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
+EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
 
-GDK_PIXBUF_CSOURCE=@GDK_PIXBUF_CSOURCE@
+GLIB_COMPILE_RESOURCES=@GLIB_COMPILE_RESOURCES@
 
 desktopdir = $(datadir)/applications
 desktop_DATA = cardpeek.desktop
@@ -36,27 +36,19 @@ mostlyclean-local:
 dist-hook:
 			rm -rf `find $(distdir)/ -name .svn`
 
-dot_cardpeek.$(OBJEXT):	dot_cardpeek_dir
-			cp -R $(srcdir)/dot_cardpeek_dir .cardpeek
-			chmod -R u+w .cardpeek/
-			tar czf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
-			$(COMPILE) -c $(srcdir)/script.S -o $@
+dot_cardpeek.tar.gz:    dot_cardpeek_dir	
+			@echo "  TAR      $<"
+			@cp -R $(srcdir)/dot_cardpeek_dir .cardpeek
+			@chmod -R u+w .cardpeek/
+			@tar czf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
 
-icons.c:		$(ICONS)
-			@echo "Storing icons in icon.c"
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_item        $(srcdir)/icons/item.png > icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_application $(srcdir)/icons/application.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_file        $(srcdir)/icons/document.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_record      $(srcdir)/icons/card.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_block       $(srcdir)/icons/block.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_smartcard   $(srcdir)/icons/smartcard.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_analyzer    $(srcdir)/icons/analyzer.png >> icons.c
-			@$(GDK_PIXBUF_CSOURCE) --raw --name icon_cardpeek    $(srcdir)/icons/cardpeek.png >> icons.c
-			touch $(srcdir)/gui.c
-
-gui.$(OBJEXT):		gui.c gui.h icons.c
-			$(COMPILE) -Wno-write-strings -c $<
+cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) cardpeek_resources.gresource.xml
+			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"
+			@$(GLIB_COMPILE_RESOURCES) --generate-source --sourcedir=. --sourcedir=$(srcdir) --target=cardpeek_resources.c $(srcdir)/cardpeek_resources.gresource.xml
+			@echo "  CC       cardpeek_resource.c"
+			@$(COMPILE) -c cardpeek_resources.c
 
 smartcard.$(OBJEXT):	smartcard.c smartcard.h $(DRIVERS)
-			$(COMPILE) -c $<
+			@echo "  CC       $<"
+			@$(COMPILE) -c $<
 

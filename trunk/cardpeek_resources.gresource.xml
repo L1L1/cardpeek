@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/cardpeek/">
+    <file>dot_cardpeek.tar.gz</file>
+    <file preprocess="to-pixdata">icons/analyzer.png</file>
+    <file preprocess="to-pixdata">icons/application.png</file>
+    <file preprocess="to-pixdata">icons/block.png</file>
+    <file preprocess="to-pixdata">icons/card.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek.png</file>
+    <file preprocess="to-pixdata">icons/document.png</file>
+    <file preprocess="to-pixdata">icons/folder.png</file>
+    <file preprocess="to-pixdata">icons/item.png</file> 
+    <file preprocess="to-pixdata">icons/smartcard.png</file>
+  </gresource>
+</gresources>

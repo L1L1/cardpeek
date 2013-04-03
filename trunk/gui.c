@@ -40,7 +40,8 @@
 #include "win32/win32compat.h"
 #endif
 
-#include "icons.c"
+#include "cardpeek_resources.gresource"
+/*#include "icons.c"*/
 
 /*********************************************************/
 /* EXPERIMENTAL ******************************************/
@@ -1274,6 +1275,68 @@ char* gui_select_reader(unsigned list_size, const char** list)
   return NULL;*/
 }
 
+const char *icon_resources[] = {
+    "/cardpeek/icons/analyzer.png", 	"cardpeek-analyzer",
+    "/cardpeek/icons/application.png",	"cardpeek-application",
+    "/cardpeek/icons/block.png", 	"cardpeek-block",
+    "/cardpeek/icons/card.png", 	"cardpeek-record",
+    "/cardpeek/icons/cardpeek.png", 	"cardpeek-cardpeek",
+    "/cardpeek/icons/document.png", 	"cardpeek-file",
+    "/cardpeek/icons/folder.png", 	"cardpeek-folder",
+    "/cardpeek/icons/item.png", 	"cardpeek-item", 
+    "/cardpeek/icons/smartcard.png", 	"cardpeek-smartcard",
+    NULL
+};
+
+static int gui_load_icons(void)
+{
+  GResource* cardpeek_resources;
+  GBytes* icon_bytes;
+  unsigned char *icon_bytes_start;
+  gsize icon_bytes_size;
+  GtkIconSet* icon_set;
+  GdkPixbuf* pixbuf;
+  GtkIconFactory* icon_factory;
+  unsigned u;
+  int is_ok = 1; 
+
+  cardpeek_resources = cardpeek_resources_get_resource();
+  if (cardpeek_resources == NULL)
+  {
+        log_printf(LOG_ERROR,"Could not load cardpeek internal resources. This is not good.");
+        return 0; 
+  }
+  
+  icon_factory = gtk_icon_factory_new();
+
+  u=0;
+  while (icon_resources[u*2])
+  {
+	  icon_bytes = g_resources_lookup_data(icon_resources[u*2],G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+	  if (icon_bytes == NULL)
+	  {
+		  log_printf(LOG_ERROR,"Could not load icon %s",icon_resources[u*2]);
+		  is_ok = 0;
+	  }
+
+	  icon_bytes_start = (unsigned char *)g_bytes_get_data(icon_bytes,&icon_bytes_size);  
+
+	  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
+	  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
+	  gtk_icon_factory_add(icon_factory,icon_resources[u*2+1],icon_set);
+
+	  if (strcmp(icon_resources[u*2+1],"cardpeek-cardpeek")==0)
+		  gtk_window_set_default_icon (pixbuf);
+
+	  g_bytes_unref(icon_bytes);
+
+	  u++;
+  }
+
+  gtk_icon_factory_add_default(icon_factory);
+  return is_ok;
+} 
+
 int gui_create(application_callback_t run_script_cb,
 	       application_callback_t run_command_cb)
 {
@@ -1288,10 +1351,6 @@ int gui_create(application_callback_t run_script_cb,
   GtkWidget *status;
   GtkWidget *tabs;
   GtkWidget *label;
-  GtkIconSet* icon_set;
-  GdkPixbuf* pixbuf;
-  GtkIconFactory* icon_factory;
-
   gui_widget_table_init();
 
   RUN_LUA_SCRIPT = run_script_cb;
@@ -1299,37 +1358,7 @@ int gui_create(application_callback_t run_script_cb,
 
   /* Build icon sets */
 
-  icon_factory = gtk_icon_factory_new();
-  
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_block, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-block",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_record, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-record",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_application, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-application",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_file, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-file",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_smartcard, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-smartcard",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_item, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-item",icon_set);
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_analyzer, FALSE, NULL);
-  icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-  gtk_icon_factory_add(icon_factory,"cardpeek-analyzer",icon_set);
-
-  gtk_icon_factory_add_default(icon_factory);
+  gui_load_icons();
 
   /* main window start */
 
@@ -1337,9 +1366,6 @@ int gui_create(application_callback_t run_script_cb,
   gtk_window_set_default_size(GTK_WINDOW(MAIN_WINDOW),600,400);
   gtk_container_set_border_width (GTK_CONTAINER (MAIN_WINDOW), 0);
   g_signal_connect (MAIN_WINDOW, "delete_event", gtk_main_quit, NULL); /* dirty */
-
-  pixbuf = gdk_pixbuf_new_from_inline (-1, icon_cardpeek, FALSE, NULL);
-  gtk_window_set_default_icon (pixbuf);
 
   /* log frame */
 
@@ -1402,8 +1428,6 @@ int gui_create(application_callback_t run_script_cb,
  
   /* main window finish */
 
-  gtk_window_set_icon(GTK_WINDOW(MAIN_WINDOW), gdk_pixbuf_new_from_inline (-1, icon_cardpeek, FALSE, NULL));
- 
   gtk_container_add (GTK_CONTAINER (MAIN_WINDOW), vbox);
 
   gtk_widget_show_all (MAIN_WINDOW);

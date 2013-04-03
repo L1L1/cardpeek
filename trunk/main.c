@@ -40,9 +40,10 @@
 #endif
 #include <signal.h> 
 #include <getopt.h>
+#include "cardpeek_resources.gresource"
 
-extern unsigned char _binary_dot_cardpeek_tar_gz_start;
-extern int _binary_dot_cardpeek_tar_gz_size;
+/*extern unsigned char _binary_dot_cardpeek_tar_gz_start;
+  extern int _binary_dot_cardpeek_tar_gz_size;*/
 /* extern unsigned char _binary_dot_cardpeek_tar_gz_end; */
 
 static int install_dot_file(void)
@@ -56,6 +57,10 @@ static int install_dot_file(void)
   a_string_t* astr;
   unsigned dot_version=0;
   int response;
+  GResource* cardpeek_resources;
+  GBytes* dot_cardpeek_tar_gz;
+  unsigned char *dot_cardpeek_tar_gz_start;
+  gsize dot_cardpeek_tar_gz_size;
 
   if (stat(dot_dir,&sbuf)==0)
   {
@@ -107,7 +112,21 @@ static int install_dot_file(void)
     }
     a_strfree(astr);
   }
-    
+
+  cardpeek_resources = cardpeek_resources_get_resource();
+  if (cardpeek_resources == NULL)
+  {
+	log_printf(LOG_ERROR,"Could not load cardpeek internal resources. This is not good.");
+	return -1; 
+  }
+  dot_cardpeek_tar_gz = g_resources_lookup_data("/cardpeek/dot_cardpeek.tar.gz",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+  if (dot_cardpeek_tar_gz == NULL)
+  {
+	log_printf(LOG_ERROR,"Could not load .cardpeek.tar.gz");
+	return -1;
+  }
+  dot_cardpeek_tar_gz_start = (unsigned char *)g_bytes_get_data(dot_cardpeek_tar_gz,&dot_cardpeek_tar_gz_size);  
+  
   chdir(home_dir);
   if ((f = g_fopen("dot_cardpeek.tar.gz","wb"))==NULL)
   {
@@ -116,15 +135,17 @@ static int install_dot_file(void)
 	  return 0;
   }
   
-  if (fwrite(&_binary_dot_cardpeek_tar_gz_start,_binary_dot_cardpeek_tar_gz_size,1,f)!=1)
+  if (fwrite(dot_cardpeek_tar_gz_start,dot_cardpeek_tar_gz_size,1,f)!=1)
   {
 	  log_printf(LOG_ERROR,"Could not write to dot_cardpeek.tar.gz in %s (%s)", home_dir, strerror(errno));
 	  gui_question("Could not write to dot_cardpeek.tar.gz, aborting.","Ok",NULL);
 	  fclose(f);
 	  return 0;
   }
-  log_printf(LOG_DEBUG,"Wrote %i bytes to dot_cardpeek.tar.gz",_binary_dot_cardpeek_tar_gz_size);
+  log_printf(LOG_DEBUG,"Wrote %i bytes to dot_cardpeek.tar.gz",dot_cardpeek_tar_gz_size);
   fclose(f);
+
+  g_bytes_unref(dot_cardpeek_tar_gz);
 
   log_printf(LOG_INFO,"Created dot_cardpeek.tar.gz");
   log_printf(LOG_INFO,"Creating files in %s", home_dir);

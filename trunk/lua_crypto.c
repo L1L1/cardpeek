@@ -37,10 +37,10 @@ static int subr_crypto_create_context(lua_State* L)
   if (lua_isnoneornil(L,2))
     bs = NULL;
   else
-    bs  = luaL_checkbytestring(L,2);
+    bs  = luaL_check_bytestring(L,2);
 
   if ((e=crypto_create_context(res,alg,bs))==CRYPTO_OK)
-    lua_pushbytestring(L,res);
+    lua_push_bytestring(L,res);
   else
   {
     bytestring_free(res);
@@ -51,8 +51,8 @@ static int subr_crypto_create_context(lua_State* L)
 
 static int subr_crypto_encrypt(lua_State* L)
 {
-  bytestring_t* ctx = luaL_checkbytestring(L,1);
-  bytestring_t* src = luaL_checkbytestring(L,2);
+  bytestring_t* ctx = luaL_check_bytestring(L,1);
+  bytestring_t* src = luaL_check_bytestring(L,2);
   bytestring_t* iv;
   bytestring_t* res = bytestring_new(8);
   crypto_error_t e;
@@ -60,10 +60,10 @@ static int subr_crypto_encrypt(lua_State* L)
   if (lua_isnoneornil(L,3))
     iv = NULL;
   else
-    iv = luaL_checkbytestring(L,3);
+    iv = luaL_check_bytestring(L,3);
 
   if ((e=crypto_encrypt(res,ctx,src,iv))==CRYPTO_OK)
-    lua_pushbytestring(L,res);
+    lua_push_bytestring(L,res);
   else
   {
     bytestring_free(res);
@@ -74,8 +74,8 @@ static int subr_crypto_encrypt(lua_State* L)
 
 static int subr_crypto_decrypt(lua_State* L)
 {
-  bytestring_t* ctx = luaL_checkbytestring(L,1);
-  bytestring_t* src = luaL_checkbytestring(L,2);
+  bytestring_t* ctx = luaL_check_bytestring(L,1);
+  bytestring_t* src = luaL_check_bytestring(L,2);
   bytestring_t* iv;
   bytestring_t* res = bytestring_new(8);
   crypto_error_t e;
@@ -83,10 +83,10 @@ static int subr_crypto_decrypt(lua_State* L)
   if (lua_isnoneornil(L,3))
     iv = NULL;
   else
-    iv = luaL_checkbytestring(L,3);
+    iv = luaL_check_bytestring(L,3);
 
   if ((e=crypto_decrypt(res,ctx,src,iv))==CRYPTO_OK)
-    lua_pushbytestring(L,res);
+    lua_push_bytestring(L,res);
   else
   {
     bytestring_free(res);
@@ -97,13 +97,13 @@ static int subr_crypto_decrypt(lua_State* L)
 
 static int subr_crypto_mac(lua_State* L)
 {
-  bytestring_t* ctx = luaL_checkbytestring(L,1);
-  bytestring_t* src = luaL_checkbytestring(L,2);
+  bytestring_t* ctx = luaL_check_bytestring(L,1);
+  bytestring_t* src = luaL_check_bytestring(L,2);
   bytestring_t* res = bytestring_new(8);
   crypto_error_t e;
 
   if ((e=crypto_mac(res,ctx,src))==CRYPTO_OK)
-    lua_pushbytestring(L,res);
+    lua_push_bytestring(L,res);
   else
   {
     bytestring_free(res);
@@ -114,13 +114,13 @@ static int subr_crypto_mac(lua_State* L)
 
 static int subr_crypto_digest(lua_State* L)
 {
-  bytestring_t* ctx = luaL_checkbytestring(L,1);
-  bytestring_t* src = luaL_checkbytestring(L,2);
+  bytestring_t* ctx = luaL_check_bytestring(L,1);
+  bytestring_t* src = luaL_check_bytestring(L,2);
   bytestring_t* res = bytestring_new(8);
   crypto_error_t e;
 
   if ((e=crypto_digest(res,ctx,src))==CRYPTO_OK)
-    lua_pushbytestring(L,res);
+    lua_push_bytestring(L,res);
   else
   {
     bytestring_free(res);

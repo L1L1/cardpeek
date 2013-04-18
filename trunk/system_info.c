@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include "config.h"
 
-const char *system_string_info()
+const char *system_string_info(void)
 {
 	static char info[128];
 	char first_line[128];
@@ -72,7 +72,7 @@ const char *system_string_info()
 
 typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 
-const char *system_string_info()
+const char *system_string_info(void)
 {
 	static char info[128];
 	SYSTEM_INFO si;

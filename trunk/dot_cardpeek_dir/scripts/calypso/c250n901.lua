@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -54,7 +54,6 @@ function navigo_process_events(cardenv)
 	local record_node
 	local ref_node
 
-	local rec_index
 	local code_value
 	local code_transport
 	local code_transition
@@ -67,26 +66,22 @@ function navigo_process_events(cardenv)
 	local station_id
 	local location_string
 
-	event_node = cardenv:find("Event logs, parsed")
+	event_node = cardenv:find_first({label="Event logs, parsed"})
 
-	if event_node:length()==0 then 
+	if event_node==nil then 
 	   log.print(log.WARNING,"No event found in card")
 	   return 0 
 	end
 
-	for rec_index=1,16 do
-	  
-	    record_node = event_node:find("record",rec_index)
+	for record_node in event_node:find({label="record"}) do
 
-	    if record_node:length()==0 then break end
-	    
 	    -- is it RATP or SNCF ?
-	    ref_node = record_node:find("EventServiceProvider")
-	    service_provider_value = bytes.tonumber(ref_node:val())
-	    ref_node:alt(SERVICE_PROVIDERS[service_provider_value])
+	    ref_node = record_node:find_first({label="EventServiceProvider"})
+	    service_provider_value = bytes.tonumber(ref_node:get_attribute("val"))
+	    ref_node:set_attribute("alt",SERVICE_PROVIDERS[service_provider_value])
 	    
-	    ref_node = record_node:find("EventCode")
-	    code_value = bytes.tonumber(ref_node:val())
+	    ref_node = record_node:find_first({label="EventCode"})
+	    code_value = bytes.tonumber(ref_node:get_attribute("val"))
 
 	    -- is it a bus, a tram, a metro, ... ?
 	    code_transport = bit.SHR(code_value,4)
@@ -98,12 +93,12 @@ function navigo_process_events(cardenv)
 	    code_transition_string = TRANSITION_LIST[code_transition] 	
 	    if (code_transition_string==nil) then code_transition_string = code_transition end
 
-	    ref_node:alt(code_transport_string.." - "..code_transition_string)
+	    ref_node:set_attribute("alt",code_transport_string.." - "..code_transition_string)
 
 	    -- service_provider_value == RATP and code_transport in { metro, tram, train } ? 
 	    if service_provider_value==3 and code_transport>=3 and code_transport<=5 then
-	       ref_node = record_node:find("EventLocationId")
-	       location_id_value = bytes.tonumber(ref_node:val())
+	       ref_node = record_node:find_first({label="EventLocationId"})
+	       location_id_value = bytes.tonumber(ref_node:get_attribute("val"))
 	       sector_id = bit.SHR(location_id_value,9)
 	       station_id = bit.AND(bit.SHR(location_id_value,4),0x1F)
 
@@ -122,7 +117,7 @@ function navigo_process_events(cardenv)
 		     end
 	       end
 	       
-	       ref_node:alt(location_string)
+	       ref_node:set_attribute("alt",location_string)
 
 	    end
 	end

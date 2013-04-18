@@ -72,4 +72,6 @@ gint cstring_equal(gconstpointer a, gconstpointer b);
 #include <stdio.h>
 #define HERE() { fprintf(stderr,"%s[%i]\n",__FILE__,__LINE__); fflush(stderr); }
 
+#define UNUSED(x) (void)x
+
 #endif

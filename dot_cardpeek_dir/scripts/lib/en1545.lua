@@ -24,7 +24,7 @@ EPOCH = 852073200
 date_days = 0
 function en1545_DATE(source)
         local part =  bytes.sub(source, 0, 13) -- 14 bits
-        bytes.pad_left(part,32,0)
+        part = bytes.pad_left(part,32,0)
         date_days = EPOCH+bytes.tonumber(part)*24*3600
         return os.date("%x",date_days)
 end
@@ -32,7 +32,7 @@ end
 function en1545_TIME(source)
         local date_minutes
         local part = bytes.sub(source, 0, 10) -- 11 bits
-        bytes.pad_left(part,32,0)
+        part = bytes.pad_left(part,32,0)
         date_minutes = date_days + bytes.tonumber(part)*60
         date_days = 0
         return os.date("%X",date_minutes)
@@ -61,8 +61,8 @@ function en1545_NETWORKID(source)
         local country_code
         local region_code
 
-        country_code = iso_country_code_name(tonumber(bytes.format("%D",bytes.convert(4,country))))
-        region_code  = tonumber(bytes.format("%D",bytes.convert(4,region)))
+        country_code = iso_country_code_name(tonumber(country:convert(4):format("%D")))
+        region_code  = tonumber(region:convert(4):format("%D"))
         if region_code then
           return "country "..country_code.." / network "..region_code
         end
@@ -77,8 +77,8 @@ function en1545_AMOUNT(source)
 end
 
 function en1545_UNDEFINED(source)
-        local hex_info = bytes.convert(8,source)
-        return bytes.format("0x%D",hex_info)
+        local hex_info = source:convert(8)
+        return hex_info:format("0x%D")
 end
 
 
@@ -109,7 +109,7 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
            return 0
         end
 
-        parsed = format[2]
+        parsed = format[2] -- entry length
 
         item = bytes.sub(data,position,position+parsed-1)
 
@@ -117,7 +117,7 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 				label=format[3], 
 				id=reference_index }
 
-        if format[1] == en1545_BITMAP then
+        if format[1] == en1545_BITMAP then -- entry type is bitmap 
 
            bitmap_size = parsed
            parsed = bitmap_size
@@ -125,25 +125,26 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 			     label="("..format[3].."Bitmap)", 
 			     val=item }
 
-           for index=0,format[2]-1 do
-               if data[position+bitmap_size-index-1]~=0 then
+	   -- go through bit table in reverse order, since lsb=first bit 
+           for index,bit in item:reverse():ipairs() do
+               if bit==1 then
                   parsed = parsed + en1545_parse_item(item_node, format[4][index], data, position+parsed, index)
                end
            end
 
-        elseif format[1] == en1545_REPEAT then
+        elseif format[1] == en1545_REPEAT then -- entry type is repeat
 
-           item_node:val(item)
-           item_node:alt(bytes.tonumber(item))
+           item_node:set_attribute("val",item)
+           item_node:set_attribute("alt",bytes.tonumber(item))
 
            for index=1,bytes.tonumber(item) do
                parsed = parsed + en1545_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
            end
 
-        else
+        else -- entry type is item
 
-           item_node:val(item)
-           item_node:alt(format[1](item))
+           item_node:set_attribute("val",item)
+           item_node:set_attribute("alt",format[1](item))
 
         end
         return parsed
@@ -169,27 +170,17 @@ end
 
 function en1545_map(cardenv, data_type, ...)
         local record_node
-        local data
         local bits
-        local index
         local i
         local parsed
         local block
-	local foo
 
-	files = cardenv:find(data_type)
+	for file in cardenv:find({label=data_type}) do
+                for record_node in file:find({label="record"}) do
 
-	for foo,file in ipairs(files:toArray()) do
+                        if record_node==nil then break end
 
-                if file==nil then return end
-
-                for index=1,15 do
-                        record_node = _n(file):find("record#"..index)
-
-                        if record_node:length()==0 then break end
-
-                        data = record_node:val()
-                        bits = bytes.convert(1,data)
+                        bits = record_node:get_attribute("val"):convert(1)
                         parsed = 0
                         for i,template in ipairs({...}) do
                                 block = bytes.sub(bits,parsed)
@@ -201,7 +192,7 @@ function en1545_map(cardenv, data_type, ...)
                         en1545_unparsed(record_node,bytes.sub(bits,parsed))
                 end
 
-		_n(file):attr("label",data_type..", parsed")
+		file:set_attribute("label",data_type..", parsed")
 	end
 end
 

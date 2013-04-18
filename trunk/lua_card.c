@@ -64,7 +64,7 @@ static int subr_card_last_atr(lua_State* L)
 {
   const bytestring_t *atr = cardreader_last_atr(READER);
 
-  lua_pushbytestring(L,bytestring_duplicate(atr));
+  lua_push_bytestring(L,bytestring_duplicate(atr));
   return 1;
 }
 
@@ -89,14 +89,14 @@ static int subr_card_info(lua_State* L)
 
 static int subr_card_send(lua_State* L)
 {
-  bytestring_t *command = luaL_checkbytestring(L,1);
+  bytestring_t *command = luaL_check_bytestring(L,1);
   bytestring_t *result = bytestring_new(8);
   unsigned short SW;
 
   SW=cardreader_transmit(READER,command,result);
 
   lua_pushinteger(L,SW);
-  lua_pushbytestring(L,result);
+  lua_push_bytestring(L,result);
   return 2;
 }
 
@@ -126,7 +126,7 @@ static int subr_card_make_file_path(lua_State* L)
     log_printf(LOG_DEBUG,"Could not parse path %s",path);
   }
   else {
-    lua_pushbytestring(L,file_path);
+    lua_push_bytestring(L,file_path);
     lua_pushinteger(L,path_type);
   }
   return 2;
@@ -156,6 +156,8 @@ static int subr_card_log_save(lua_State* L)
 
 static int subr_card_log_clear(lua_State* L)
 {
+  UNUSED(L);
+
   cardreader_log_clear(READER);
   return 0;  
 }

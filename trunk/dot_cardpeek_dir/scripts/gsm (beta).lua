@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 require('lib.strict')
 require('lib.apdu')
-require('lib.tnode')
 
 card.CLA = 0xA0
 
@@ -65,12 +64,13 @@ MAP1_FILE_TYPE 		= { [1]="MF", [2]="DF", [4]="EF" }
 MAP1_FILE_STATUS 	= { [0]="invalidated", [1]="not invalidated" }
 
 function GSM_bcd_swap(data)
-	local i 
-	local msb, lsb
+	local i,v 
 	local r = ""
-	for i=0,#data-1 do
-		lsb = bit.AND(data[i],0xF)
-		msb = bit.SHR(data[i],4)
+
+	for i,v in data:ipairs() do
+		local lsb = bit.AND(v,0xF)
+		local msb = bit.SHR(v,4)
+
 		if lsb == 0xF then break end
 		r = r .. BCD_EXTENDED[1+lsb]
 		if msb == 0xF then break end 
@@ -81,12 +81,13 @@ end
 
 function GSM_tostring(data)
 	local r = ""
-	local i
-	for i=0,#data-1 do
-		if data[i]==0xFF then
+	local i,v
+
+	for i,v in data:ipairs() do
+		if v==0xFF then
 			return r
 		end
-		r = r .. GSM_DEFAULT_ALPHABET[data[i]+1]	
+		r = r .. GSM_DEFAULT_ALPHABET[v+1]	
 	end	
 	return r
 end
@@ -94,39 +95,40 @@ end
 -------------------------------------------------------------------------
 function GSM_access_conditions(node,data)
 	local text
-	text = 	   AC_GSM[1+bit.SHR(data[0],  4)] .. ","
-		.. AC_GSM[1+bit.AND(data[0],0xF)] .. ","
-		.. AC_GSM[1+bit.SHR(data[1],  4)] .. ","
-		-- RFU: .. AC_GSM[1+bit.AND(data[1],0xF)] .. ","
-		.. AC_GSM[1+bit.SHR(data[2],  4)] .. ","
-		.. AC_GSM[1+bit.AND(data[2],0xF)]
-	return node:alt(text)
+	text = 	   AC_GSM[1+bit.SHR(data:get(0),  4)] .. ","
+		.. AC_GSM[1+bit.AND(data:get(0),0xF)] .. ","
+		.. AC_GSM[1+bit.SHR(data:get(1),  4)] .. ","
+		.. AC_GSM[1+bit.SHR(data:get(2),  4)] .. ","
+		.. AC_GSM[1+bit.AND(data:get(2),0xF)]
+	return node:set_attribute("alt",text)
 end
 
 function GSM_byte_map(node,data,map)
-	return node:alt(map[bytes.tonumber(data)])
+	
+	local ret = node:set_attribute("alt",map[bytes.tonumber(data)])
+	return ret
 end
 
 
 function GSM_ICCID(node,data)
-	return node:alt(GSM_bcd_swap(data))
+	return node:set_attribute("alt",GSM_bcd_swap(data))
 end
 
 function GSM_SPN(node,data)
-	return node:alt(GSM_tostring(bytes.sub(data,1)))
+	return node:set_attribute("alt",GSM_tostring(bytes.sub(data,1)))
 end
 
 function GSM_ADN(node,data)
 	local alpha_len = #data-14
 	local r = ""
-	if data[0]==0xFF then
-		return node:alt("(empty)")
+	if data:get(0)==0xFF then
+		return node:set_attribute("alt","(empty)")
 	end
 	if alpha_len then
 		r = GSM_tostring(bytes.sub(data,0,alpha_len-1))
 	end
 	r = r .. ": " .. GSM_bcd_swap(bytes.sub(data,alpha_len+2,alpha_len+12)) 
-	return node:alt(r)
+	return node:set_attribute("alt",r)
 end
 
 
@@ -141,10 +143,10 @@ function GSM_SMS_decode_default_alphabet(node,data)
 	
 	for pos=0,#data-1 do
 		shifted = (pos%7)
-		dmy = bit.AND(data[pos],bit.SHR(0xFF,shifted+1))
+		dmy = bit.AND(data:get(pos),bit.SHR(0xFF,shifted+1))
 		
-		char = bit.AND(bit.SHL(data[pos],shifted),0x7F)+back_char
-		back_char = bit.SHR(data[pos],7-shifted)
+		char = bit.AND(bit.SHL(data:get(pos),shifted),0x7F)+back_char
+		back_char = bit.SHR(data:get(pos),7-shifted)
 	
 		text = text..GSM_DEFAULT_ALPHABET[char+1]
 		if shifted==6 then
@@ -152,21 +154,21 @@ function GSM_SMS_decode_default_alphabet(node,data)
 			back_char = 0
 		end
 	end
-	return node:alt(text)
+	return node:set_attribute("alt",text)
 end
 
 function GSM_number(node,data)
 	local bcd=GSM_bcd_swap(data)
 	
-	if (bcd:byte(#bcd)=='F') then 
-		node:alt(string.sub(bcd,1,-1))
+	if (bcd[#bcd]=='F') then 
+		node:set_attribute("alt",string.sub(bcd,1,-1))
 	else
-		node:alt(bcd)
+		node:set_attribute("alt",bcd)
 	end
 end
 
 function GSM_byte(node,data)
-	node:alt(data[0])
+	node:set_attribute("alt",data:get(0))
 end
 
 GSM_MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -174,9 +176,9 @@ GSM_MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 GSM_QUARTER = { "00","15","30","45" }
 
 function GSM_timestamp(node,data)
-	local bcd=bytes.convert(4,data)
-	local tz = bcd[13]*10+bcd[12]
-	local year = bcd[1]*10+bcd[0]
+	local bcd=data:convert(4) 
+	local tz = bcd:get(13)*10+bcd:get(12)
+	local year = bcd:get(1)*10+bcd:get(0)
 	
 	if year>90 then
 		year=1900+year
@@ -184,12 +186,12 @@ function GSM_timestamp(node,data)
 		year=2000+year
 	end
 
-	node:alt(string.format("%i%i:%i%i:%i%i, %i%i %s %i [+%i:%s]",
-				bcd[7], bcd[6], 
-				bcd[9], bcd[8], 
-				bcd[11], bcd[10], 
-				bcd[5], bcd[4],
-				GSM_MONTHS[bcd[3]*10+bcd[2]],
+	node:set_attribute("alt",string.format("%i%i:%i%i:%i%i, %i%i %s %i [+%i:%s]",
+				bcd:get(7), bcd:get(6), 
+				bcd:get(9), bcd:get(8), 
+				bcd:get(11), bcd:get(10), 
+				bcd:get(5), bcd:get(4),
+				GSM_MONTHS[bcd:get(3)*10+bcd:get(2)],
 				year,
 				math.floor(tz/4), GSM_QUARTER[1+tz%4]));
  
@@ -212,27 +214,27 @@ function GSM_SMS(node,data)
 	
 	create_sub_node(node,data,"status",0,1)
 	pos = 1
-	if data[0]>0 then
+	if data:get(0)~=0 then
 		create_sub_node(node,data,"Length of SMSC information",pos,1,GSM_byte)
 		create_sub_node(node,data,"Type of address",pos+1,1)
-		create_sub_node(node,data,"Service center number",pos+2,data[pos]-1,GSM_number)
-		pos = pos+data[pos] + 1
+		create_sub_node(node,data,"Service center number",pos+2,data:get(pos)-1,GSM_number)
+		pos = pos+data:get(pos) + 1
 		create_sub_node(node,data,"First octet SMS deliver message",pos,1,GSM_byte)
 		pos = pos + 1
 		create_sub_node(node,data,"Length of address",pos,1,GSM_byte)
 		create_sub_node(node,data,"Type of address",pos+1,1)
-		create_sub_node(node,data,"Sender number".." "..tostring(data[pos]),pos+2,math.floor((data[pos]+1)/2),GSM_number)
-		pos = pos+math.floor((data[pos]+1)/2) + 2
+		create_sub_node(node,data,"Sender number".." "..tostring(data:get(pos)),pos+2,math.floor((data:get(pos)+1)/2),GSM_number)
+		pos = pos+math.floor((data:get(pos)+1)/2) + 2
 		create_sub_node(node,data,"TP-PID",pos,1)
-		encoding = data[pos+1]
+		encoding = data:get(pos+1)
 		create_sub_node(node,data,"TP-DCS",pos+1,1)
 		create_sub_node(node,data,"TP-SCTS",pos+2,7,GSM_timestamp)
 		pos = pos + 9
 		create_sub_node(node,data,"Length of SMS",pos,1,GSM_byte)
 		if encoding==0 then
-			create_sub_node(node,data,"Text of SMS",pos+1,((data[pos])*7+6)/8,GSM_SMS_decode_default_alphabet)
+			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+6)/8),GSM_SMS_decode_default_alphabet)
 		else
-			create_sub_node(node,data,"Text of SMS",pos+1,((data[pos])*7+6)/8)
+			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+6)/8))
 		end
 	end
 end
@@ -258,12 +260,12 @@ end
 --]]
 
 GSM_MAP = 
-{ "application", "3F00", "MF", {
+{ "folder", "3F00", "MF", {
 		{ "file", "2F00", "Application directory", nil },
 		{ "file", "2F05", "Preferred languages", nil },
 		{ "file", "2F06", "Access rule reference", nil },
 		{ "file", "2FE2", "ICCID", GSM_ICCID },
-		{ "application", "7F10", "TELECOM", {
+		{ "folder", "7F10", "TELECOM", {
 				{ "file", "6F06", "Access rule reference", nil },
 				{ "file", "6F3A", "Abbreviated dialling numbers", GSM_ADN },
 				{ "file", "6F3B", "Fixed dialing numbers", GSM_ADN },
@@ -289,7 +291,7 @@ GSM_MAP =
 
 			}
 		},
-		{ "application", "7F20", "GSM", {
+		{ "folder", "7F20", "GSM", {
 				{ "file", "6F05", "Language indication", nil },
 				{ "file", "6F07", "IMSI", nil },
 				{ "file", "6F20", "Ciphering key Kc", nil },
@@ -343,7 +345,7 @@ EF_MAP =
 	{ 3, "Access conditions", GSM_access_conditions },
 	{ 1, "File status", GSM_byte_map, MAP1_FILE_STATUS },
 	{ 1, "Length of extra GSM data" },
-	{ 1, "File structure", GSM_byte_map, MAP1_FILE_STRUCT },
+	{ 1, "File structure" }, --GSM_byte_map, MAP1_FILE_STRUCT },
 	{ 1, "Length of a record" },
 }
 function gsm_map_descriptor(node,data,map)
@@ -353,6 +355,7 @@ function gsm_map_descriptor(node,data,map)
 
 	node = node:append{ classname="record", label="header", size=#data }
 
+	
 	for i,v in ipairs(map) do
 		item = bytes.sub(data,pos,pos+v[1]-1)
 		child = node:append{ classname="item", label=v[2], size=v[1], val=item }
@@ -379,12 +382,12 @@ function gsm_read_content_binary(node,fsize,alt)
 		if sw~=0x9000 then
 			return false
 		end
-		bytes.append(data,resp)
+		data = bytes.concat(data,resp)
 		pos = pos + try_read
 		fsize = fsize - try_read
 	end
 	
-	node = node:append{classname="record", label="data", ise=#data, val=data}
+	node = node:append{classname="record", label="data", size=#data, val=data}
 	if alt then
 		alt(node,data)
 	end
@@ -428,12 +431,12 @@ function gsm_map(root,amap)
 		child = root:append{classname=amap[1], label=amap[3], id=amap[2]}
 		if amap[1]=="file" then
 			gsm_map_descriptor(child,resp,EF_MAP)
-			file_type = resp[13]
-			file_size = resp[2]*256+resp[3]
+			file_type = resp:get(13)
+			file_size = resp:get(2)*256+resp:get(3)
 			if file_type == 0 then
 				gsm_read_content_binary(child,file_size,amap[4])
 			else
-				gsm_read_content_record(child,file_size,resp[14],amap[4])
+				gsm_read_content_record(child,file_size,resp:get(14),amap[4])
 			end
 		else
 			gsm_map_descriptor(child,resp,DF_MAP)
@@ -450,10 +453,10 @@ function pin_wrap(pin)
 	local i
 	local r = bytes.new(8)
 	for i=1,#pin do
-		bytes.append(r,string.byte(pin,i))
+		r = bytes.concat(r,string.byte(pin,i))
 	end
 	for i=#pin+1,8 do
-		bytes.append(r,0xFF)
+		r = bytes.concat(r,0xFF)
 	end
 	return r
 end
@@ -462,14 +465,14 @@ local PIN
 local sw,resp
 
 if card.connect() then
-   CARD = _n(card.tree_startup("GSM"))
+   CARD = card.tree_startup("GSM")
 
    PIN = ui.readline("Enter PIN for verification (or keep empty to avoid PIN verification)",8,"0000")
    if PIN~="" then
    	PIN=pin_wrap(PIN)
    	sw, resp = card.send(bytes.new(8,"A0 20 00 01 08",PIN)) -- unblock pin = XXXX
 	if sw == 0x9000 then
-		gsm_map(_n(CARD),GSM_MAP)
+		gsm_map(CARD,GSM_MAP)
 	elseif bit.AND(sw,0xFF00) == 0x9800 then 
 		log.print(log.ERROR,"PIN Verification failed")
 		ui.question("PIN Verfication failed, halting.",{"OK"})

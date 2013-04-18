@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -20,6 +20,61 @@
 -- HELPER LIBRARY : implements some frequent iso7816 APDUs
 
 -----------------------------------------------------------
+-- load_smartcard_list
+--
+----------------------------------------------------------
+
+local TABLE_BASE={}
+local TABLE_REGEX={}
+
+function card.load_smartcard_list()
+	local current=nil
+
+	for line in io.lines('etc/smartcard_list.txt') do
+	
+		cfirst = line:sub(1,1)
+
+		-- quick'n'dirty
+		if cfirst=="\t" then
+			res = { string.find(line,"\t(.+)") }
+			table.insert(current, res[3])
+		elseif cfirst=="3" then
+			res = line:gsub(" ", "")
+			if res:find("%.") then
+				TABLE_REGEX[res]={}
+				current=TABLE_REGEX[res]
+			else	
+				TABLE_BASE[res]={}
+				current=TABLE_BASE[res]
+			end	
+		else
+			-- nothing
+		end
+	end
+end
+
+function card.identify_atr(atr)
+	local k,v
+	local target=tostring(atr)
+
+	if #TABLE_BASE==0 then
+		card.load_smartcard_list()
+	end
+
+	for k,v in pairs(TABLE_BASE) do
+		if k==target then
+			return v
+		end
+	end
+	for k,v in pairs(TABLE_REGEX) do
+		if string.match(target,k) then
+			return v
+		end
+	end
+	return nil
+end
+
+-----------------------------------------------------------
 -- tree_startup : helper startup function
 -- connect the card and start the card information tree
 -----------------------------------------------------------
@@ -29,10 +84,23 @@ function card.tree_startup(title)
 	local mycard
 	local ref
 	local atr = card.last_atr()
+	local candidates = card.identify_atr(atr)
+	local atrnode
 
-	mycard = ui.tree_add_node(nil,"card",title)
-	ref = ui.tree_add_node(mycard,"block","cold ATR",nil,#atr)
-	ui.tree_set_value(ref,atr)
+	mycard = nodes.root():append({ classname="card",
+				       label=title });
+
+	atrnode = mycard:append({ classname="block",
+			          label="cold ATR",
+			  	  size=#atr,
+				  val=atr })
+
+	if candidates then
+		local cardtypes = atrnode:append({ classname="item",
+						   label="Possibly identified card",
+						   val=table.concat(candidates,"\n  ")})
+	end
+
 	return mycard
 end
 
@@ -98,9 +166,9 @@ function card.select(file_path,return_what,length)
 	end
 
 	if length~=nil then
-	   bytes.append(command,length)
+	   command = bytes.concat(command,length)
 	else
-	   bytes.append(command,"00")
+	   command = bytes.concat(command,"00")
 	end
 
 	return card.send(command)

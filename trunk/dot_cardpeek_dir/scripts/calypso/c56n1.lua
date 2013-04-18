@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -31,10 +31,10 @@ require('etc.brussels-metro')
 require('etc.brussels-bus')
 
 function mobib_BIRTHDATE(source)
-	local source_digits = bytes.convert(4,source)
-	local year   = tonumber(bytes.format("%D",bytes.sub(source_digits,0,3)))
-	local month  = tonumber(bytes.format("%D",bytes.sub(source_digits,4,5)))
-	local day    = tonumber(bytes.format("%D",bytes.sub(source_digits,6,7)))
+	local source_digits = source:convert(4)
+	local year   = tonumber(source_digits:sub(0,3):format("%D"))
+	local month  = tonumber(source_digits:sub(4,5):format("%D"))
+	local day    = tonumber(source_digits:sub(6,7):format("%D"))
 	return os.date("%x",os.time({['year']=year,['month']=month,['day']=day}))
 end
 
@@ -49,10 +49,10 @@ function mobib_GENDER(source)
 end
 
 function mobib_HOLDERNUMBER(source)
-	local source_digits = bytes.convert(4,source)
-	return  tostring(bytes.sub(source_digits,0,5)).."/"..
-		tostring(bytes.sub(source_digits,6,17)).."/"..
-		tostring(bytes.sub(source_digits,18,18))
+	local source_digits = source:convert(4)
+	return  tostring(source_digits:sub(0,5)).."/"..
+		tostring(source_digits:sub(6,17)).."/"..
+		tostring(source_digits:sub(18,18))
 end
 
 
@@ -87,16 +87,16 @@ end
 function mobib_process_block(ref,label,beginp,endp,block,func)
 	local data = bytes.sub(block,beginp,endp)
 	local res = func(data)
-	_n(ref):append{ classname="item",
-	 	        label=label,
-		        size=endp-beginp+1,
-		        val=data,
-		        alt=res }
+	ref:append{ classname="item",
+	 	    label=label,
+		    size=endp-beginp+1,
+		    val=data,
+		    alt=res }
 	return res
 end
 
-function mobib_process_holderext(i,ref)
-	local block = bytes.convert(1,ui.tree_get_value(ref))
+function mobib_process_holderext(ref)
+	local block = ref:get_attribute("val"):convert(1)
 	if bytes.is_all(block,0) then
 		return false
 	end
@@ -106,13 +106,13 @@ function mobib_process_holderext(i,ref)
 	mobib_process_block(ref,"HolderName",205,359,block,en1545_ALPHA)
 end
 
-function mobib_process_event(i,ref)
-	local block = bytes.convert(1,ui.tree_get_value(ref))
+function mobib_process_event(ref)
+	local block = ref:get_attribute("val"):convert(1)
 	local transport_type
 	local ref2
 
 	if bytes.is_all(block,0) then
-		_n(ref):alt("NO EVENT RECORDED")
+		ref:set_attribute("alt","NO EVENT RECORDED")
 		return false
 	end
 	mobib_process_block(ref,"EventDataDateStamp",6,19,block,en1545_DATE)
@@ -124,7 +124,7 @@ function mobib_process_event(i,ref)
 	transport_type = mobib_process_block(ref,"EventTransportType",99,104,block,mobib_TRANSPORT)
 	if transport_type=="metro" or transport_type=="premetro" then
 		mobib_process_block(ref,"EventLocationId",104,120,block,mobib_TRANSPORT_METRO)
-		ref2 = _n(ref):find("EventLocationId"):get(1)	
+		ref2 = ref:find_first({label="EventLocationId"})	
 		mobib_process_block(ref2,"EventLocationZone",104,109,block,en1545_NUMBER)
 		mobib_process_block(ref2,"EventLocationSubZone",110,113,block,en1545_NUMBER)
 		mobib_process_block(ref2,"EventLocationStation",114,120,block,en1545_NUMBER)
@@ -135,10 +135,10 @@ function mobib_process_event(i,ref)
 	return true
 end
 
-function mobib_process_env(i,ref)
-	local block = bytes.convert(1,ui.tree_get_value(ref))
+function mobib_process_env(ref)
+	local block = ref:get_attribute("val"):convert(1)
 	if bytes.is_all(block,0) then
-		_n(ref):alt("NO ENVIRONMENT DATA")
+		ref:set_attribute("alt","NO ENVIRONMENT DATA")
 	        return false
 	end
 	mobib_process_block(ref,"EnvNetworkId",13,36,block,en1545_NETWORKID)
@@ -150,33 +150,38 @@ function mobib_process(cardenv)
 	local record2_node
 	local data
 
-	record1_node = cardenv:find("Holder Extended"):find("record#1")
-	if record1_node:length()==0 then 
+	record1_node = cardenv:find_first({label="Holder Extended"}):find_first({label="record",id="1"})
+	if record1_node==nil then 
 		log.print(LOG_ERROR,"Could not find record 1 in 'Holder Extended' file")
 		return false
 	end
 
-	record2_node= cardenv:find("Holder Extended"):find("record#2")
-	if record2_node:length()==0 then 
+	record2_node= cardenv:find_first({label="Holder Extended"}):find_first({label="record",id="2"})
+	if record2_node==nil then 
 		log.print(LOG_ERROR,"Could not find record 2 in 'Holder Extended' file")
 		return false
 	end
 	
-	data = record1_node:val() .. record2_node:val()
+	data = record1_node:get_attribute("val") .. record2_node:get_attribute("val")
 	
 	record1_node:remove()
 	record2_node:remove()
 
-	cardenv:find("Holder Extended")
-		:append({ classname = "record", 
-			  label = "record",
-			  id = "1+2",
-			  size = #data,
-			  val = data })
-		:each(mobib_process_holderext)
+	local node
+	node = cardenv:find_first({label="Holder Extended"})
+		      :append({ classname = "record", 
+		                label = "record",
+		      		id = "1+2",
+		      		size = #data,
+		      		val = data })
+	mobib_process_holderext(node)
 
-	cardenv:find("Event logs"):find("record"):each(mobib_process_event)
-	cardenv:find("Environment"):find("record"):each(mobib_process_env)
+	for node in cardenv:find_first({label="Event logs"}):find({label="record"}) do
+		mobib_process_event(node)
+	end
+	for node in cardenv:find_first({label="Environment"}):find({label="record"}) do
+		mobib_process_env(node)
+	end
 end
 
 mobib_process(CARD)

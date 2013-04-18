@@ -42,6 +42,7 @@
 #include "lua_bit.h"
 #include "lua_crypto.h"
 #include "lua_ui.h" 
+#include "lua_nodes.h" 
 
 
 /****************************************/
@@ -219,6 +220,7 @@ int luax_init(void)
   luaopen_log(LUA_STATE);
   luaopen_ui(LUA_STATE);
   luaopen_crypto(LUA_STATE);
+  luaopen_nodes(LUA_STATE);
   chdir(config_get_string(CONFIG_FOLDER_CARDPEEK));
   log_printf(LOG_DEBUG,"Running configuration script %s",config_get_string(CONFIG_FILE_CONFIG));
   run_file(LUA_STATE,config_get_string(CONFIG_FILE_CONFIG));

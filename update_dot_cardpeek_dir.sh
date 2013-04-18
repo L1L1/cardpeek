@@ -5,7 +5,7 @@ VERSION=`date +%s`
 if [ -d ~/.cardpeek ] 
 then
   echo "** Retrieving new files **"
-  cp -pRv ~/.cardpeek/* dot_cardpeek_dir/
+  cp -pRv ~/.cardpeek/* dot_cardpeek_dir
   echo "** Removing unecessary files **"
   rm -vf dot_cardpeek_dir/logs/* 
   touch dot_cardpeek_dir

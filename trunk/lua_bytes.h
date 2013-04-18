@@ -25,8 +25,10 @@
 
 int luaopen_bytes(lua_State* L);
 
-bytestring_t* luaL_checkbytestring(lua_State *L, int p);
+bytestring_t* luaL_check_bytestring(lua_State *L, int p);
 
-void lua_pushbytestring(lua_State *L, bytestring_t* bs);
+int luaL_is_bytestring(lua_State *L, int p);
+
+void lua_push_bytestring(lua_State *L, bytestring_t* bs);
 
 #endif

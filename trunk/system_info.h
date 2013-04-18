@@ -20,6 +20,6 @@
 */
 #ifndef SYSTEM_INFO_H
 
-const char *system_string_info();
+const char *system_string_info(void);
 
 #endif

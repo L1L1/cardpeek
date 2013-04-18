@@ -19,6 +19,8 @@
 *
 */
 
+#include "gui_about.h"
+
 #include <gtk/gtk.h>
 #ifndef _WIN32
 #include "config.h"
@@ -40,28 +42,22 @@ const char* LICENSE="CARDPEEK is free software: you can redistribute it and/or m
 		    "not, see http://www.gnu.org/licenses/.";
  
 
-const char* AUTHORS[]= {
-	"Main author:",
-	"- Alain Pannetrat <L1L1@gmx.com>",
-	"",
-	"Contributors:",
-	"- Ludovic Lange: Initial patch for Mac OS X version.",
-	"- Adam Laurie: CVM parsing in EMV.",
-	"- Kalev Lember: bug and compatibility fixes.",
-	"- Ludovic Rousseau: Lots of code cleanup, better use of autotools.", 
-	"- Pascal Terjan: Paris metro/RER name decoding and bug fixes.",
-	"- and a few anonymous contributors...",
-	NULL 
-};
-
 void gui_about(void)
 {
+	GBytes* authors_bytes;
+	gsize size;
+	const char *authors[2];
+
+	authors_bytes = g_resources_lookup_data("/cardpeek/AUTHORS",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+	authors[0] = (const char *)g_bytes_get_data(authors_bytes,&size);
+	authors[1] = NULL;
+
 	gtk_show_about_dialog(NULL,
 			      "program-name", "cardpeek",
 			      "version", VERSION,
 			      "license", LICENSE,
 			      "wrap-license", TRUE,
-			      "authors", AUTHORS,
+			      "authors", authors,
 			      "comments", "Cardpeek is a tool to read the contents of smart cards.",
 			      "copyright", "Copyright Alain Pannetrat <L1L1@gmx.com>",
 			      "website", "https://cardpeek.googlecode.com", 

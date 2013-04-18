@@ -177,16 +177,20 @@ static const char *signature =
 "\n"
 "                                                               \n"
 "  L1L1@gmx.com                                                 \n"
-"*****************************************************************"
+"***************************************************************\n"
 ;
 
 static void save_what_can_be_saved(int sig_num) 
 {
   const char *logfile;	
+  char buf[32];
+
   write(2,message,strlen(message));
   logfile = config_get_string(CONFIG_FILE_LOG);
   write(2,logfile,strlen(logfile));
   write(2,signature,strlen(signature));
+  sprintf(buf,"Recieved signal %i\n",sig_num); 
+  write(2,buf,strlen(buf));
   log_close_file();
   exit(-2);
 } 

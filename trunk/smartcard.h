@@ -25,7 +25,7 @@
 #define SMARTCARD_H
 
 #include "bytestring.h"
-#include "emulator.h"
+#include "replay.h"
 
 #define PROTOCOL_T0 1
 #define PROTOCOL_T1 2
@@ -88,7 +88,7 @@ struct _cardreader_t {
   void           *extra_data;
   cardreader_callback_t cb_func;
   void           *cb_data;
-  cardemul_t     *cardlog;   
+  cardreplay_t   *cardlog;   
 
   int (*connect)(cardreader_t*, unsigned);
   int (*disconnect)(cardreader_t*);

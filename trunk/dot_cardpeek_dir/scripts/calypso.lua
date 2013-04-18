@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 --   format, as described in the French "intercode" documentation.
 -- * experimentation and guesses, 
 -- This information is incomplete. If you have further data, such 
--- as details of ISO 1545 or calypso card specs, please help send them
+-- as details ofd specs, please help send them
 -- to L1L1@gmx.com
 --------------------------------------------------------------------------
 
@@ -37,14 +37,14 @@ SEL_BY_LFI  = 2
 sel_method  = SEL_BY_LFI
 
 require('lib.strict')
-require('lib.tnode')
 require('lib.country_codes')
 
 function bytes.is_all(bs,byte)
-	local i
+	local i,v
+
 	if #bs==0 then return false end
-	for i=0,#bs-1 do
-		if bs[i]~=byte then return false end
+	for i,v in bs:ipairs() do
+		if v~=byte then return false end
 	end
 	return true
 end
@@ -83,17 +83,17 @@ function calypso_select(ctx,desc,path,klass)
 	local file_node=nil
 
 	if sel_method==SEL_BY_LFI then
-		sw,resp = card.select(bytes.format("#%D",lfi))
+		sw,resp = card.select(bytes.format(lfi,"#%D"))
 	else
 		sw,resp = card.select(path)
 	end
 
 	if sw==0x9000 then
 		for r=0,(#path_parsed/2)-1 do
-			item = bytes.format("%D",bytes.sub(path_parsed,r*2,r*2+1))
+			item = bytes.format(bytes.sub(path_parsed,r*2,r*2+1),"%D")
 			
-			file_node = parent_node:find("#"..item)
-			if file_node:length()==0 then
+			file_node = parent_node:find_first({id=item})
+			if file_node==nil then
 				file_node = parent_node:append{ classname = klass,
 		                                                label = desc,
 							        id = item }
@@ -106,23 +106,21 @@ function calypso_select(ctx,desc,path,klass)
 end
 
 function calypso_guess_network(cardenv)
-	local country_bin
-	local network_bin
 	local env_node
 	local record_node
 	local data
 
-	env_node = cardenv:find("Environment")
+	env_node = cardenv:find_first({label="Environment"})
 
 	if env_node then
-		record_node = env_node:find("record#1")
+		record_node = env_node:find_first({label="record", id="1"})
 		if record_node then
-			data = bytes.convert(1,record_node:val())
+			data = record_node:get_attribute("val"):convert(1)
 			if #data > 36 then
-				country_bin = bytes.sub(data,13,24)
-				network_bin = bytes.sub(data,25,36)
-				return tonumber(bytes.format("%D",bytes.convert(4,country_bin))),
-			       	       tonumber(bytes.format("%D",bytes.convert(4,network_bin)))
+				local country_bin = data:sub(13,24)
+				local network_bin = data:sub(25,36)
+				return tonumber(country_bin:convert(4):format("%D")),
+			       	       tonumber(network_bin:convert(4):format("%D"))
 			else
 				log.print(log.WARNING,"Could not find enough data in 'Environement/record#1'")
 			end
@@ -188,10 +186,10 @@ local atr, hex_card_num, card_num
 
 if card.connect() then 
 
-  CARD = _n(card.tree_startup("CALYPSO"))
+  CARD = card.tree_startup("CALYPSO")
   atr = card.last_atr();
   hex_card_num = bytes.sub(atr,-7,-4)
-  card_num     = (hex_card_num[0]*256*65536)+(hex_card_num[1]*65536)+(hex_card_num[2]*256)+hex_card_num[3]
+  card_num     = (hex_card_num:get(0)*256*65536)+(hex_card_num:get(1)*65536)+(hex_card_num:get(2)*256)+hex_card_num:get(3)
 
   CARD:append{ classname = "block", 
   	       label="Card number", 
@@ -201,8 +199,8 @@ if card.connect() then
   --local ref = ui.tree_add_node(CARD,"block","Card number",nil,4)
   --ui.tree_set_value(ref,hex_card_num)
   --ui.tree_set_alt_value(ref,card_num)
-  --ref:val(hex_card_num)
-  --ref:alt(card_num)
+  --ref:set_attribute("val",hex_card_num)
+  --ref:set_attribute("alt",card_num)
 
   
   sw = card.select("#2010")

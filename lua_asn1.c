@@ -26,7 +26,7 @@
 
 static int subr_asn1_split(lua_State* L)
 {
-  const bytestring_t *tlv = luaL_checkbytestring(L,1);
+  const bytestring_t *tlv = luaL_check_bytestring(L,1);
   unsigned tag;
   bytestring_t *value = bytestring_new(8);
   bytestring_t *tail  = bytestring_new(8);
@@ -36,12 +36,12 @@ static int subr_asn1_split(lua_State* L)
   {
     lua_pushinteger(L,tag);
     
-    lua_pushbytestring(L,value);
+    lua_push_bytestring(L,value);
     
     if (pos<bytestring_get_size(tlv))
     {
       bytestring_substr(tail,pos,BYTESTRING_NPOS,tlv);
-      lua_pushbytestring(L,tail);
+      lua_push_bytestring(L,tail);
     }
     else
     {
@@ -62,7 +62,7 @@ static int subr_asn1_split(lua_State* L)
 
 static int subr_asn1_split_tag(lua_State* L)
 {
-  const bytestring_t *tlv = luaL_checkbytestring(L,1);
+  const bytestring_t *tlv = luaL_check_bytestring(L,1);
   unsigned tag;
   bytestring_t *tail  = bytestring_new(8);
   unsigned pos=0;
@@ -74,7 +74,7 @@ static int subr_asn1_split_tag(lua_State* L)
     if (pos<bytestring_get_size(tlv))
     {
       bytestring_substr(tail,pos,BYTESTRING_NPOS,tlv);
-      lua_pushbytestring(L,tail);
+      lua_push_bytestring(L,tail);
     }
     else
     {
@@ -93,7 +93,7 @@ static int subr_asn1_split_tag(lua_State* L)
 
 static int subr_asn1_split_length(lua_State* L)
 {
-  const bytestring_t *tlv = luaL_checkbytestring(L,1);
+  const bytestring_t *tlv = luaL_check_bytestring(L,1);
   unsigned len;
   bytestring_t *tail  = bytestring_new(8);
   unsigned pos=0;
@@ -105,7 +105,7 @@ static int subr_asn1_split_length(lua_State* L)
     if (pos<bytestring_get_size(tlv))
     {
       bytestring_substr(tail,pos,BYTESTRING_NPOS,tlv);
-      lua_pushbytestring(L,tail);
+      lua_push_bytestring(L,tail);
     }
     else
     {
@@ -145,7 +145,7 @@ static int subr_asn1_join(lua_State* L)
       clear_value = 1;
     }
     else
-      value = luaL_checkbytestring(L,2);
+      value = luaL_check_bytestring(L,2);
   }
  
   asn1_encode_tlv(tag,value,tlv);
@@ -159,13 +159,13 @@ static int subr_asn1_join(lua_State* L)
       clear_tail = 1;
     }
     else
-      tail = luaL_checkbytestring(L,3);
+      tail = luaL_check_bytestring(L,3);
     bytestring_append(tlv,tail);
   }
 
   if (clear_value) bytestring_free(value);
   if (clear_tail) bytestring_free(tail);
-  lua_pushbytestring(L,tlv);
+  lua_push_bytestring(L,tlv);
   return 1;
 }
 

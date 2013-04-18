@@ -1,1 +1,13 @@
-Cardpeek is (c) 2009-2013 Alain Pannetrat <L1L1@gmx.com>
+Cardpeek is (c) 2009-2013 Alain Pannetrat 
+<L1L1@gmx.com>
+
+Kind contributors:
+- Ludovic Lange: Initial patch for Mac OS X version.
+- Adam Laurie: CVM parsing in EMV.
+- Kalev Lember: bug and compatibility fixes.
+- Ludovic Rousseau: Lots of code cleanup, better use of autotools. 
+- Pascal Terjan: Paris metro/RER name decoding and bug fixes.
+- and a few anonymous contributors...
+
+This software uses the smartcard_list.txt (c) from Ludovic Rousseau.
+

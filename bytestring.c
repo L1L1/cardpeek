@@ -434,8 +434,8 @@ int bytestring_get_element(unsigned char* element,
 			   int pos)
 {
   if (pos<0)
-    pos=bs->len+pos;
-  if (pos<bs->len && pos>=0)
+    pos=(int)bs->len+pos;
+  if (pos<(int)bs->len && pos>=0)
   {
     *element=bs->data[pos];
     return BYTESTRING_OK;
@@ -448,8 +448,8 @@ int bytestring_set_element(const bytestring_t *bs,
 			   int pos, unsigned char element)
 {
   if (pos<0)
-    pos=bs->len+pos;
-  if (pos<bs->len && pos>=0)
+    pos=(int)bs->len+pos;
+  if (pos<(int)bs->len && pos>=0)
   {
     bs->data[pos]=element&bs->mask;
     return BYTESTRING_OK;
@@ -689,7 +689,7 @@ static void x_bytestring_append_as_digits(a_string_t* dest, const bytestring_t *
   }
 }
 
-static int x_bytestring_set(bytestring_t *bs, int bs_index, unsigned char v)
+static int x_bytestring_set(bytestring_t *bs, unsigned bs_index, unsigned char v)
 {
   if (bs_index>=bs->len) 
     bytestring_resize(bs,bs_index+1);
@@ -697,7 +697,7 @@ static int x_bytestring_set(bytestring_t *bs, int bs_index, unsigned char v)
   
   return BYTESTRING_OK;
 }
-static unsigned x_bytestring_get(bytestring_t *bs, int bs_index)
+static unsigned x_bytestring_get(bytestring_t *bs, unsigned bs_index)
 {
   if (bs_index>=bs->len)
     return 0;
@@ -742,28 +742,12 @@ static int x_bytestring_decimal_mul_add(bytestring_t *bs, unsigned mul_v, unsign
 
 static void x_bytestring_append_as_integer(a_string_t *dest, const bytestring_t *bs)
 {
-/*  bytestring_t *src; */
   bytestring_t *b10;
-  int i;
+  unsigned i;
 
   if (bs->len==0)
     return;
-/* 
-  src = bytestring_new(8);
-  b10 = bytestring_new(8);
   
-  bytestring_convert(src,bs);
-  bytestring_pushback(b10,0);
-  
-  for (i=0;i<src->len;i++)
-    x_bytestring_decimal_mul_add(b10,256,src->data[i]);
-  
-  for (i=0;i<b10->len;i++)
-    a_strpushback(dest,b10->data[b10->len-1-i]+'0');
-  
-  bytestring_free(src);
-  bytestring_free(b10);
-*/
   b10 = bytestring_new(8);
   bytestring_pushback(b10,0);
 
@@ -820,7 +804,7 @@ end_this_function:
 
 double bytestring_to_number(const bytestring_t *bs)
 {
-  int i;
+  unsigned i;
   unsigned coef = 0;
   double res = 0;
 

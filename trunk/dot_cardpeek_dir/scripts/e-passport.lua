@@ -31,8 +31,8 @@ function epass_inc_SSC()
 	local i=7
 	local e
 	while i>=0 do
-	   SSC[i]=SSC[i]+1
-	   if SSC[i]~=0 then break end
+	   SSC:set(i,SSC:get(i)+1)
+	   if SSC:get(i)~=0 then break end
 	   i=i-1
 	end
 	--print("SSC: ",#SSC,SSC)
@@ -100,7 +100,7 @@ function epass_create_session_keys()
 	k_icc = bytes.sub(R,16,31)
 	k_seed = bytes.new(8)
 	for i=0,15 do
-	    bytes.append(k_seed,bit.XOR(k_ifd[i],k_icc[i]))
+	    k_seed = bytes.concat(k_seed,bit.XOR(k_ifd:get(i),k_icc:get(i)))
 	end
 	SSC = bytes.sub(rnd_icc,4,7)..bytes.sub(rnd_ifd,4,7)
 	KS_ENC, KS_MAC = epass_key_derivation(k_seed)
@@ -117,7 +117,7 @@ function epass_select(EF)
 	local command
 	local DO99
 
-	M = bytes.concat("01"..crypto.encrypt(TDES_CBC,cmdbody,iv))
+	M = bytes.concat("01",crypto.encrypt(TDES_CBC,cmdbody,iv))
 	DO87 = asn1.join(0x87,M)
 	epass_inc_SSC()
 	N = bytes.concat(SSC,cmdheader,"80 00 00 00",DO87)
@@ -126,6 +126,9 @@ function epass_select(EF)
 	command=bytes.concat(cmdheader,(#DO87+#DO8E),DO87,DO8E,0)
 	sw, resp = card.send(command)
 	epass_inc_SSC()
+	if sw~=0x9000 then
+		return sw, resp
+	end 
 	tag_99, value_99, rest = asn1.split(resp)
 	tag_8E, value_8E, rest = asn1.split(rest)
 	if tag_99~=0x99 then
@@ -173,7 +176,7 @@ function epass_read_file()
 	tag, rest = asn1.split_tag(resp)
 	len, rest = asn1.split_length(rest)
 
-	io.write("read_file: [")
+	--io.write("read_file: [")
 	if len>127 then
            to_read = len + 4
 	else
@@ -183,7 +186,7 @@ function epass_read_file()
 	result = bytes.new(8)
 	already_read = 0
 	while to_read>0 do
-	     io.write(".");io.flush()    
+	     --io.write(".");io.flush()    
 	     if to_read>0xFF then
 	        le = 0xFF
              else
@@ -191,31 +194,31 @@ function epass_read_file()
 	     end
 	     sw, resp = epass_read_binary(already_read,le)
 	     if sw~=0x9000 then return result end
-	     bytes.append(result,resp)
+	     result = bytes.concat(result,resp)
 	     already_read = already_read + #resp
 	     to_read = to_read - #resp
 	end
-	io.write("] "..#result.."bytes\n")
+	--io.write("] "..#result.."bytes\n")
 	return result
 end
 
 function ui_parse_version(node,data)
-	local ver = bytes.format("%P",bytes.sub(data,0,1))
+	local ver = bytes.format(bytes.sub(data,0,1),"%P")
 	local i
 	for i=1,(#data/2)-1 do
-		ver = ver .. "." .. bytes.format("%P",bytes.sub(data,i*2,i*2+1))
+		ver = ver .. "." .. bytes.format(bytes.sub(data,i*2,i*2+1),"%P")
 	end
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,ver)
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",ver)
 	return true
 end
 
 
 
 function ui_parse_cstring(node,data)
-	ui.tree_set_value(node,data)
+	nodes.set_attribute(node,"val",data)
 	if #data>1 then
-        	ui.tree_set_alt_value(node,bytes.format("%P",bytes.sub(data,0,#data-2)))
+        	nodes.set_attribute(node,"alt",bytes.format(bytes.sub(data,0,#data-2),"%P"))
 	end
 end
 
@@ -347,7 +350,7 @@ function ui_parse_block(node,format,data,pos)
 	local index
 
 	for i,v in ipairs(format) do
-		ITEM = ui.tree_add_node(node,"item",v[1],i-1,v[2])
+		ITEM = node:append({ classname="item", label=v[1], id=i-1, size=v[2] })
 		block = bytes.sub(data,pos,pos+v[2]-1)
 		if v[3]~=nil then
 			if type(v[3])=="function" then
@@ -356,17 +359,17 @@ function ui_parse_block(node,format,data,pos)
 			   end
 			elseif type(v[3])=="table" then
 			   index = bytes.tonumber(block)
-			   ui.tree_set_value(ITEM,block)
+			   nodes.set_attribute(ITEM,"val",block)
 			   if v[3][index] then
-				ui.tree_set_alt_value(ITEM,v[3][index])
+				nodes.set_attribute(ITEM,"alt",v[3][index])
 			   else
-				ui.tree_set_alt_value(ITEM,index)
+				nodes.set_attribute(ITEM,"alt",index)
 			   end
 			else
 			   return nil
 			end 
 		else
-			ui.tree_set_value(ITEM,block)
+			nodes.set_attribute(ITEM,"val",block)
 		end
 		pos = pos + v[2]
 	end
@@ -391,23 +394,23 @@ function ui_parse_biometry_fac(node,data)
 
 	num_faces = bytes.tonumber(bytes.sub(data,12,13))
 
-	BLOCK = ui.tree_add_node(node,"item","Facial Record Header");
+	BLOCK = node:append({ classname="item", label="Facial Record Header" })
 	index = ui_parse_block(BLOCK,BL_FAC_RECORD_HEADER,data,index)
 	if index==nil then
 		log.print(log.ERROR,"Failed to parse facial header information") 
 		return false 
 	end 
 
-	BLOCK = ui.tree_add_node(node,"item","Facial Data Records")
+	BLOCK = node:append({ classname="item", label="Facial Data Records" })
 
 	for i = 1,num_faces do
 		block_start = index
 		block_length = bytes.tonumber(bytes.sub(data,index,index+3))
 		num_features = bytes.tonumber(bytes.sub(data,index+4,index+5))
 		
-		SUBBLOCK = ui.tree_add_node(BLOCK,"item","Facial Record Data",i,block_length)
+		SUBBLOCK = BLOCK:append({ classname="item", label="Facial Record Data", id=i, size=block_length })
 		
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Facial Information")
+		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Facial Information" })
 		index = ui_parse_block(SUBSUBBLOCK,BL_FAC_INFORMATION,data,index)
 		if index==nil then 
 			log.print(log.ERROR,"Failed to parse facial information")
@@ -415,9 +418,9 @@ function ui_parse_biometry_fac(node,data)
 		end 	
 
 		if num_features>0 then
-			SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Feature points")
+			SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Feature points" })
 			for j=1,num_features do
-				SUBSUBSUBBLOCK =  ui.tree_add_node(node,"item","Feature Point",j)
+				SUBSUBSUBBLOCK =  node:append({ classname="item", label="Feature Point", id=j })
 				index = ui_parse_block(SUBSUBSUBBLOCK,BL_FEATURE_POINT,data,index)				
 				if index==nil then 
 					log.print(log.ERROR,"Failed to parse facial feature information")
@@ -426,7 +429,7 @@ function ui_parse_biometry_fac(node,data)
 			end
 		end
 
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Image Information");
+		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Image Information" })
 		index = ui_parse_block(SUBSUBBLOCK,BL_FAC_IMAGE_INFORMATION,data,index)
 		if index==nil then
 			log.print(log.ERROR,"Failed to parse facial image information") 
@@ -434,8 +437,9 @@ function ui_parse_biometry_fac(node,data)
 		end
 		
 		image_len = block_length-(index-block_start)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Image Data",image_len)
-		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_len-1))
+		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Image Data", size=image_len })
+		nodes.set_attribute(SUBSUBBLOCK,"val",bytes.sub(data,index,index+image_len-1))
+		nodes.set_attribute(SUBSUBBLOCK,"mime-type","image/jpeg")
 		index = index + image_len
 	end
 	return true
@@ -453,7 +457,7 @@ function ui_parse_biometry_fir(node,data)
 	local image_size
 	local i
 
-	BLOCK = ui.tree_add_node(node,"item","Finger General Record Header");
+	BLOCK = node:append({ classname="item", label="Finger General Record Header" })
 	index = ui_parse_block(BLOCK,BL_FIR_GENERAL_RECORD_HEADER,data,index)
 	if index==nil then 
 		log.print(log.ERROR,"Failed to parse finger general record header information")
@@ -461,13 +465,13 @@ function ui_parse_biometry_fir(node,data)
 	end 
 	num_images = bytes.tonumber(bytes.sub(data,18,18))
 
-	BLOCK = ui.tree_add_node(node,"item","Finger Images")
+	BLOCK = node:append({ classname="item", label="Finger Images" })
 	for i=1,num_images do
 		record_size = bytes.tonumber(bytes.sub(data,index,index+3))
 		record_start = index
 
-		SUBBLOCK = ui.tree_add_node(BLOCK,"item","Finger Image",i,record_size)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Finger Image Record Header")
+		SUBBLOCK = BLOCK:append({ classname="item", label="Finger Image", id=i, size=record_size })
+		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Finger Image Record Header" })
 		index = ui_parse_block(SUBSUBBLOCK,BL_FIR_IMAGE_RECORD_HEADER,data,index)
 		if index==nil then 
 			log.print(log.ERROR,"Failed to parse finger image record header information")
@@ -475,8 +479,8 @@ function ui_parse_biometry_fir(node,data)
 		end
 
 		image_size = record_size-(index-record_start)
-		SUBSUBBLOCK = ui.tree_add_node(SUBBLOCK,"item","Finger Image Data")
-		ui.tree_set_value(SUBSUBBLOCK,bytes.sub(data,index,index+image_size-1))
+		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Finger Image Data" })
+		nodes.set_attribute(SUBSUBBLOCK,"val",bytes.sub(data,index,index+image_size-1))
 		index = index + image_size
 	end
  
@@ -491,7 +495,7 @@ function ui_parse_biometry(node,data)
 	elseif tag==FIR_FORMAT_IDENTIFIER then
 		ui_parse_biometry_fir(node,data)
 	else
-		ui.tree_set_value(node,data)
+		nodes.set_attribute(node,"val",data)
 	end
 	return true
 end
@@ -569,9 +573,11 @@ until #MRZ_DATA>=28
 
 
 if card.connect() then
+  local ke,km,i,v,r
+
   CARD = card.tree_startup("e-passport")
   sw, resp = card.select(AID_MRTD,0)
-  APP = ui.tree_add_node(CARD,"application","application",AID_MRTD)
+  APP = CARD:append({classname="application", label="application", id=AID_MRTD})
   if #resp>0 then
 	  tlv_parse(APP,resp)
   end
@@ -580,22 +586,30 @@ if card.connect() then
      then
        for i,v in ipairs(FILES) do
          sw, resp = epass_select(v['FID'])
-         FID = ui.tree_add_node(CARD,"file",v['name'],string.format(".%04X",v['FID']),#resp)
-         if sw==0x9000 then
-            r = epass_read_file()
+  
+         FID = APP:append({ classname="file", label=v['name'], id=string.format(".%04X",v['FID']) })
+	 FID:append({classname="block", label="header", size=#resp, val=resp })
+	 CONTENT = FID:append({classname="block", label="content" })
+	 
+	if sw==0x9000 then
+    
+	    r = epass_read_file()
+	         
 	    if r then
-                if r[0]==0x6D then
+		nodes.set_attribute(CONTENT,"size",#r)
+                if r:get(0)==0x6D then
 	       		tag_6D, value_6D = asn1.split(r)
-	       		TAG6D = ui.tree_add_node(FID,"item","National specific data",nil,#value_6D)
-	       		ui.tree_set_value(TAG6D,value_6D)
+	       		TAG6D = CONTENT:append({ classname="item", label="National specific data", size=#value_6D })
+	       		nodes.set_attribute(TAG6D,"val",value_6D)
 	    	else
-               		tlv_parse(FID,r,MRP_REFERENCE)
+               		tlv_parse(CONTENT,r,MRP_REFERENCE)
 	    	end
 	    else
-		    ui.tree_set_alt_value(FID,"Selected file, but data is not accessible")
+		    nodes.set_attribute(CONTENT,"alt","Selected file, but data is not accessible")
             end
+	   
          else
-	    ui.tree_set_alt_value(FID,string.format("could not select file, data not accessible (code %04X)",sw))
+	    nodes.set_attribute(CONTENT,"alt",string.format("Content not accessible (code %04X)",sw))
          end
        end
      else

@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
 require('lib.tlv')
 
 function ui_parse_asciidate(node,data)
-	local d = bytes.format("%P",data)
+	local d = bytes.format(data,"%P")
 	local t = os.time( { ['year']  = string.sub(d,1,4),
 	      	   	     ['month'] = string.sub(d,5,6),
 	      		     ['day']   = string.sub(d,7,8) } )
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,os.date("%x",t))
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",os.date("%x",t))
 	return true
 end
 
@@ -50,7 +50,7 @@ function read_bin()
 	r = 0
 	repeat 
           sw, resp = card.read_binary(".",r)
-	  bytes.append(total,resp)
+	  total = bytes.concat(total,resp)
 	  r = r + 256
 	until #resp~=256 or sw~=0x9000
 
@@ -99,7 +99,7 @@ function create_card_map()
 	  if tag==0x80 then
 	     entry = tostring(bytes.sub(val,8,9))
 	     file  = "."..tostring(bytes.sub(val,10,11))
-	     name  = bytes.format("%P",bytes.sub(val,0,7))
+	     name  = bytes.format(bytes.sub(val,0,7),"%P")
 	     table.insert(map[entry]['files'],{ ['name']=name, ['ef']=file })
 	  end
 	until rest==nil or tag==0
@@ -134,24 +134,30 @@ if card.connect() then
      for app in pairs(map) do
          sw,resp = card.select(map[app]['aid'])
          if sw==0x9000 then
-            APP = ui.tree_add_node(CARD,"application","Application",map[app]['aid'])
+            APP = CARD:append({	classname="application", 
+				label="Application", 
+				id=map[app]['aid'] })
 	    tlv_parse(APP,resp)
          end
          for i in pairs(map[app]['files']) do
-            EF = ui.tree_add_node(APP,"file",map[app]['files'][i]['name'],map[app]['files'][i]['ef'])
+            EF = APP:append({	classname="file", 
+				label=map[app]['files'][i]['name'],
+				id=map[app]['files'][i]['ef'] })
   	    sw,resp = card.select(map[app]['files'][i]['ef'])
 	    tlv_parse(EF,resp)
 	    if sw==0x9000 then
 	       sw,resp = read_bin()
-	       CONTENT = ui.tree_add_node(EF,"record","content",nil,#resp)
+	       CONTENT = EF:append({	classname="record",
+					label="content",
+					size=#resp })
 	       if sw==0x9000 then
-	          if resp[0]==0 or (resp[0]==0x04 and resp[1]==0x00) then
-                    ui.tree_set_value(CONTENT,resp)
+	          if resp:get(0)==0 or (resp:get(0)==0x04 and resp:get(1)==0x00) then
+                    nodes.set_attribute(CONTENT,"val",resp)
 	          else
                     tlv_parse(CONTENT,resp,VITALE_IDO)
                   end
 	       else
-	          ui.tree_set_alt_value(CONTENT,string.format("data not accessible (code %04X)",sw))
+	          nodes.set_attribute(CONTENT,"alt",string.format("data not accessible (code %04X)",sw))
 	       end
 	    end
          end

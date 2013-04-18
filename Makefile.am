@@ -6,7 +6,7 @@ AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GL
 
 bin_PROGRAMS= cardpeek
 
-cardpeek_SOURCES = asn1.c asn1.h bytestring.c bytestring.h gui_flexi_cell_renderer.c gui_flexi_cell_renderer.h dyntree_model.c dyntree_model.h cardtree.c cardtree.h crypto.c crypto.h emulator.c emulator.h gui.c gui.h iso7816.c iso7816.h lua_asn1.c lua_asn1.h lua_bit.c lua_bit.h lua_bytes.c lua_bytes.h lua_card.c lua_card.h lua_crypto.c lua_crypto.h lua_ext.c lua_ext.h lua_log.c lua_log.h lua_ui.c lua_ui.h main.c misc.c misc.h pathconfig.c pathconfig.h smartcard.c smartcard.h system_info.c system_info.h a_string.c a_string.h gui_about.c gui_about.h 
+cardpeek_SOURCES = asn1.c asn1.h bytestring.c bytestring.h gui_flexi_cell_renderer.c gui_flexi_cell_renderer.h dyntree_model.c dyntree_model.h crypto.c crypto.h replay.c replay.h gui.c gui.h iso7816.c iso7816.h lua_nodes.c lua_nodes.h lua_asn1.c lua_asn1.h lua_bit.c lua_bit.h lua_bytes.c lua_bytes.h lua_card.c lua_card.h lua_crypto.c lua_crypto.h lua_ext.c lua_ext.h lua_log.c lua_log.h lua_ui.c lua_ui.h main.c misc.c misc.h pathconfig.c pathconfig.h smartcard.c smartcard.h system_info.c system_info.h a_string.c a_string.h gui_about.c gui_about.h 
 
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
@@ -14,8 +14,8 @@ cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @
 
 dist_man_MANS=cardpeek.1
 
-DRIVERS=drivers/emul_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
-ICONS=icons/analyzer.png icons/item.png icons/card.png icons/smartcard.png icons/folder.png icons/cardpeek.png icons/application.png icons/document.png icons/block.png
+DRIVERS=drivers/replay_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c drivers/acg_driver.c
+ICONS=icons/analyzer.png icons/item.png icons/record.png icons/smartcard.png icons/folder.png icons/cardpeek.png icons/application.png icons/file.png icons/block.png icons/atr.png icons/header.png icons/body.png
 
 CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz 
 
@@ -42,7 +42,7 @@ dot_cardpeek.tar.gz:    dot_cardpeek_dir
 			@chmod -R u+w .cardpeek/
 			@tar czf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
 
-cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) cardpeek_resources.gresource.xml
+cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
 			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"
 			@$(GLIB_COMPILE_RESOURCES) --generate-source --sourcedir=. --sourcedir=$(srcdir) --target=cardpeek_resources.c $(srcdir)/cardpeek_resources.gresource.xml
 			@echo "  CC       cardpeek_resource.c"

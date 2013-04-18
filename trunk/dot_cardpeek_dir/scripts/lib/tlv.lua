@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -38,13 +38,13 @@ end
 -- otherwise.
 
 function ui_parse_digits(node,data)
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,bytes.format("%D",data))
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",bytes.format(data,"%D"))
 end
 
 function ui_parse_number(node,data)
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,bytes.tonumber(data))
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",bytes.tonumber(data))
 end
 
 function ui_parse_YYMMDD(node,data)
@@ -60,32 +60,32 @@ function ui_parse_YYMMDD(node,data)
 	end
 	t = os.time(d_table)
 
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,os.date("%x",t))
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",os.date("%x",t))
 end
 
 function ui_parse_country_code(node,data)
         local cc_name = iso_country_code_name(tonumber(tostring(data)))
 
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,cc_name)
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",cc_name)
 	return true
 end
 
 function ui_parse_currency_code(node,data)
         local cc_name = iso_currency_code_name(tonumber(tostring(data)))
 
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,cc_name)
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",cc_name)
 	return true
 end
 
 function ui_parse_printable(node,data)
-	ui.tree_set_value(node,data)
+	nodes.set_attribute(node,"val",data)
 	if bytes.is_printable(data) then
-		ui.tree_set_alt_value(node,bytes.format("%P",data))
+		nodes.set_attribute(node,"alt",bytes.format(data,"%P"))
 	else 
-		ui.tree_set_alt_value(node,bytes.format("%P (%D)",data))
+		nodes.set_attribute(node,"alt",bytes.format(data,"%P (%D)"))
 	end
 	return true
 end
@@ -93,21 +93,21 @@ end
 
 function ui_parse_oid(node,data)
 	local ret
-	local i
+	local i,v
 	local item
 
-	ret = "{ "..math.floor(data[0]/40) .." ".. (data[0]%40)
+	ret = "{ "..math.floor(data:get(0)/40) .." ".. (data:get(0)%40)
 	item = 0
-	for i=1,(#data-1) do
-		item = item*128+bit.AND(data[i],0x7F)
-		if data[i]>0x80 then
+	for i,v in data:ipairs() do
+		item = item*128+bit.AND(v,0x7F)
+		if v>0x80 then
 			ret = ret .. " " .. item
 			item = 0
 		end
 	end
 	ret = ret .. " }"
-	ui.tree_set_value(node,data)
-	ui.tree_set_alt_value(node,ret)
+	nodes.set_attribute(node,"val",data)
+	nodes.set_attribute(node,"alt",ret)
 	return true
 end
 
@@ -167,8 +167,8 @@ ISO_7816_IDO = {
    -- MISSING DATA HERE
    ['5F50'] = {"Issuer URL" },
    ['62'] = {"File Control Parameters (FCP) Template" },
-   ['62/80'] = {"Data size excluding structural information" },
-   ['62/81'] = {"Data size including structural information" },
+   ['62/80'] = {"Data size excluding structural information", ui_parse_number },
+   ['62/81'] = {"Data size including structural information", ui_parse_number },
    ['62/82'] = {"File descriptor" },
    ['62/83'] = {"File identifier" },
    ['62/84'] = {"Dedicated File (DF) Name", ui_parse_printable },
@@ -179,8 +179,8 @@ ISO_7816_IDO = {
    ['64'] = {"File Management Data (FMD) Template" },
    -- MISSING DATA HERE
    ['6F'] = {"File Control Information (FCI) Template" },
-   ['6F/80'] = {"Data size excluding structural information" },
-   ['6F/81'] = {"Data size including structural information" },
+   ['6F/80'] = {"Data size excluding structural information", ui_parse_number },
+   ['6F/81'] = {"Data size including structural information", ui_parse_number },
    ['6F/82'] = {"File descriptor" },
    ['6F/83'] = {"File identifier" },
    ['6F/84'] = {"Dedicated File (DF) Name", ui_parse_printable },
@@ -239,18 +239,21 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
 	       tlv_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tlv_tag),6)+1]
 	    end--if
 
-	    ref = ui.tree_add_node(cardenv,"item",tostring(tlv_name),string.format('%X',tlv_tag), #tlv_value)
+	    ref = nodes.append(cardenv,{ classname="item",
+					     label=tostring(tlv_name),
+					     id=string.format('%X',tlv_tag), 
+					     size=#tlv_value })
 
             if (tlv_tag_is_compound(tlv_tag)) then
 	       if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
-		  ui.tree_delete_node(ref)
+		  nodes.remove(ref)
 		  return false
 	       end
             else
 	       if tlv_ui_func then
 	          tlv_ui_func(ref,tlv_value)
                else
-                  ui.tree_set_value(ref,tlv_value)
+                  nodes.set_attribute(ref,"val",tlv_value)
                end--if
             end--if
 	    tlv = tlv_tail

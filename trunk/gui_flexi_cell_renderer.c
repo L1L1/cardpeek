@@ -1,5 +1,7 @@
 #include "gui_flexi_cell_renderer.h"
+#include "bytestring.h"
 #include <string.h>
+#include "misc.h"
 
 /* This is based mainly on GtkCellRendererFlexi
  *  in GAIM, written and (c) 2002 by Sean Egan
@@ -53,6 +55,13 @@ enum
   PROP_RAW_VALUE = 1,
   PROP_MIME_TYPE,
   PROP_ALT_TEXT
+};
+
+enum
+{
+  RENDER_NONE,
+  RENDER_TEXT,
+  RENDER_PIXBUF
 };
 
 static   gpointer parent_class;
@@ -114,7 +123,8 @@ static void custom_cell_renderer_flexi_init (CustomCellRendererFlexi *cellrender
   cellrendererflexi->raw_value = a_strnew(NULL);
   cellrendererflexi->alt_text  = a_strnew(NULL);
   cellrendererflexi->mime_type = a_strnew(NULL);
-  cellrendererflexi->rendering = a_strnew(NULL);
+  cellrendererflexi->rendered_type = RENDER_NONE;
+  cellrendererflexi->rendered_value = NULL;
   cellrendererflexi->default_width = -1;
 }
 
@@ -187,14 +197,28 @@ static void custom_cell_renderer_flexi_class_init (CustomCellRendererFlexiClass 
  *
  ***************************************************************************/
 
+static void internal_clear_rendered(CustomCellRendererFlexi *cr)
+{
+   switch (cr->rendered_type) {
+	case RENDER_TEXT:
+		a_strfree((a_string_t*)cr->rendered_value);
+		break;
+	case RENDER_PIXBUF:
+		gdk_pixbuf_unref((GdkPixbuf *)cr->rendered_value);
+		break;
+   }
+   cr->rendered_type = RENDER_NONE;
+   cr->rendered_value = NULL;
+}
+
 static void custom_cell_renderer_flexi_finalize (GObject *object)
 {
   CustomCellRendererFlexi *crflexi = CUSTOM_CELL_RENDERER_FLEXI(object);
   
   a_strfree(crflexi->raw_value);
   a_strfree(crflexi->mime_type);
-  a_strfree(crflexi->alt_text); 
-  a_strfree(crflexi->rendering); 
+  a_strfree(crflexi->alt_text);
+  internal_clear_rendered(crflexi);	
 
   (* G_OBJECT_CLASS (parent_class)->finalize) (object);
 }
@@ -273,6 +297,7 @@ static void custom_cell_renderer_flexi_set_property (GObject      *object,
 		  G_OBJECT_WARN_INVALID_PROPERTY_ID(object, param_id, pspec);
 		  break;
   }
+  internal_clear_rendered(cellflexi);
 }
 
 /***************************************************************************
@@ -285,26 +310,72 @@ GtkCellRenderer *custom_cell_renderer_flexi_new (gboolean is_raw)
 {
   CustomCellRendererFlexi *cellflexi = g_object_new(CUSTOM_TYPE_CELL_RENDERER_FLEXI, NULL);
 
-  cellflexi->is_raw = is_raw;
+  cellflexi -> is_raw = is_raw;
+
+/*
+  if (!is_raw)
+  {
+	GSList *formats = gdk_pixbuf_get_formats();
+	GSList* item;
+	char **mime_types;
+	int i;
+	if (formats)
+	{
+		for (item=formats;item!=NULL;item=g_slist_next(item))
+		{
+			mime_types = gdk_pixbuf_format_get_mime_types(item->data);
+			for (i=0;mime_types[i]!=NULL;i++)
+				g_printf("Format(%s): %s\n", 
+					 gdk_pixbuf_format_get_name(item->data),
+					 mime_types[i]); 
+			g_strfreev(mime_types);
+		}
+		g_slist_free(formats);
+	}
+  }
+*/
   return GTK_CELL_RENDERER(cellflexi);
 }
 
-static void internal_format_raw(a_string_t *dst, const a_string_t *a_src)
+/***************************************************************************
+ * 
+ * RENDERING
+ *
+ */
+
+static gboolean internal_render_error(CustomCellRendererFlexi *cr, const char *msg)
 {
-	const char *src = a_strval(a_src);
-	int len_src;
-	
+	cr->rendered_type = RENDER_TEXT;
+	cr->rendered_value = a_strnew("<span foreground='#7F0000'>Error: ");
+	a_strcat(cr->rendered_value,msg);
+	a_strcat(cr->rendered_value,"</span>");
+	if (a_strlen(cr->mime_type)>2)
+		log_printf(LOG_WARNING,"Rendering error for '%s' mime-type: %s",a_strval(cr->mime_type)+2,msg);
+	else
+		log_printf(LOG_WARNING,"Rendering error: %s",msg);
+	return FALSE;
+}
+
+static void internal_format_raw(a_string_t *dst, int len_src, const char *src, int limit)
+{
+	char tmp[40];
+
 	a_strcpy(dst,"");
 
-	if (src && strlen(src)>=2)
+	if (len_src>=2)
 	{
-		len_src = strlen(src)-2;
-		
 		a_strcat(dst,"<tt>");
 	
-		a_strcat(dst,src+2);
-
+		a_strncat(dst,limit,src+2);
+		
 		a_strcat(dst,"</tt>");
+		
+		if (limit<len_src-2)
+		{
+			sprintf(tmp,"[%i bytes follow...]",(len_src-2-limit)/2);
+			a_strcat(dst,tmp);
+		}
+
 		if (src[2])
 		{
 			switch (src[0]) {
@@ -328,21 +399,17 @@ static void internal_format_raw(a_string_t *dst, const a_string_t *a_src)
 	}
 }
 
-static void internal_format_alt(a_string_t *dst, const a_string_t *a_src)
+static void internal_format_alt(a_string_t *dst, int len_src, const char *src)
 {
-	const char *src;
 	int i;
-	int len_src = a_strlen(a_src);
 	
 	a_strcpy(dst,"");
 
-	if (len_src)
+	if (len_src>=2)
 	{
-		src = a_strval(a_src);
-		
 		a_strcat(dst,"<tt><span foreground='#2f2fff'>&gt;</span> ");
 		
-		for (i=0;i<len_src;i++)
+		for (i=2;i<len_src;i++)
 		{
 			if (src[i]=='<') 	
 				a_strcat(dst,"&lt;");
@@ -357,8 +424,132 @@ static void internal_format_alt(a_string_t *dst, const a_string_t *a_src)
 	}
 }
 
+static gboolean internal_format(CustomCellRendererFlexi *cr, const a_string_t *a_src, int limit)
+{
+	int len_src 	= a_strlen(a_src);
+	const char *src = a_strval(a_src);
+	
+	cr->rendered_type = RENDER_TEXT;
+	cr->rendered_value = a_strnew(NULL);
 
-static PangoLayout* internal_create_layout(GtkWidget *widget, CustomCellRendererFlexi *cellflexi)
+	if (src==NULL || len_src<2) return FALSE;
+
+	switch (src[0]) {
+		case '8':
+		case '4':
+		case '1':
+			internal_format_raw(cr->rendered_value,len_src,src,limit);
+			break;
+		case 't':
+			internal_format_alt(cr->rendered_value,len_src,src);
+			break;
+		default:
+			return internal_render_error(cr,"Internal format error.");
+	}
+	return TRUE;
+}
+
+static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src)
+{
+	GdkPixbufLoader *loader;
+	bytestring_t *bs = bytestring_new_from_string(src);
+	GError *err = NULL;
+
+	if (bs==NULL) 
+	{
+		internal_render_error(cr,"No image data.");
+		return FALSE;
+	}
+
+	if (bs->width!=8)
+	{
+		internal_render_error(cr,"Image data must be octets.");
+		bytestring_free(bs);
+		return FALSE;
+	}
+
+	loader = gdk_pixbuf_loader_new();
+
+	if (gdk_pixbuf_loader_write(loader,bs->data,bs->len,&err)==FALSE)
+	{
+		if (err!=NULL)
+		{
+			internal_render_error(cr,err->message);
+			g_error_free(err);
+			bytestring_free(bs);
+			return FALSE;
+		}
+	}
+
+	if (gdk_pixbuf_loader_close(loader,&err)==FALSE)
+	{
+		if (err!=NULL)
+		{
+			internal_render_error(cr,err->message);
+			g_error_free(err);	
+			bytestring_free(bs);
+			return FALSE;
+		}	
+	}
+
+	cr->rendered_type  = RENDER_PIXBUF;
+	cr->rendered_value = (GdkPixbuf*) gdk_pixbuf_loader_get_pixbuf(loader);
+
+	gdk_pixbuf_ref((GdkPixbuf *)cr->rendered_value);
+
+	g_object_unref(loader);
+
+	bytestring_free(bs);
+	return TRUE;	
+}
+
+static int internal_prepare_rendering(CustomCellRendererFlexi *cr)
+{
+	if (cr->rendered_type!=RENDER_NONE) return cr->rendered_type;
+
+	if (cr->is_raw)
+	{
+		internal_format(cr, cr->raw_value, 65536);	
+	}
+	else
+	{
+		if (a_strlen(cr->mime_type)>2)
+		{
+			if (strstr(a_strval(cr->mime_type)+2,"image/")!=NULL)
+			{
+				internal_load_image(cr,a_strval(cr->raw_value));
+			} 
+			else
+			{
+				internal_render_error(cr,"Unrecognized mime-type");
+			}
+		}
+		else
+		{
+			if (a_strlen(cr->alt_text)>0)
+			{
+				internal_format(cr, cr->alt_text,65536);
+			}
+			else if (a_strlen(cr->raw_value)>0)
+			{
+				internal_format(cr, cr->raw_value,256);	
+			}
+		}
+	}
+	return cr->rendered_type;
+}
+
+/***************************************************************************
+ *
+ *  custom_cell_renderer_flexi_get_size: crucial - calculate the size
+ *                                          of our cell, taking into account
+ *                                          padding and alignment properties
+ *                                          of parent.
+ *
+ ***************************************************************************/
+
+
+static PangoLayout* internal_text_create_layout(GtkWidget *widget, CustomCellRendererFlexi *cellflexi)
 {
 	PangoContext* p_context = gtk_widget_get_pango_context(widget);
 	PangoFontDescription* font_desc = NULL;
@@ -393,31 +584,14 @@ static PangoLayout* internal_create_layout(GtkWidget *widget, CustomCellRenderer
 
 	pango_layout_set_width(layout,cellflexi->default_width*PANGO_SCALE);
 
-	if (!cellflexi->is_raw && a_strlen(cellflexi->alt_text))
-	{
-		internal_format_alt(cellflexi->rendering, cellflexi->alt_text);
-		pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
-	}
-	else
-	{
-		internal_format_raw(cellflexi->rendering, cellflexi->raw_value);
-		pango_layout_set_wrap(layout,PANGO_WRAP_CHAR);
-	}
-	pango_layout_set_markup(layout,a_strval(cellflexi->rendering),-1);
+	pango_layout_set_wrap(layout,PANGO_WRAP_WORD_CHAR);
+	
+	pango_layout_set_markup(layout,a_strval((a_string_t*)cellflexi->rendered_value),-1);
 
 	return layout;
 }
 
-/***************************************************************************
- *
- *  custom_cell_renderer_flexi_get_size: crucial - calculate the size
- *                                          of our cell, taking into account
- *                                          padding and alignment properties
- *                                          of parent.
- *
- ***************************************************************************/
-
-static void internal_get_size_layout(GtkCellRenderer *cell,
+static void internal_text_get_size_layout(GtkCellRenderer *cell,
 			      GtkWidget       *widget,
 			      PangoLayout     *layout,
 			      GdkRectangle    *cell_area,
@@ -432,9 +606,10 @@ static void internal_get_size_layout(GtkCellRenderer *cell,
   gint calc_height;
 
   if (layout==NULL)
-	  layout = internal_create_layout(widget,cellflexi);
+	  layout = internal_text_create_layout(widget,cellflexi);
   else
 	  g_object_ref(layout);
+
   g_assert(layout!=NULL);
 
   pango_layout_get_pixel_extents(layout,NULL,&rect);
@@ -464,6 +639,44 @@ static void internal_get_size_layout(GtkCellRenderer *cell,
   g_object_unref(layout);
 }
 
+static void internal_image_get_size(GtkCellRenderer *cell,
+			      GtkWidget       *widget,
+			      GdkRectangle    *cell_area,
+			      gint            *x_offset,
+			      gint            *y_offset,
+			      gint            *width,
+			      gint            *height)
+{
+  CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
+  int image_width = gdk_pixbuf_get_width((GdkPixbuf*)cellflexi->rendered_value);
+  int image_height = gdk_pixbuf_get_height((GdkPixbuf*)cellflexi->rendered_value);
+  gint calc_width;
+  gint calc_height;
+
+  UNUSED(widget);
+  UNUSED(cell_area);
+
+  calc_width  = (gint) cell->xpad * 2 + image_width;
+  calc_height = (gint) cell->ypad * 2 + image_height;
+
+  if (width)
+    *width = calc_width;
+
+  if (height)
+    *height = calc_height;
+
+  if (x_offset)
+    {
+      *x_offset = 0;
+    }
+
+  if (y_offset)
+    {
+      *y_offset = 0;
+    }
+}
+
+  
 
 static void custom_cell_renderer_flexi_get_size (GtkCellRenderer *cell,
 						 GtkWidget       *widget,
@@ -473,7 +686,17 @@ static void custom_cell_renderer_flexi_get_size (GtkCellRenderer *cell,
 						 gint            *width,
 						 gint            *height)
 {
-	internal_get_size_layout(cell,widget,NULL,cell_area,x_offset,y_offset,width,height);
+	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
+	int engine = internal_prepare_rendering(cellflexi);
+
+	switch (engine) {
+		case RENDER_TEXT:
+			internal_text_get_size_layout(cell,widget,NULL,cell_area,x_offset,y_offset,width,height);
+			break;
+		case RENDER_PIXBUF:
+			internal_image_get_size(cell,widget,cell_area,x_offset,y_offset,width,height);
+			break;
+	}
 }
 
 
@@ -483,6 +706,84 @@ static void custom_cell_renderer_flexi_get_size (GtkCellRenderer *cell,
  *
  ***************************************************************************/
 
+
+static void internal_text_render(GtkCellRenderer *cell,
+					       GdkWindow       *window,
+					       GtkWidget       *widget,
+					       GdkRectangle    *background_area,
+					       GdkRectangle    *cell_area,
+					       GdkRectangle    *expose_area,
+					       guint            flags)
+{
+	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
+	PangoLayout 		*layout;
+	GtkStateType          state;
+	gint                  width, height;
+	gint                  x_offset, y_offset;
+
+	UNUSED(background_area);
+	UNUSED(flags);
+
+	layout = internal_text_create_layout(widget,cellflexi);
+
+	g_assert(layout!=NULL);
+
+	internal_text_get_size_layout (cell, widget, layout,
+			cell_area,
+			&x_offset, &y_offset,
+			&width, &height);
+
+	if (GTK_WIDGET_HAS_FOCUS (widget))
+		state = GTK_STATE_ACTIVE;
+	else
+		state = GTK_STATE_NORMAL;
+
+	width  -= cell->xpad*2;
+	height -= cell->ypad*2;
+
+	gtk_paint_layout (widget->style,
+			window,
+			state,
+			FALSE, 
+			expose_area, 
+			widget, 
+			"cellrendererflexi",
+			cell_area->x + x_offset + cell->xpad,
+			cell_area->y + y_offset + cell->ypad,
+			layout);
+	g_object_unref(layout);
+}
+
+static void internal_image_render(GtkCellRenderer *cell,
+                                               GdkWindow       *window,
+                                               GtkWidget       *widget,
+                                               GdkRectangle    *background_area,
+                                               GdkRectangle    *cell_area,
+                                               GdkRectangle    *expose_area,
+                                               guint            flags)
+{
+	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
+
+	UNUSED(widget);
+	UNUSED(background_area);
+	UNUSED(cell_area);
+	UNUSED(expose_area);
+	UNUSED(flags);
+
+	/*cairo_t *cr = gdk_cairo_create(window);*/
+	
+	/*gdk_cairo_set_source_pixbuf(cr, (GdkPixbuf *)cellflexi->rendered_value,0,0);
+	cairo_paint(cr);
+	cairo_fill(cr);
+	cairo_destroy(cr); */
+
+	gdk_draw_pixbuf(window, NULL,
+			(GdkPixbuf *)cellflexi->rendered_value, 
+			0, 0, cell_area->x, cell_area->y, 
+			-1, -1,  
+			GDK_RGB_DITHER_NONE, 0, 0);
+}
+
 static void custom_cell_renderer_flexi_render (GtkCellRenderer *cell,
 					       GdkWindow       *window,
 					       GtkWidget       *widget,
@@ -491,55 +792,16 @@ static void custom_cell_renderer_flexi_render (GtkCellRenderer *cell,
 					       GdkRectangle    *expose_area,
 					       guint            flags)
 {
-  CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
-  PangoLayout 		*layout;
-  GtkStateType          state;
-  gint                  width, height;
-  gint                  x_offset, y_offset;
+	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
+	int engine = internal_prepare_rendering(cellflexi);
 
- 
-  layout = internal_create_layout(widget,cellflexi);
-	
-  g_assert(layout!=NULL);
-
-  internal_get_size_layout (cell, widget, layout,
-		     cell_area,
-		     &x_offset, &y_offset,
-		     &width, &height);
-
-  if (GTK_WIDGET_HAS_FOCUS (widget))
-    state = GTK_STATE_ACTIVE;
-  else
-    state = GTK_STATE_NORMAL;
-
-  width  -= cell->xpad*2;
-  height -= cell->ypad*2;
-
-  gtk_paint_layout (widget->style,
-		    window,
-		    state,
-		    FALSE, 
-		    expose_area, 
-		    widget, 
-		    "cellrendererflexi",
-		    cell_area->x + x_offset + cell->xpad,
-		    cell_area->y + y_offset + cell->ypad,
-		    layout);
-  g_object_unref(layout);
+	switch (engine) {
+		case RENDER_TEXT:
+			internal_text_render(cell, window, widget, background_area, cell_area, expose_area, flags);
+			break;
+		case RENDER_PIXBUF:
+			internal_image_render(cell,window, widget, background_area, cell_area, expose_area, flags);		
+	}
 }
 
-
-void custom_cell_renderer_flexi_set_format(GtkCellRenderer *crenderer, gboolean is_raw)
-{
-	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (crenderer);
-
-	cellflexi->is_raw = is_raw;
-}
-
-gboolean custom_cell_renderer_flexi_get_format(GtkCellRenderer *crenderer)
-{
-	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (crenderer);
-	
-	return cellflexi->is_raw;
-}
 

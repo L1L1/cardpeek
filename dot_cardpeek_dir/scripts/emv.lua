@@ -61,8 +61,8 @@ function ui_parse_transaction_type(node,cc)
 	if tt == nil then 
 	   return tostring(cc)
 	end
-	ui.tree_set_value(node,cc)
-	ui.tree_set_alt_value(node,tt)
+	nodes.set_attribute(node,"val",cc)
+	nodes.set_attribute(node,"alt",tt)
 	return true
 end
 
@@ -75,17 +75,24 @@ function ui_parse_CVM(node,data)
 	local subnode
 	local out 
 
-	subnode = ui.tree_add_node(node,"item","X",nil,4)
-	ui.tree_set_value(subnode,bytes.sub(data,0,3))
+	nodes.append(node,{	classname="item", 
+			      	label="X", 
+				size=4,
+				val=bytes.sub(data,0,3)})
 
-	subnode = ui.tree_add_node(node,"item","Y",nil,4)
-	ui.tree_set_value(subnode,bytes.sub(data,4,7))
+	nodes.append(node,{	classname="item", 
+				label="Y", 
+				size=4,
+				val=bytes.sub(data,4,7)})
 
 	for i= 4,(#data/2)-1 do
-		subnode = ui.tree_add_node(node,"item","CVM",i-3,2)
-		ui.tree_set_value(subnode,bytes.sub(data,i*2,i*2+1))
-		left = data[i*2]
-		right = data[i*2+1]
+		subnode = nodes.append(node, { classname="item",
+						   label="CVM",
+						   id=i-3,
+						   size=2,
+						   val=bytes.sub(data,i*2,i*2+1)})
+		left = data:get(i*2)
+		right = data:get(i*2+1)
 
 		if bit.AND(left,0x40) == 0x40 then
 			out = "Apply succeeding CV rule if this rule is unsuccessful: "
@@ -104,9 +111,9 @@ function ui_parse_CVM(node,data)
 			rightstring = CVM_REFERENCE_BYTE2[right]
 		end
 		out = out .. leftstring .. " - " .. rightstring
-		ui.tree_set_alt_value(subnode,out)
+		nodes.set_attribute(subnode,"alt",out)
 	end
-        ui.tree_set_value(node,data)
+        nodes.set_attribute(node,"val",data)
 	return true
 end
 
@@ -250,7 +257,6 @@ function emv_process_ppse(cardenv)
 	local sw, resp
 	local APP
 	local dirent
-	local i
 
 	sw, resp = card.select(PPSE)
 
@@ -260,15 +266,13 @@ function emv_process_ppse(cardenv)
 	end
 
 	-- Construct tree
-	APP = ui.tree_add_node(cardenv,"application","application",PPSE)
+	APP = nodes.append(cardenv, {classname="application", label="application", id=PPSE})
 	emv_parse(APP,resp)
 
 	AID_LIST = {}
 
-	dirent = ui.tree_find_all_nodes(APP,nil,"4F")
-
-	for i=1,#dirent do
-	        aid = tostring(ui.tree_get_value(dirent[i]))
+	for dirent in  nodes.find(APP,{ id="4F" }) do
+	        aid = tostring(nodes.get_attribute(dirent,"val"))
 		log.print(log.INFO,"PPSE contains application #" .. aid)
 	        table.insert(AID_LIST,"#"..aid)
 	end
@@ -287,16 +291,15 @@ function emv_process_pse(cardenv)
 	local RECORD
 	local aid
 	local warm_atr
+	local tag4F
 
         sw, resp = card.select(PSE)
 	
 	-- Could it be a french card?
 	if sw == 0x6E00 then 
-	   local ATR
 	   card.warm_reset()
 	   warm_atr = card.last_atr()
-	   ATR = ui.tree_add_node(cardenv, "block", "ATR", "warm", #warm_atr)
-	   ui.tree_set_value(ATR,warm_atr)
+	   nodes.append(cardenv, {classname="block", label="ATR", id="warm", size=#warm_atr, val=warm_atr})
            sw, resp = card.select(PSE)
 	end
 
@@ -311,25 +314,28 @@ function emv_process_pse(cardenv)
 	end
 
 	-- Construct tree
-	APP = ui.tree_add_node(cardenv,"application","application",PSE)
+	APP = nodes.append(cardenv, {classname="application", label="application", id=PSE})
 	emv_parse(APP,resp)
 
-	ref = ui.tree_find_node(APP,nil,"88")
+	ref = node.find_first(APP,{id="88"})
 	if (ref) then
-	   sfi = ui.tree_get_value(ref)
-	   FILE = ui.tree_add_node(APP,"file","file",sfi[0])
+	   sfi = nodes.get_attribute(ref,"val")
+	   FILE = nodes.append(APP,{classname="file", label="file", id=sfi[0]})
 
 	   rec = 1
 	   AID_LIST = {}
 	   repeat 
 	     sw,resp = card.read_record(sfi[0],rec)
 	     if sw == 0x9000 then
-	        RECORD = ui.tree_add_node(FILE,"record","record",tostring(rec))
+	        RECORD = nodes.append(FILE, {classname="record", label="record", id=tostring(rec)})
 	        emv_parse(RECORD,resp)
-	        aid = tostring(ui.tree_get_value(ui.tree_find_node(RECORD,nil,"4F")))
-		log.print(log.INFO,"PSE contains application #" .. aid)
-	        table.insert(AID_LIST,"#"..aid)
-		rec = rec + 1
+		tag4F = nodes.find_first(RECORD,{id="4F"})
+		if (tag4F) then
+	           aid = tostring(nodes.get_attribute(tag4F,"val"))
+		   log.print(log.INFO,"PSE contains application #" .. aid)
+	           table.insert(AID_LIST,"#"..aid)
+		   rec = rec + 1
+		end
              end
 	   until sw ~= 0x9000
 	else
@@ -343,11 +349,14 @@ function visa_process_application_logs(application, log_sfi, log_max)
 	local LOG_FILE
 	local LOG_DATA
 	local LOG_FORMAT
-	local REC
 	local log_recno
 
-	LOG_FILE   = ui.tree_add_node(application,"file","file",tostring(log_sfi),nil)
-	LOG_DATA   = ui.tree_add_node(LOG_FILE,"item","log data")
+	LOG_FILE   = nodes.append(application,{ classname="file", 
+						    label="file",
+						    id=tostring(log_sfi)})
+
+	LOG_DATA   = nodes.append(LOG_FILE, { classname="item", 
+						  label = "log data"})
  	
 	log.print(log.INFO,string.format("Reading LOG SFI %i",log_sfi))
 	for log_recno =1,log_max do
@@ -356,8 +365,11 @@ function visa_process_application_logs(application, log_sfi, log_max)
                   log.print(log.WARNING,"Read log record failed")
 		  break
 	   else
-	          REC = ui.tree_add_node(LOG_DATA,"record","record",log_recno,#resp)
-		  ui.tree_set_value(REC,resp)
+	          nodes.append(LOG_DATA,{ classname = "record", 
+					      label="record",
+					      id=log_recno,
+					      size=#resp,
+					      val=resp})
 	   end
 	end 
 
@@ -386,9 +398,9 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	local data
 	local currency_code, currency_name, currency_digits
 
-	LOG_FILE   = ui.tree_add_node(application,"file","file",log_sfi)
-	LOG_FORMAT = ui.tree_add_node(LOG_FILE,"item","log format")
-	LOG_DATA   = ui.tree_add_node(LOG_FILE,"item","log data")
+	LOG_FILE   = nodes.append(application, { classmame="file", label="file", id=log_sfi})
+	LOG_FORMAT = nodes.append(LOG_FILE,	   { classname="item", label="log format"})
+	LOG_DATA   = nodes.append(LOG_FILE,	   { classname="item", label="log data"})
  	
 	sw, log_format = card.get_data(0x9F4F)
 	if sw ~=0x9000 then
@@ -400,7 +412,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
 
 	i = 1
 	item = ""
-	ui.tree_set_value(LOG_FORMAT,log_format);
+	nodes.set_attribute(LOG_FORMAT,"val",log_format);
 	while log_format 
 	do
 	    tag, log_format = asn1.split_tag(log_format)
@@ -410,7 +422,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	    i = i+1
 	    item = item .. string.format("%X[%d] ", tag, len);
 	end
-	ui.tree_set_alt_value(LOG_FORMAT,item);
+	nodes.set_attribute(LOG_FORMAT,"alt",item);
 
 	log.print(log.INFO,string.format("Reading LOG SFI %i",log_sfi))
 	for log_recno =1,log_max do
@@ -419,19 +431,23 @@ function emv_process_application_logs(application, log_sfi, log_max)
                   log.print(log.WARNING,"Read log record failed")
 		  break
 	   else
-	          REC = ui.tree_add_node(LOG_DATA,"record","record",log_recno,#resp)
+	          REC = nodes.append(LOG_DATA,{classname="record", label="record", id=log_recno, size=#resp})
 		  item_pos = 0
 		  ITEM_AMOUNT = nil
 		  currency_digits = 0
 		  for i=1,#log_items do
 		     if log_items[i][3] then
-		        ITEM = ui.tree_add_node(REC,"item",log_items[i][3],nil,log_items[i][2])
+		        ITEM = nodes.append(REC,{ classname="item", 
+						      label=log_items[i][3], 
+						      size=log_items[i][2] })
 		     else
-		        ITEM = ui.tree_add_node(REC,"item",string.format("tag %X",log_items[i][1]),nil,log_items[i][2])
+		        ITEM = nodes.append(REC,{ classname="item", 
+						      label=string.format("tag %X",log_items[i][1]),
+						      size=log_items[i][2] })
 		     end
 
 		     data = bytes.sub(resp,item_pos,item_pos+log_items[i][2]-1)
-	             ui.tree_set_value(ITEM,data)
+	             nodes.set_attribute(ITEM,"val",data)
 
 		     if log_items[i][1]==0x9F02 then
 		        ITEM_AMOUNT=ITEM
@@ -439,7 +455,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	                currency_code   = tonumber(tostring(data))
 		        currency_name   = iso_currency_code_name(currency_code)
 	                currency_digits = iso_currency_code_digits(currency_code)
-	                ui.tree_set_alt_value(ITEM,currency_name)
+	                nodes.set_attribute(ITEM,"alt",currency_name)
 		     elseif log_items[i][4] then
 		        log_items[i][4](ITEM,data)
                      end
@@ -447,7 +463,8 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	          end
 
 	          if ITEM_AMOUNT then
-		     ui.tree_set_alt_value(ITEM_AMOUNT,string.format("%.2f",tostring(ui.tree_get_value(ITEM_AMOUNT))/(10^currency_digits)))
+		     local amount = tostring(nodes.get_attribute(ITEM_AMOUNT,"val"))
+		     nodes.set_attribute(ITEM_AMOUNT,"alt",string.format("%.2f",amount/(10^currency_digits)))
 		  end
 	   end
 	end 
@@ -474,11 +491,11 @@ function emv_process_application(cardenv,aid)
 	-- Process 'File Control Infomation' and get PDOL
 	local APP
 	
-	APP = ui.tree_add_node(cardenv,"application","application",aid)
+	APP = nodes.append(cardenv, { classname = "application", label = "application", id=aid })
 	emv_parse(APP,resp)
-	ref = ui.tree_find_node(APP,nil,"9F38")
+	ref = nodes.find_first(APP,{id="9F38"})
 	if (ref) then
-	   pdol = ui.tree_get_value(ref)
+	   pdol = nodes.get_attribute(ref,"val")
 	else
 	   pdol = nil;
 	end
@@ -489,18 +506,18 @@ function emv_process_application(cardenv,aid)
 	local logformat
 	
 	logformat=nil
-	ref = ui.tree_find_node(APP,nil,"9F4D")
+	ref = nodes.find_first(APP,{id="9F4D"})
 	-- I've seen this on some cards :
 	if ref==nil then
 	   -- proprietary style ?
-	   ref = ui.tree_find_node(APP,nil,"DF60")
+	   ref = nodes.find_first(APP,{id="DF60"})
 	   logformat = "VISA"
 	else
 	   logformat = "EMV"
 	end
 
 	if ref then
-           LOG = ui.tree_get_value(ref)
+           LOG = nodes.get_attribute(ref,"val")
 	else
 	   sw, resp = card.get_data(0x9F4D)
       	   if sw==0x9000 then
@@ -544,20 +561,10 @@ function emv_process_application(cardenv,aid)
                 log.print(log.ERROR,"GPO Failed")
 		ui.question("GET PROCESSING OPTIONS failed, the script will continue to read the card",{"OK"})
            else
- 	   	GPO = ui.tree_add_node(APP,"item","processing_options");
+ 	   	GPO = nodes.append(APP,{classname="item",label="processing_options"})
 	    	emv_parse(GPO,resp)
 	   end
 	end
-
-
-	-- find AFL
-	--ref = ui.tree_find_node(GPO,nil,"80")
-	--if (ref) then
-	--	AFL = bytes.sub(ui.tree_get_value(ref),2)
-	--else
-	--	ref = ui.tree_find_node(GPO,nil,"94")
-	--	AFL = ui.tree_get_value(ref)
-	--end
 
 	local sfi_index
 	local rec_index
@@ -577,11 +584,11 @@ function emv_process_application(cardenv,aid)
 				    break
 			        else
 				    if (SFI==nil) then
-	   		    		    SFI = ui.tree_add_node(APP,"file","file",sfi_index)
+	   		    		    SFI = nodes.append(APP,{classname="file", label="file",	id=sfi_index})
 				    end
-			            REC = ui.tree_add_node(SFI,"record","record",rec_index)
+			            REC = nodes.append(SFI,{classname="record", label="record", id=rec_index})
 			            if (emv_parse(REC,resp)==false) then
-					    ui.tree_set_value(REC,resp)    
+					    nodes.set_attribute(REC,"val",resp)    
 				    end
 		        	end
 	
@@ -599,7 +606,7 @@ function emv_process_application(cardenv,aid)
 	end
 
 	-- Read extra data 
-	extra = ui.tree_add_node(APP,"block","extra emv data")
+	extra = nodes.append(APP,{classname="block",label="extra emv data"})
 	for j=1,#EXTRA_DATA do
 	    sw,resp = card.get_data(EXTRA_DATA[j])
 	    if sw == 0x9000 then
@@ -647,15 +654,12 @@ function emv_process_cplc(cardenv)
 	sw,resp = card.get_data(0x9F7F)
 	if sw == 0x9000 then
 	   cplc_tag, cplc_data = asn1.split(resp)
-	   CPLC      = ui.tree_add_node(cardenv,"block","cpcl data","9F7F",#cplc_data)
-	   ui.tree_set_value(CPLC,cplc_data) 
+	   CPLC      = nodes.append(cardenv,{classname="block", label="cpcl data", id="9F7F", size=#cplc_data})
+	   nodes.set_attribute(CPLC,"val",cplc_data) 
 	   pos = 0
 	   for i=1,#CPLC_DATA do
-	       ref2 = ui.tree_add_node(CPLC,
-				       "item",
-				       CPLC_DATA[i][1],
-				       pos);
-	       ui.tree_set_value(ref2,bytes.sub(cplc_data,pos,pos+CPLC_DATA[i][2]-1))
+	       ref2 = nodes.append(CPLC,{classname="item", label=CPLC_DATA[i][1], id=pos});
+	       nodes.set_attribute(ref2,"val",bytes.sub(cplc_data,pos,pos+CPLC_DATA[i][2]-1))
 	       pos = pos + CPLC_DATA[i][2]
 	   end
 	end

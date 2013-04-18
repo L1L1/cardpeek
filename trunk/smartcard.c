@@ -38,7 +38,7 @@
 #endif
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
-int cardmanager_search_emul_readers(cardmanager_t *cm);
+int cardmanager_search_replay_readers(cardmanager_t *cm);
 #ifndef _WIN32
 int cardmanager_search_acg_readers(cardmanager_t *cm);
 #endif
@@ -57,7 +57,7 @@ cardmanager_t *cardmanager_new(void)
   cardmanager_search_acg_readers(cm);
 #endif
 
-  cardmanager_search_emul_readers(cm);
+  cardmanager_search_replay_readers(cm);
   return cm;
 }
 
@@ -94,7 +94,7 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
 
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
-#include "drivers/emul_driver.c"
+#include "drivers/replay_driver.c"
 #ifndef _WIN32
 #include "drivers/acg_driver.c"
 #endif
@@ -114,10 +114,10 @@ cardreader_t* cardreader_new(const char *card_reader_name)
     reader->name=strdup(card_reader_name);
     if (pcsc_initialize(reader)==0) return NULL;
   }
-  else if (strncmp(card_reader_name,"emulator://",11)==0)
+  else if (strncmp(card_reader_name,"replay://",9)==0)
   {
     reader->name=strdup(card_reader_name);
-    if (emul_initialize(reader)==0) return NULL;
+    if (replay_initialize(reader)==0) return NULL;
   }
 #ifndef _WIN32
   else if (strncmp(card_reader_name,"acg://",6)==0)
@@ -133,7 +133,7 @@ cardreader_t* cardreader_new(const char *card_reader_name)
   }
  
   reader->atr=bytestring_new(8);
-  reader->cardlog=cardemul_new();
+  reader->cardlog=cardreplay_new();
   return reader;
 }
 
@@ -143,7 +143,7 @@ int cardreader_connect(cardreader_t *reader, unsigned protocol)
 
   cardreader_last_atr(reader);
 
-  cardemul_add_reset(reader->cardlog,reader->atr);
+  cardreplay_add_reset(reader->cardlog,reader->atr);
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_CONNECT,reader->atr,0,NULL,reader->cb_data);
   return retval;
@@ -162,7 +162,7 @@ int cardreader_warm_reset(cardreader_t *reader)
   
   cardreader_last_atr(reader);
 
-  cardemul_add_reset(reader->cardlog,reader->atr); 
+  cardreplay_add_reset(reader->cardlog,reader->atr); 
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_RESET,reader->atr,0,NULL,reader->cb_data);
   return retval;
@@ -198,7 +198,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
   reader->sw = reader->transmit(reader,command,result);
   
-  cardemul_add_command(reader->cardlog,command,reader->sw,result);
+  cardreplay_add_command(reader->cardlog,command,reader->sw,result);
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_TRANSMIT,command,reader->sw,result,reader->cb_data);
   SW1 = (reader->sw>>8)&0xFF;
@@ -294,7 +294,7 @@ void cardreader_free(cardreader_t *reader)
 {
   reader->finalize(reader);
   bytestring_free(reader->atr);
-  cardemul_free(reader->cardlog);
+  cardreplay_free(reader->cardlog);
   free(reader->name);
   free(reader);
 }
@@ -309,20 +309,20 @@ void cardreader_log_clear(cardreader_t *reader)
 {
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_CLEAR_LOG,NULL,0,NULL,reader->cb_data);
-  cardemul_free(reader->cardlog);
-  reader->cardlog=cardemul_new();
+  cardreplay_free(reader->cardlog);
+  reader->cardlog=cardreplay_new();
 }
 
 int cardreader_log_save(const cardreader_t *reader, const char *filename)
 {
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_SAVE_LOG,NULL,0,NULL,reader->cb_data);
-  return cardemul_save_to_file(reader->cardlog,filename);
+  return cardreplay_save_to_file(reader->cardlog,filename);
 }
 
 int cardreader_log_count_records(const cardreader_t *reader)
 {
-  return cardemul_count_records(reader->cardlog);
+  return cardreplay_count_records(reader->cardlog);
 }
 
 /************************************************/
@@ -421,7 +421,7 @@ static int select_clf(DIRENT_T* de)
 }
 
 
-int cardmanager_search_emul_readers(cardmanager_t *cm)
+int cardmanager_search_replay_readers(cardmanager_t *cm)
 {
   a_string_t* fn;
   struct dirent **namelist;
@@ -439,7 +439,7 @@ int cardmanager_search_emul_readers(cardmanager_t *cm)
   {
     count++;
     fn = a_strnew(NULL);
-    a_sprintf(fn,"emulator://%s",namelist[n]->d_name);
+    a_sprintf(fn,"replay://%s",namelist[n]->d_name);
     cm->readers[cm->readers_count++]=a_strfinalize(fn);
     free(namelist[n]);
   }

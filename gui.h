@@ -22,10 +22,10 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include "cardtree.h"
+#include "dyntree_model.h"
 #include "bytestring.h"
 
-extern cardtree_t* CARDTREE;
+extern DyntreeModel* CARDTREE;
 
 typedef void (*application_callback_t)(const char *);
 
@@ -38,7 +38,7 @@ int gui_run(void);
 
 void gui_exit(void);
 
-void gui_update(int lag_allowed);
+void gui_update(unsigned lag_allowed);
 
 void gui_expand_view(void);
 
@@ -54,8 +54,6 @@ int gui_readline(const char *message, unsigned input_max, char* input);
 char** gui_select_file(const char *title,
    		       const char *path,
    		       const char *filename);
-
-void gui_about(void);
 
 void gui_reader_print_data(unsigned event,
 			   const bytestring_t *command,

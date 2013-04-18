@@ -10,6 +10,17 @@
 #define DYNTREE_IS_MODEL_CLASS(klass) 	(G_TYPE_CHECK_CLASS_TYPE ((klass), DYNTREE_MODEL_TYPE))
 #define DYNTREE_MODEL_GET_CLASS(obj) 	(G_TYPE_INSTANCE_GET_CLASS ((obj), DYNTREE_MODEL_TYPE, CustomListClass))
 
+enum {
+        CC_CLASSNAME = 0,       /* 0 */
+        CC_LABEL,
+        CC_ID,
+        CC_SIZE,
+        CC_VAL,
+        CC_ALT,                 /* 5 */
+        CC_MIME_TYPE,       	/* 6 */
+        CC_INITIAL_COUNT        /* 7 */
+};
+
 typedef struct {
 	char *name;
 } DyntreeModelAttributeDescriptor;
@@ -74,7 +85,7 @@ gint dyntree_model_get_n_columns (GtkTreeModel *tree_model);
 
 gboolean dyntree_model_iter_attribute_set(DyntreeModel *m, 
 		GtkTreeIter *iter, 
-		unsigned index, 
+		int index, 
 		const char *str);
 
 gboolean dyntree_model_iter_attribute_set_by_name(DyntreeModel *m, 
@@ -94,7 +105,7 @@ gboolean dyntree_model_iter_attributes_set(DyntreeModel *ctm,
 
 gboolean dyntree_model_iter_attribute_get(DyntreeModel *m, 
 		GtkTreeIter *iter, 
-		unsigned index, 
+		int index, 
 		const char **str);
 
 gboolean dyntree_model_iter_attribute_get_by_name(DyntreeModel *m, 
@@ -129,14 +140,14 @@ void dyntree_model_iter_append (DyntreeModel *ctm,
 
 /* exporting/importing XML */
 
-char* dyntree_model_iter_to_xml(DyntreeModel *ctm, GtkTreeIter *root, const char *xml_name);
+char* dyntree_model_iter_to_xml(DyntreeModel *ctm, GtkTreeIter *root, gboolean full_xml);
                 /* result (char*) must be freed with g_free() */
 
-gboolean dyntree_model_iter_to_xml_file(DyntreeModel* ct, GtkTreeIter *root, const char *xml_name, const char *fname);
+gboolean dyntree_model_iter_to_xml_file(DyntreeModel* ct, GtkTreeIter *root, const char *fname);
 
-gboolean dyntree_model_iter_from_xml(DyntreeModel *ct, GtkTreeIter *parent, const char *xml_name, const char *source_val, int source_len);
+gboolean dyntree_model_iter_from_xml(DyntreeModel *ct, GtkTreeIter *parent, gboolean full_xml, const char *source_val, int source_len);
  
-gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *parent, const char *xml_name, const char *fname);
+gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *parent, const char *fname);
 
 /* searching */
 
@@ -144,15 +155,15 @@ gboolean dyntree_model_iter_find_first(DyntreeModel *ctm,
 		GtkTreeIter *result,
 		GtkTreeIter *root,
 		int *indices,
-		const char **str,
-		unsigned n_values);
+		char **str,
+		int n_values);
 
 gboolean dyntree_model_iter_find_next(DyntreeModel *ctm,
 		GtkTreeIter *result,
 		GtkTreeIter *root,
 		int *indices,
-		const char **str,
-		unsigned n_values);
+		char **str,
+		int n_values);
 
 /* iterating */
 

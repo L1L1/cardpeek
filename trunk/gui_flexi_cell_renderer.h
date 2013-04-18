@@ -29,8 +29,8 @@ struct _CustomCellRendererFlexi
   a_string_t	*raw_value;
   a_string_t	*alt_text;
   a_string_t  	*mime_type;
-  a_string_t  	*rendering;
-  /* GValue	*value; */
+  unsigned	rendered_type;
+  gpointer	rendered_value;  
   int		default_width; 
 };
 
@@ -43,9 +43,5 @@ struct _CustomCellRendererFlexiClass
 GType                custom_cell_renderer_flexi_get_type (void);
 
 GtkCellRenderer     *custom_cell_renderer_flexi_new (gboolean is_raw);
-
-void custom_cell_renderer_flexi_set_format(GtkCellRenderer *crenderer, gboolean is_raw);
-
-gboolean custom_cell_renderer_flexi_get_format(GtkCellRenderer *crenderer);
 
 #endif

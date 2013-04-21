@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009i-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -22,17 +22,9 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include "dyntree_model.h"
-#include "bytestring.h"
-
-extern DyntreeModel* CARDTREE;
-
-typedef void (*application_callback_t)(const char *);
-
 int gui_init(int *argc, char ***argv);
 
-int gui_create(application_callback_t run_script_cb,
-	       application_callback_t run_command_cb);
+int gui_create(void);
 
 int gui_run(void);
 
@@ -54,11 +46,5 @@ int gui_readline(const char *message, unsigned input_max, char* input);
 char** gui_select_file(const char *title,
    		       const char *path,
    		       const char *filename);
-
-void gui_reader_print_data(unsigned event,
-			   const bytestring_t *command,
-			   unsigned short sw,
-			   const bytestring_t *response,
-			   void *extra_data);
 
 #endif

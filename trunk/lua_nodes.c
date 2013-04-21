@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2011 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include <lauxlib.h>
 #include "lua_ui.h"
 #include "gui.h"
+#include "gui_cardview.h"
 #include "dyntree_model.h"
 #include "misc.h"
 #include <string.h>
@@ -215,7 +216,7 @@ static gboolean internal_index_table(attr_table_t *table)
    
    for (u=0;u<table->size;u++)
    {
-	if ((table->indices[u] = dyntree_model_column_name_to_index(CARDTREE,table->names[u]))<0)
+	if ((table->indices[u] = dyntree_model_column_name_to_index(gui_cardview_get_store(),table->names[u]))<0)
 		return FALSE;
    }
    return TRUE;
@@ -251,26 +252,26 @@ static int subr_nodes_append(lua_State* L)
 
 	if (internal_is_pseudo_root(parent)) parent = NULL;
 
-	dyntree_model_iter_append(CARDTREE,&node,parent);
+	dyntree_model_iter_append(gui_cardview_get_store(),&node,parent);
 
 	switch (lua_type(L,2)) {
 		case LUA_TNONE:
 		case LUA_TNIL:
-			dyntree_model_iter_attribute_set(CARDTREE,&node,CC_CLASSNAME,"t:item");
+			dyntree_model_iter_attribute_set(gui_cardview_get_store(),&node,CC_CLASSNAME,"t:item");
 			break;	
 		case LUA_TTABLE:
 			if (internal_fill_table(L,2,&table))
 			{
 				for (u=0;u<table.size;u++)
 				{
-					dyntree_model_iter_attribute_set_by_name(CARDTREE,&node,table.names[u],table.values[u]);	
+					dyntree_model_iter_attribute_set_by_name(gui_cardview_get_store(),&node,table.names[u],table.values[u]);	
 				}
 				internal_empty_table(&table);
 			}
 			break;
 		case LUA_TSTRING:
 			classname = g_strdup_printf("t:%s",luaL_checkstring(L,2));	
-			dyntree_model_iter_attribute_set(CARDTREE,&node,CC_CLASSNAME,classname);
+			dyntree_model_iter_attribute_set(gui_cardview_get_store(),&node,CC_CLASSNAME,classname);
 			g_free(classname);
 			break;
 		default:
@@ -300,7 +301,7 @@ static int subr_nodes_set_attribute(lua_State* L)
   else
 	  attribute_value = internal_bytes_or_string_dup(L,3);
 
-  if (dyntree_model_iter_attribute_set_by_name(CARDTREE,iter,attribute_name,attribute_value))
+  if (dyntree_model_iter_attribute_set_by_name(gui_cardview_get_store(),iter,attribute_name,attribute_value))
     lua_push_node_ref(L,iter);
   else
     lua_pushnil(L);
@@ -319,7 +320,7 @@ static int subr_nodes_get_attribute(lua_State* L)
   iter  	  = luaL_check_node_ref_no_pseudo_root(L,1);
   attribute_name  = luaL_checkstring(L,2);
 
-  if (dyntree_model_iter_attribute_get_by_name(CARDTREE,iter,attribute_name,&attribute_value))
+  if (dyntree_model_iter_attribute_get_by_name(gui_cardview_get_store(),iter,attribute_name,&attribute_value))
 	  internal_bytes_or_string_push(L,attribute_value);
   else
 	  lua_pushnil(L);
@@ -341,11 +342,11 @@ static int iter_attribute(lua_State* L)
  
 	while (attr->index<attr->count)
 	{
-		if (dyntree_model_iter_attribute_get(CARDTREE,attr->iter,attr->index,&attr_value))
+		if (dyntree_model_iter_attribute_get(gui_cardview_get_store(),attr->iter,attr->index,&attr_value))
                 {
 			if (attr_value)
 			{
-				attr_name = dyntree_model_column_index_to_name(CARDTREE,attr->index++);
+				attr_name = dyntree_model_column_index_to_name(gui_cardview_get_store(),attr->index++);
 				lua_pushstring(L,attr_name);
 				internal_bytes_or_string_push(L,attr_value);
 				return 2;
@@ -362,7 +363,7 @@ static int subr_nodes_attributes(lua_State* L)
 	attribute_iter_data_t *attr = (attribute_iter_data_t *)lua_newuserdata(L,sizeof(attribute_iter_data_t)); 
 
 	attr->index = 0;
-	attr->count = dyntree_model_get_n_columns(GTK_TREE_MODEL(CARDTREE));
+	attr->count = dyntree_model_get_n_columns(GTK_TREE_MODEL(gui_cardview_get_store()));
 	attr->iter  = iter;
 	
 	lua_pushcclosure(L, iter_attribute, 1);
@@ -381,7 +382,7 @@ static int iter_children(lua_State* L)
 	if (children->has_more)
 	{
 		lua_push_node_ref(L,&(children->iter));
-		children->has_more = gtk_tree_model_iter_next(GTK_TREE_MODEL(CARDTREE),&(children->iter));
+		children->has_more = gtk_tree_model_iter_next(GTK_TREE_MODEL(gui_cardview_get_store()),&(children->iter));
 		return 1;
 	}
 	return 0;
@@ -398,7 +399,7 @@ static int subr_nodes_children(lua_State *L)
 	if (internal_is_pseudo_root(parent)) parent = NULL;
 	
 	children = (children_iter_data_t *)lua_newuserdata(L,sizeof(children_iter_data_t));
-	children->has_more = gtk_tree_model_iter_children(GTK_TREE_MODEL(CARDTREE),&(children->iter),parent);
+	children->has_more = gtk_tree_model_iter_children(GTK_TREE_MODEL(gui_cardview_get_store()),&(children->iter),parent);
 	
 	lua_pushcclosure(L, iter_children, 1);
 	return 1;
@@ -409,7 +410,7 @@ static int subr_nodes_parent(lua_State *L)
 	GtkTreeIter *iter = luaL_check_node_ref_no_pseudo_root(L,1);
 	GtkTreeIter ret;
 
-	if (gtk_tree_model_iter_parent(GTK_TREE_MODEL(CARDTREE),&ret,iter))
+	if (gtk_tree_model_iter_parent(GTK_TREE_MODEL(gui_cardview_get_store()),&ret,iter))
 		lua_push_node_ref(L,&ret);
 	else
 		lua_pushnil(L);
@@ -423,7 +424,7 @@ static int subr_nodes_remove(lua_State* L)
 
   if (internal_is_pseudo_root(iter)) iter = NULL;
 
-  if (!dyntree_model_iter_remove(CARDTREE,iter))
+  if (!dyntree_model_iter_remove(gui_cardview_get_store(),iter))
     lua_pushboolean(L,0);
   else
     lua_pushboolean(L,1);
@@ -448,7 +449,7 @@ static int subr_nodes_find_first(lua_State* L)
 	if (internal_index_table(&table))
 	{
 
-	  if (dyntree_model_iter_find_first(CARDTREE,&node,iter,table.indices,table.values,table.size))
+	  if (dyntree_model_iter_find_first(gui_cardview_get_store(),&node,iter,table.indices,table.values,table.size))
 		  lua_push_node_ref(L,&node);
 	  else
 		  lua_pushnil(L);
@@ -478,7 +479,7 @@ static int iter_find(lua_State* L)
         if (nodes->has_more)
         {
                 lua_push_node_ref(L,&(nodes->node));
-                nodes->has_more = dyntree_model_iter_find_next(CARDTREE,
+                nodes->has_more = dyntree_model_iter_find_next(gui_cardview_get_store(),
 								&(nodes->node),
 								nodes->iter,
 								nodes->table.indices,
@@ -517,7 +518,7 @@ static int subr_nodes_find(lua_State* L)
 
 			nodes->table = table;
 			nodes->iter = iter;
-			nodes->has_more = dyntree_model_iter_find_first(CARDTREE,
+			nodes->has_more = dyntree_model_iter_find_first(gui_cardview_get_store(),
 									&(nodes->node),
 									nodes->iter,
 									nodes->table.indices,
@@ -541,7 +542,7 @@ static int subr_nodes_to_xml(lua_State* L)
   iter = luaL_check_node_ref(L,1);
   if (internal_is_pseudo_root(iter)) iter = NULL;
 
-  res = dyntree_model_iter_to_xml(CARDTREE,iter,FALSE);
+  res = dyntree_model_iter_to_xml(gui_cardview_get_store(),iter,FALSE);
   if (res==NULL)
   {  
     	lua_pushnil(L);
@@ -566,7 +567,7 @@ static int subr_nodes_from_xml(lua_State* L)
 
   xml = luaL_checkstring(L,2);
 
-  res = dyntree_model_iter_from_xml(CARDTREE,iter,FALSE,xml,-1);
+  res = dyntree_model_iter_from_xml(gui_cardview_get_store(),iter,FALSE,xml,-1);
   
   lua_pushboolean(L,res);
   

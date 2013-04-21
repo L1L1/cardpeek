@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,20 @@
 *
 */
 
-#ifndef LUAX_H
-#define LUAX_H
+#ifndef GUI_READERVIEW_H
+#define GUI_READERVIEW_H
 
-#include "smartcard.h"
+#include <gtk/gtk.h>
+#include "bytestring.h"
 
-void luax_set_card_reader(cardreader_t* r);
+void gui_readerview_print(unsigned event,
+                          const bytestring_t *command,
+                          unsigned short sw,
+                          const bytestring_t *response,
+                          void *extra_data);
 
-void luax_run_script(const char* scriptname);
+GtkWidget *gui_readerview_create_window(void);
 
-void luax_run_command(const char* command);
-
-int luax_init(void);
-
-void luax_release(void);
-
-const char *luax_get_string_value(const char *identifier);
-
-char *luax_escape_string(const char *src);
+void gui_readerview_cleanup(void);
 
 #endif

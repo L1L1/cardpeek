@@ -19,23 +19,18 @@
 *
 */
 
-#ifndef LUAX_H
-#define LUAX_H
+#ifndef GUI_CARDVIEW_H
+#define GUI_CARDVIEW_H
 
-#include "smartcard.h"
+#include <gtk/gtk.h>
+#include "dyntree_model.h"
 
-void luax_set_card_reader(cardreader_t* r);
+DyntreeModel* gui_cardview_get_store(void);
 
-void luax_run_script(const char* scriptname);
+GtkWidget *gui_cardview_create_window(void);
 
-void luax_run_command(const char* command);
+void gui_cardview_expand_all(void);
 
-int luax_init(void);
-
-void luax_release(void);
-
-const char *luax_get_string_value(const char *identifier);
-
-char *luax_escape_string(const char *src);
+void gui_cardview_cleanup(void);
 
 #endif

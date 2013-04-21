@@ -30,6 +30,7 @@
 #include "misc.h"
 #include "a_string.h"
 #include "gui.h"
+#include "gui_readerview.h"
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "script_version.h"
@@ -237,7 +238,7 @@ int main(int argc, char **argv)
    
   if (options_ok)
   {
-	  gui_create(luax_run_script_cb,luax_run_command_cb);
+	  gui_create();
 
 	  log_printf(LOG_INFO,"Running %s",system_string_info());
 
@@ -259,9 +260,9 @@ int main(int argc, char **argv)
 	  {
 		  luax_set_card_reader(READER);
 
-		  cardreader_set_callback(READER,gui_reader_print_data,NULL);
+		  cardreader_set_callback(READER,gui_readerview_print,NULL);
 
-		  if (exec_command) luax_run_command_cb(exec_command);
+		  if (exec_command) luax_run_command(exec_command);
 
 		  gui_run();
 

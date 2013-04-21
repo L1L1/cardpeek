@@ -26,7 +26,6 @@
 
 require('lib.strict')
 require('lib.en1545')
-require('lib.tnode')
 require('etc.brussels-metro')
 require('etc.brussels-bus')
 

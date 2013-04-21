@@ -353,7 +353,7 @@ function gsm_map_descriptor(node,data,map)
 	local i,v 
 	local item
 
-	node = node:append{ classname="record", label="header", size=#data }
+	node = node:append{ classname="header", label="answer to select", size=#data }
 
 	
 	for i,v in ipairs(map) do
@@ -387,7 +387,7 @@ function gsm_read_content_binary(node,fsize,alt)
 		fsize = fsize - try_read
 	end
 	
-	node = node:append{classname="record", label="data", size=#data, val=data}
+	node = node:append{classname="block", label="data", size=#data, val=data}
 	if alt then
 		alt(node,data)
 	end

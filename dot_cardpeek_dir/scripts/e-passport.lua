@@ -588,8 +588,8 @@ if card.connect() then
          sw, resp = epass_select(v['FID'])
   
          FID = APP:append({ classname="file", label=v['name'], id=string.format(".%04X",v['FID']) })
-	 FID:append({classname="block", label="header", size=#resp, val=resp })
-	 CONTENT = FID:append({classname="block", label="content" })
+	 FID:append({classname="header", label="header", size=#resp, val=resp })
+	 CONTENT = FID:append({classname="body", label="content" })
 	 
 	if sw==0x9000 then
     

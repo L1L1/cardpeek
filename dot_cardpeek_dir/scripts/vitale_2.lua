@@ -124,6 +124,7 @@ AID = {
 }
 --]]
 
+local header
 
 if card.connect() then
   CARD = card.tree_startup("VITALE 2")
@@ -137,17 +138,20 @@ if card.connect() then
             APP = CARD:append({	classname="application", 
 				label="Application", 
 				id=map[app]['aid'] })
-	    tlv_parse(APP,resp)
+	    
+	    header = APP:append({ classname="header", label="answer to select", size=#resp })
+	    tlv_parse(header,resp)
          end
          for i in pairs(map[app]['files']) do
             EF = APP:append({	classname="file", 
 				label=map[app]['files'][i]['name'],
 				id=map[app]['files'][i]['ef'] })
   	    sw,resp = card.select(map[app]['files'][i]['ef'])
-	    tlv_parse(EF,resp)
+	    header = EF:append({ classname="header", label="answer to select", size=#resp })
+	    tlv_parse(header,resp)
 	    if sw==0x9000 then
 	       sw,resp = read_bin()
-	       CONTENT = EF:append({	classname="record",
+	       CONTENT = EF:append({	classname="body",
 					label="content",
 					size=#resp })
 	       if sw==0x9000 then

@@ -299,7 +299,7 @@ function emv_process_pse(cardenv)
 	if sw == 0x6E00 then 
 	   card.warm_reset()
 	   warm_atr = card.last_atr()
-	   nodes.append(cardenv, {classname="block", label="ATR", id="warm", size=#warm_atr, val=warm_atr})
+	   nodes.append(cardenv, {classname="atr", label="ATR", id="warm", size=#warm_atr, val=warm_atr})
            sw, resp = card.select(PSE)
 	end
 
@@ -317,7 +317,7 @@ function emv_process_pse(cardenv)
 	APP = nodes.append(cardenv, {classname="application", label="application", id=PSE})
 	emv_parse(APP,resp)
 
-	ref = node.find_first(APP,{id="88"})
+	ref = nodes.find_first(APP,{id="88"})
 	if (ref) then
 	   sfi = nodes.get_attribute(ref,"val")
 	   FILE = nodes.append(APP,{classname="file", label="file", id=sfi[0]})
@@ -325,7 +325,7 @@ function emv_process_pse(cardenv)
 	   rec = 1
 	   AID_LIST = {}
 	   repeat 
-	     sw,resp = card.read_record(sfi[0],rec)
+	     sw,resp = card.read_record(sfi:get(0),rec)
 	     if sw == 0x9000 then
 	        RECORD = nodes.append(FILE, {classname="record", label="record", id=tostring(rec)})
 	        emv_parse(RECORD,resp)
@@ -398,17 +398,10 @@ function emv_process_application_logs(application, log_sfi, log_max)
 	local data
 	local currency_code, currency_name, currency_digits
 
-	LOG_FILE   = nodes.append(application, { classmame="file", label="file", id=log_sfi})
-	LOG_FORMAT = nodes.append(LOG_FILE,	   { classname="item", label="log format"})
-	LOG_DATA   = nodes.append(LOG_FILE,	   { classname="item", label="log data"})
+	LOG_FILE   = nodes.append(application,     { classname="file", label="log file", id=log_sfi})
+	LOG_FORMAT = nodes.append(LOG_FILE,	   { classname="block", label="log format"})
  	
-	sw, log_format = card.get_data(0x9F4F)
-	if sw ~=0x9000 then
-	   log.print(log.ERROR,"Failed to get log format information, transaction logs won't be analyzed")
-	   return false
-	end
-
-	log_tag, log_format = asn1.split(log_format)
+	log_format = application:find_first({id = "9F4F"}):get_attribute("val")
 
 	i = 1
 	item = ""
@@ -431,7 +424,7 @@ function emv_process_application_logs(application, log_sfi, log_max)
                   log.print(log.WARNING,"Read log record failed")
 		  break
 	   else
-	          REC = nodes.append(LOG_DATA,{classname="record", label="record", id=log_recno, size=#resp})
+	          REC = nodes.append(LOG_FILE,{classname="record", label="record", id=log_recno, size=#resp})
 		  item_pos = 0
 		  ITEM_AMOUNT = nil
 		  currency_digits = 0
@@ -487,21 +480,54 @@ function emv_process_application(cardenv,aid)
 	   return false
 	end
 
-
 	-- Process 'File Control Infomation' and get PDOL
 	local APP
+	local FCI
 	
 	APP = nodes.append(cardenv, { classname = "application", label = "application", id=aid })
-	emv_parse(APP,resp)
-	ref = nodes.find_first(APP,{id="9F38"})
+	FCI = nodes.append(APP, { classname = "header", label = "answer to select", size=#resp, val=resp })
+	emv_parse(FCI,resp)
+	ref = nodes.find_first(FCI,{id="9F38"})
 	if (ref) then
 	   pdol = nodes.get_attribute(ref,"val")
 	else
 	   pdol = nil;
 	end
 
+	-- INITIATE get processing options, now that we have pdol
+	local GPO
 
-	-- find LOG INFO
+        if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
+            -- Get processing options
+            log.print(log.INFO,"Attempting GPO")
+            sw,resp = card.get_processing_options(pdol)
+            if sw ~=0x9000 then
+                if pdol then
+                    -- try empty GPO just in case the card is blocking some stuff
+                    log.print(log.WARNING,
+                              string.format("GPO with data failed with code %X, retrying GPO without data",sw))
+                    sw,resp = card.get_processing_options(nil)	
+                end
+           end
+           if sw ~=0x9000 then
+                log.print(log.ERROR,"GPO Failed")
+		ui.question("GET PROCESSING OPTIONS failed, the script will continue to read the card",{"OK"})
+           else
+ 	   	GPO = nodes.append(APP,{classname="block",label="processing_options", size=#resp, val=resp})
+		emv_parse(GPO,resp)
+	   end
+	end
+
+	-- Read extra data 
+	extra = nodes.append(APP,{classname="block",label="extra emv data"})
+	for j=1,#EXTRA_DATA do
+	    sw,resp = card.get_data(EXTRA_DATA[j])
+	    if sw == 0x9000 then
+	       emv_parse(extra,resp)
+	    end
+	end
+	
+	-- find LOG INFO 
 	local LOG
 	local logformat
 	
@@ -542,30 +568,6 @@ function emv_process_application(cardenv,aid)
 	end
 
 
-	-- INITIATE get processing options
-	local GPO
-
-        if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
-            -- Get processing options
-            log.print(log.INFO,"Attempting GPO")
-            sw,resp = card.get_processing_options(pdol)
-            if sw ~=0x9000 then
-                if pdol then
-                    -- try empty GPO just in case the card is blocking some stuff
-                    log.print(log.WARNING,
-                              string.format("GPO with data failed with code %X, retrying GPO without data",sw))
-                    sw,resp = card.get_processing_options(nil)	
-                end
-           end
-           if sw ~=0x9000 then
-                log.print(log.ERROR,"GPO Failed")
-		ui.question("GET PROCESSING OPTIONS failed, the script will continue to read the card",{"OK"})
-           else
- 	   	GPO = nodes.append(APP,{classname="item",label="processing_options"})
-	    	emv_parse(GPO,resp)
-	   end
-	end
-
 	local sfi_index
 	local rec_index
 	local SFI
@@ -574,7 +576,7 @@ function emv_process_application(cardenv,aid)
         for sfi_index=1,31 do
 		SFI = nil
 
-		if (logformat==nil or LOG[0]~=sfi_index) then
+		if (logformat==nil or LOG:get(0)~=sfi_index) then
 
 	    		for rec_index=1,255 do
 				log.print(log.INFO,string.format("Reading SFI %i, record %i",sfi_index, rec_index))
@@ -588,7 +590,8 @@ function emv_process_application(cardenv,aid)
 				    end
 			            REC = nodes.append(SFI,{classname="record", label="record", id=rec_index})
 			            if (emv_parse(REC,resp)==false) then
-					    nodes.set_attribute(REC,"val",resp)    
+					    nodes.set_attribute(REC,"val",resp)
+					    nodes.set_attribute(REC,"size",#resp)
 				    end
 		        	end
 	
@@ -600,20 +603,12 @@ function emv_process_application(cardenv,aid)
 
 	-- Read logs if they exist
 	if logformat=="EMV" then
-           emv_process_application_logs(APP,LOG[0],LOG[1])
+           emv_process_application_logs(APP,LOG:get(0),LOG:get(1))
 	elseif logformat=="VISA" then
-	   visa_process_application_logs(APP,LOG[0],LOG[1])
+	   visa_process_application_logs(APP,LOG:get(0),LOG:get(1))
 	end
 
-	-- Read extra data 
-	extra = nodes.append(APP,{classname="block",label="extra emv data"})
-	for j=1,#EXTRA_DATA do
-	    sw,resp = card.get_data(EXTRA_DATA[j])
-	    if sw == 0x9000 then
-	       emv_parse(extra,resp)
-	    end
-	end
-	
+
 	return true
 end
 

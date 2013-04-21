@@ -19,23 +19,24 @@
 *
 */
 
-#ifndef LUAX_H
-#define LUAX_H
+#ifndef GUI_TOOLBAR_H
+#define GUI_TOOLBAR_H
 
-#include "smartcard.h"
+#include <gtk/gtk.h>
 
-void luax_set_card_reader(cardreader_t* r);
+typedef struct {
+        const gchar *id;
+        const gchar *icon;
+        const gchar *text;
+        GCallback callback;
+        gconstpointer callback_data;
+} toolbar_item_t; 
 
-void luax_run_script(const char* scriptname);
+#define TOOLBAR_ITEM_SEPARATOR  "separator"
+#define TOOLBAR_ITEM_EXPANDER "expander"
 
-void luax_run_command(const char* command);
+GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems);
 
-int luax_init(void);
-
-void luax_release(void);
-
-const char *luax_get_string_value(const char *identifier);
-
-char *luax_escape_string(const char *src);
+void gui_toolbar_run_command_cb(GtkWidget *w, gconstpointer user_data);
 
 #endif

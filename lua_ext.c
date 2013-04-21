@@ -83,6 +83,7 @@ char line_buf[1024];
 
 static const char* read_chunk(lua_State* L, void* input, size_t* sz)
 {
+  UNUSED(L);
   if (fgets(line_buf,1024,(FILE*)input)==NULL)
   {
     *sz=0;
@@ -186,14 +187,14 @@ void x_lua_shell(lua_State* L, const char* prompt)
  
 lua_State* LUA_STATE= NULL;
 
-void luax_run_script_cb(const char* scriptname)
+void luax_run_script(const char* scriptname)
 {
   chdir(config_get_string(CONFIG_FOLDER_SCRIPTS));
   log_printf(LOG_INFO,"Running script %s (please wait)",scriptname);
   run_file(LUA_STATE,scriptname);
 }
 
-void luax_run_command_cb(const char* command)
+void luax_run_command(const char* command)
 {
   int error;
 
@@ -270,3 +271,34 @@ const char *luax_get_string_value(const char *identifier)
   lua_pop(LUA_STATE,1);
   return result;
 }
+
+char *luax_escape_string(const char *src)
+{
+        char *res;
+        const char *s;
+        char *p;
+        unsigned alloc_count = 1;
+
+        for (s=src;*s;s++) 
+        {
+                if (*s=='\\') 
+                        alloc_count+=2;
+                else
+                        alloc_count++;
+        }
+        p = res = g_malloc(alloc_count);
+        while (*src)
+        {
+                if (*src=='\\')
+                {
+                        *p++='\\';
+                        *p++='\\';
+                }
+                else
+                        *p++=*src;
+                src++;
+        }
+        *p='\0';
+        return res;
+}
+

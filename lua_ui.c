@@ -22,6 +22,7 @@
 #include "lua_ui.h"
 #include "gui.h"
 #include "gui_about.h"
+#include "gui_cardview.h"
 #include "dyntree_model.h"
 #include "misc.h"
 #include <string.h>
@@ -40,7 +41,7 @@ static int subr_ui_tree_save(lua_State* L)
 
   filename= lua_tostring(L,1);
 
-  if (dyntree_model_iter_to_xml_file(CARDTREE,NULL,filename)==0)
+  if (dyntree_model_iter_to_xml_file(gui_cardview_get_store(),NULL,filename)==0)
   {
     log_printf(LOG_ERROR,"Could not write xml data to '%s'",filename);
     lua_pushboolean(L,0);
@@ -69,7 +70,7 @@ static int subr_ui_tree_load(lua_State* L)
         " menu instead to open this file.",filename_base(filename));
   }
 
-  retval =  dyntree_model_iter_from_xml_file(CARDTREE,NULL,filename);
+  retval =  dyntree_model_iter_from_xml_file(gui_cardview_get_store(),NULL,filename);
 
   lua_pushboolean(L,retval);
   return 1;

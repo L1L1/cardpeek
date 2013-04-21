@@ -19,7 +19,6 @@
 
 require('lib.strict')
 require('lib.apdu')
-require('lib.treeflex')
 
 MIFARE_STD_KEYS= { [0xA]= "A0A1A2A3A4A5",
                    [0xB]= "B0B1B2B3B4B5",
@@ -182,6 +181,6 @@ if card.connect() then
    mifare_load_key(0xA,MIFARE_STD_KEYS[0xA])
    mifare_load_key(0xB,MIFARE_STD_KEYS[0xB])
    mifare_load_key(0xF,MIFARE_STD_KEYS[0xF])
-   MIFARE_scan(_n(CARD))
+   MIFARE_scan(CARD)
    card.disconnect()
 end

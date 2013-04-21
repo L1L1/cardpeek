@@ -30,7 +30,18 @@ local TABLE_REGEX={}
 function card.load_smartcard_list()
 	local current=nil
 
-	for line in io.lines('etc/smartcard_list.txt') do
+	local f = io.open('etc/smartcard_list.txt','r')
+
+	if f==nil then
+		f = io.open('/usr/share/pcsc/smartcard_list.txt','r')
+	end
+
+	if f==nil then
+		log.print(log.WARNING,"Could not find smartcard_list.txt either in .cardpeek/scripts/etc/ or in /usr/share/pcsc/.")
+		return false 
+	end
+
+	for line in f:lines() do
 	
 		cfirst = line:sub(1,1)
 
@@ -51,6 +62,10 @@ function card.load_smartcard_list()
 			-- nothing
 		end
 	end
+
+	io.close(f)
+
+	return true
 end
 
 function card.identify_atr(atr)
@@ -90,7 +105,7 @@ function card.tree_startup(title)
 	mycard = nodes.root():append({ classname="card",
 				       label=title });
 
-	atrnode = mycard:append({ classname="block",
+	atrnode = mycard:append({ classname="atr",
 			          label="cold ATR",
 			  	  size=#atr,
 				  val=atr })
@@ -102,29 +117,6 @@ function card.tree_startup(title)
 	end
 
 	return mycard
-end
-
------------------------------------------------------------
--- card.select_file : standard file select apdu
--- Deprecated : see card.select below
------------------------------------------------------------
-
-function card.select_file(name,ftype,mode)
-	local command
-	local bname = bytes.new(8,name)
-
-	log.printf(log.WARNING,"card.select_file() is deprecated, please use card.select() with card.SELECT_BY_DF_NAME instead.")
-
-	if ftype==nil
-	then
-	   ftype=4
-	end
-	if mode==nil
-	then
-	   mode=0
-	end
-        local command = bytes.new(8,card.CLA,0xA4,ftype,mode,#bname,bname,0)
-        return card.send(command)
 end
 
 -----------------------------------------------------------

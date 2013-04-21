@@ -279,9 +279,20 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
     return CARDPEEK_ERROR_SW;
   }
 
-  bytestring_assign_data(result,REC_LEN-2,REC_DAT);
-
-  SW = (REC_DAT[REC_LEN-2]<<8)|REC_DAT[REC_LEN-1];
+  if (REC_LEN>=2)
+  {
+    bytestring_assign_data(result,REC_LEN-2,REC_DAT);
+    SW = (REC_DAT[REC_LEN-2]<<8)|REC_DAT[REC_LEN-1];
+  }
+  else if (REC_LEN==1)
+  {
+    bytestring_clear(result);
+    SW = REC_DAT[0];
+  } 
+  else
+  {
+    return CARDPEEK_ERROR_SW;
+  }
 
   return SW;
 }

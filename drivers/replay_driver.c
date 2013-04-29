@@ -64,9 +64,9 @@ static const bytestring_t* replay_last_atr(cardreader_t* cr)
   return cr->atr;
 }
 
-static char** replay_get_info(cardreader_t* cr,char** parent)
+static char** replay_get_info(cardreader_t* cr)
 {
-  return parent; /* nothing to add */
+  return NULL; /* nothing to add */
 }
 
 static int replay_fail(cardreader_t* cr)

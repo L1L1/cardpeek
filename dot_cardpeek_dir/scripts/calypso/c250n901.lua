@@ -49,7 +49,7 @@ TRANSITION_LIST = {
   [7] = "Interchange (exit)"
 }
 
-function navigo_process_events(cardenv)
+function navigo_process_events(cardenv,node_label)
 	local event_node
 	local record_node
 	local ref_node
@@ -66,7 +66,7 @@ function navigo_process_events(cardenv)
 	local station_id
 	local location_string
 
-	event_node = cardenv:find_first({label="Event logs, parsed"})
+	event_node = cardenv:find_first({label=node_label})
 
 	if event_node==nil then 
 	   log.print(log.WARNING,"No event found in card")
@@ -96,7 +96,7 @@ function navigo_process_events(cardenv)
 	    ref_node:set_attribute("alt",code_transport_string.." - "..code_transition_string)
 
 	    -- service_provider_value == RATP and code_transport in { metro, tram, train } ? 
-	    if service_provider_value==3 and code_transport>=3 and code_transport<=5 then
+	    if (service_provider_value==3 or service_provider_value==5) and code_transport>=3 and code_transport<=5 then
 	       ref_node = record_node:find_first({label="EventLocationId"})
 	       location_id_value = bytes.tonumber(ref_node:get_attribute("val"))
 	       sector_id = bit.SHR(location_id_value,9)
@@ -123,6 +123,7 @@ function navigo_process_events(cardenv)
 	end
 end
 
-navigo_process_events(CARD)
+navigo_process_events(CARD,"Event logs, parsed")
+navigo_process_events(CARD,"Special events, parsed")
 
 

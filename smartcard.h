@@ -88,14 +88,14 @@ struct _cardreader_t {
   void           *extra_data;
   cardreader_callback_t cb_func;
   void           *cb_data;
-  cardreplay_t   *cardlog;   
+  cardreplay_t   *cardlog;
 
   int (*connect)(cardreader_t*, unsigned);
   int (*disconnect)(cardreader_t*);
   int (*reset)(cardreader_t*);
   unsigned short (*transmit)(cardreader_t*,const bytestring_t*, bytestring_t*);
   const bytestring_t* (*last_atr)(cardreader_t*);
-  char** (*get_info)(cardreader_t*,char**);
+  char** (*get_info)(cardreader_t*);
   int (*fail)(cardreader_t*);
   void (*finalize)(cardreader_t*);
 };

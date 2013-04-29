@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2011 by 'L1L1'
+-- Copyright 2009-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -164,7 +164,7 @@ function epass_read_binary(start,len)
 	command = bytes.concat(cmdheader,(#DO97+#DO8E),DO97,DO8E,0)
 	sw, resp = card.send(command)
 	epass_inc_SSC()
-	if (sw~=0x9000) then return false end
+	if (sw~=0x9000) and (sw~=0x6282) then return false end
 	tag_87, value_87 = asn1.split(resp)
 	decrypted_data = crypto.decrypt(TDES_CBC,bytes.sub(value_87,1,-1),iv)
 	return sw, bytes.sub(decrypted_data,0,len-1)
@@ -173,22 +173,25 @@ end
 function epass_read_file()
 	sw,resp = epass_read_binary(0,4)
 	if sw~=0x9000 then return nil end
+	log.print(log.INFO,"Heading is " .. tostring(resp))
 	tag, rest = asn1.split_tag(resp)
 	len, rest = asn1.split_length(rest)
 
 	--io.write("read_file: [")
+	
 	if len>127 then
-           to_read = len + 4
+           to_read = len + 2 + resp:get(1)-128
 	else
            to_read = len + 2 
 	end
 
+	log.print(log.INFO,"Expecting " .. to_read)
 	result = bytes.new(8)
 	already_read = 0
 	while to_read>0 do
 	     --io.write(".");io.flush()    
-	     if to_read>0xFF then
-	        le = 0xFF
+	     if to_read>0x80 then
+	        le = 0x80
              else
 	        le = to_read
 	     end
@@ -585,6 +588,7 @@ if card.connect() then
   if epass_create_session_keys(ke,km)
      then
        for i,v in ipairs(FILES) do
+	 log.print(log.INFO,"Attempt to select " .. v['name'])
          sw, resp = epass_select(v['FID'])
   
          FID = APP:append({ classname="file", label=v['name'], id=string.format(".%04X",v['FID']) })
@@ -592,7 +596,8 @@ if card.connect() then
 	 CONTENT = FID:append({classname="body", label="content" })
 	 
 	if sw==0x9000 then
-    
+   	    log.print(log.INFO,"Attempt to read from " .. v['name'])
+
 	    r = epass_read_file()
 	         
 	    if r then

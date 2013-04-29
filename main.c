@@ -190,16 +190,52 @@ static void save_what_can_be_saved(int sig_num)
   logfile = config_get_string(CONFIG_FILE_LOG);
   write(2,logfile,strlen(logfile));
   write(2,signature,strlen(signature));
-  sprintf(buf,"Recieved signal %i\n",sig_num); 
+  sprintf(buf,"Received signal %i\n",sig_num); 
   write(2,buf,strlen(buf));
   log_close_file();
   exit(-2);
 } 
 
+static void display_readers_and_version(void)
+{
+	cardmanager_t *CTX;
+	unsigned i;
+	unsigned reader_count;
+	const char **reader_list;
+
+	log_set_function(NULL);
+
+	luax_init();
+
+	fprintf(stderr,"This is %s.\n",system_string_info());
+	fprintf(stderr,"Cardpeek path is %s\n",config_get_string(CONFIG_FOLDER_CARDPEEK));
+	
+	CTX = cardmanager_new();
+	reader_count = cardmanager_count_readers(CTX);
+	reader_list  = cardmanager_reader_name_list(CTX);
+	if (reader_count == 0)
+		fprintf(stderr,"There are no readers detected\n");
+	else if (reader_count==1)
+		fprintf(stderr,"There is 1 reader detected:\n");
+	else
+		fprintf(stderr,"There are %i readers detected:\n",reader_count);
+	for (i=0;i<reader_count;i++)
+		fprintf(stderr," -> %s\n", reader_list[i]);
+	fprintf(stderr,"\n");
+	cardmanager_free(CTX);
+	luax_release();
+}
+
+static void display_help(void)
+{
+	
+}
+
 static struct option long_options[] = {
-            {"reader",  required_argument, 0,  'r' },
-            {"exec",    required_argument, 0,  'e' },
-            {0,         0,                 0,  0 }
+            {"reader",  	required_argument, 0,  'r' },
+            {"exec",    	required_argument, 0,  'e' },
+            {"version", 	required_argument, 0,  'v' },
+            {0,        	 	0,                 0,  0 }
         };
 
 int main(int argc, char **argv)
@@ -220,7 +256,7 @@ int main(int argc, char **argv)
 
   gui_init(&argc,&argv);
 
-  while ((opt = getopt_long(argc,argv,"r:e:",long_options,&opt_index))!=-1) 
+  while ((opt = getopt_long(argc,argv,"r:e:v",long_options,&opt_index))!=-1) 
   {
 	  switch (opt) {
 		case 'r':
@@ -229,9 +265,13 @@ int main(int argc, char **argv)
 		case 'e':
 			exec_command = optarg;
 			break;
+		case 'v':
+			display_readers_and_version();
+			options_ok = 0;
+			break;
 		default:
-			log_printf(LOG_ERROR, "Usage: %s [-r|--reader reader-name] [-e|--exec lua_command]\n",
-				argv[0]);
+			log_printf(LOG_ERROR, "Usage: %s [-r|--reader reader-name] [-e|--exec lua-command] [-v|--version]\n",
+				   argv[0]);
 			options_ok = 0;
 	  }
   }

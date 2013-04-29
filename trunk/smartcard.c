@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009-2012 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -51,12 +51,10 @@ cardmanager_t *cardmanager_new(void)
 {
   cardmanager_t *cm = (cardmanager_t *)malloc(sizeof(cardmanager_t));
   memset(cm,0,sizeof(cardmanager_t));
-
   cardmanager_search_pcsc_readers(cm);
 #ifndef _WIN32
   cardmanager_search_acg_readers(cm);
 #endif
-
   cardmanager_search_replay_readers(cm);
   return cm;
 }
@@ -260,29 +258,42 @@ const bytestring_t *cardreader_last_atr(cardreader_t *reader)
 char** cardreader_get_info(cardreader_t *reader)
 {
   char SW_string[5];
-  char **prev = malloc(sizeof(char*)*(2*5+1));
+  unsigned info_count;  
+  char **info = reader->get_info(reader);
 
-  prev[0]=strdup("Name");
-  prev[1]=strdup(reader->name);
-  prev[2]=strdup("Connected");
+  if (info==NULL)
+	info_count = 0;
+  else
+	for (info_count=0; info[info_count]!=NULL; info_count++);
+
+  info = g_realloc(info, sizeof(char*)*(11+info_count));
+
+  info[info_count+0]=g_strdup("reader");
+  info[info_count+1]=g_strdup(reader->name);
+
+  info[info_count+2]=g_strdup("connected");
   if (reader->connected)
-    prev[3]=strdup("TRUE");
+    info[info_count+3]=g_strdup("TRUE");
   else
-    prev[3]=strdup("FALSE");
-  prev[4]=strdup("Protocol");
+    info[info_count+3]=g_strdup("FALSE");
+
+  info[info_count+4]=g_strdup("protocol");
   if (reader->protocol==PROTOCOL_T0)
-    prev[5]=strdup("T0");
+    info[info_count+5]=g_strdup("T0");
   else if (reader->protocol==PROTOCOL_T1)
-    prev[5]=strdup("T1");
+    info[info_count+5]=g_strdup("T1");
   else
-    prev[5]=strdup("Undefined");
-  prev[6]=strdup("SW");
-  sprintf(SW_string,"%04X",reader->sw);
-  prev[7]=strdup(SW_string);
-  prev[8]=strdup("CommandInterval");
-  prev[9]=strdup("0");
-  prev[10]=NULL;
-  return reader->get_info(reader, prev);
+    info[info_count+5]=g_strdup("Undefined");
+
+  info[info_count+6]=g_strdup("sw");
+  sprintf(SW_string,"%u",(unsigned)(reader->sw & 0xFFFF));
+  info[info_count+7]=g_strdup(SW_string);
+
+  info[info_count+8]=g_strdup("command_interval");
+  info[info_count+9]=g_strdup("0");
+
+  info[info_count+10]=NULL;
+  return info;
 }
 
 int cardreader_fail(cardreader_t *reader)

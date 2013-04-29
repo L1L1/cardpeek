@@ -34,6 +34,7 @@
 /*********************************************************/
   
 GtkWidget *MAIN_WINDOW=NULL;
+GtkWidget *MAIN_NOTEBOOK=NULL;
 
 /*********************************************************/
 /* GUI_* FUNCTIONS ***************************************/
@@ -386,6 +387,79 @@ static int gui_load_icons(void)
   return is_ok;
 } 
 
+static void notebook_on_destroy(GtkWidget *window, gpointer user_data)
+{
+	GtkWidget* page;
+	GtkWidget* label;
+	const char *label_text;
+	GtkNotebook *notebook = GTK_NOTEBOOK(user_data);
+	
+	g_printf("destroy called, with notebook %p\n",notebook);
+
+	while ((page = gtk_notebook_get_nth_page(notebook,0)))
+	{
+		label_text = gtk_notebook_get_tab_label_text(notebook,page);
+		g_printf("Reparenting %p with label %s\n", page,label_text);
+		label = gtk_label_new(label_text);
+		gtk_widget_reparent(page, MAIN_NOTEBOOK);
+		gtk_notebook_set_tab_label(GTK_NOTEBOOK(MAIN_NOTEBOOK),page,label);
+		gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (MAIN_NOTEBOOK), page, TRUE);
+		gtk_notebook_set_tab_detachable (GTK_NOTEBOOK (MAIN_NOTEBOOK), page, TRUE);
+
+	}	
+} 
+
+
+static void notebook_on_page_removed(GtkNotebook *notebook,
+			    GtkWidget   *child,
+			    guint        page_num,
+			    gpointer     user_data)
+{
+  GtkWidget *toplevel;
+  
+  g_printf("on_remove: Pages %p is %i\n",notebook,gtk_notebook_get_n_pages(notebook));
+  if (gtk_notebook_get_n_pages(notebook)==0)
+  {
+	toplevel = gtk_widget_get_toplevel(GTK_WIDGET(notebook));
+	gtk_widget_destroy(toplevel);
+  }
+}
+
+static GtkNotebook* notebook_create_extra(GtkNotebook *source_notebook,
+                          GtkWidget   *child,
+                          gint         x,
+                          gint         y,
+                          gpointer     data)
+{
+  GtkWidget *window;
+  GtkWidget *notebook;
+
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  notebook = gtk_notebook_new ();
+
+  g_printf("Created notebook %p\n",notebook);
+
+  g_signal_connect (notebook, "page-removed",
+                    G_CALLBACK (notebook_on_page_removed), NULL);
+
+  g_signal_connect (notebook, "create-window",
+                    G_CALLBACK (notebook_create_extra), NULL);
+
+  g_signal_connect (window, "destroy",
+                    G_CALLBACK (notebook_on_destroy), notebook);
+
+  gtk_notebook_set_group_name (GTK_NOTEBOOK (notebook),
+                               gtk_notebook_get_group_name (source_notebook));
+
+  gtk_container_add (GTK_CONTAINER (window), notebook);
+
+  gtk_window_set_default_size (GTK_WINDOW (window), 600, 400);
+  gtk_window_move (GTK_WINDOW (window), x, y);
+  gtk_widget_show_all (window);
+
+  return GTK_NOTEBOOK (notebook);
+}
+
 int gui_create(void)
 { 
   GtkWidget *widget;
@@ -443,16 +517,23 @@ int gui_create(void)
   /* notebook */
 
   tabs = gtk_notebook_new ();
-  g_object_set(G_OBJECT (tabs), "tab-border", 4, NULL);
+  MAIN_NOTEBOOK = tabs;
+  g_signal_connect(tabs, "create-window", G_CALLBACK(notebook_create_extra), NULL);
+  gtk_notebook_set_group_name (GTK_NOTEBOOK (tabs), "cardpeek-tabs");
 
   label = gtk_label_new ("card view");
   gtk_notebook_append_page (GTK_NOTEBOOK (tabs), cardview, label);
+  gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), cardview, TRUE);
 
   label = gtk_label_new ("reader");
   gtk_notebook_append_page (GTK_NOTEBOOK (tabs), readerview, label);
+  gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), readerview, TRUE);
+  gtk_notebook_set_tab_detachable (GTK_NOTEBOOK (tabs), readerview, TRUE);
 
   label = gtk_label_new ("logs");
   gtk_notebook_append_page (GTK_NOTEBOOK (tabs), logview, label);
+  gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), logview, TRUE);
+  gtk_notebook_set_tab_detachable (GTK_NOTEBOOK (tabs), logview, TRUE);
 
   /* vertical packing */
 
@@ -483,4 +564,12 @@ int gui_run(void)
   return 1;
 }
 
+void gui_set_title(const char *title)
+{
+	char atitle[80];
+
+	snprintf(atitle,80,"cardpeek: %s",title);
+	atitle[79]=0;
+	gtk_window_set_title(GTK_WINDOW(MAIN_WINDOW),atitle);
+}
 

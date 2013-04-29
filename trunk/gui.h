@@ -47,4 +47,6 @@ char** gui_select_file(const char *title,
    		       const char *path,
    		       const char *filename);
 
+void gui_set_title(const char *title);
+
 #endif

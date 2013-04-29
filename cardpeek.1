@@ -5,20 +5,31 @@ cardpeek \- A gui tool to explore the contents of ISO 7816 smart cards.
 
 .SH SYNOPSIS 
 .B cardpeek 
+.RB [\fIoptions\fR]
 
 .SH DESCRIPTION 
-
+.PP
 Cardpeek is a tool to read the contents of ISO7816 smart cards.
 It features a GTK GUI to represent card data is a tree view, and is
 extendable with a scripting language (LUA).
- 
+.TP
+\fB\-r\fR, \fB\-\-reader\fR=\fIREADER\fR
+Connect to the reader identified by READER.
+.TP
+\fB\-e\fR, \fB\-\-exec\fR=\fICOMMAND\fR
+Execute the lua commands described in COMMAND.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print version info and list of detected smart card readers.
+.PP
 The goal of this project is to allow smart card owners to be better
 informed about what type of personal information is stored in these
 devices.
  
-This is not a real man-page, see included PDF documentation 
+This is not a real man-page, for more detailed information see 
+included PDF documentation 
 .B cardpeek_ref.en.pdf
-available here:
+available online here:
  
 http://cardpeek.googlecode.com/files/cardpeek_ref.en.pdf
 
@@ -27,7 +38,7 @@ or in your in your system
 directory (e.g. /usr/share/doc/cardpeek).
 
 .SH COPYRIGHT 
-cardpeek is Copyright (c) 2009-2013 L1L1@gmx.com.
+cardpeek is Copyright (c) 2009-2013 Alain Pannetrat.
 
 cardpeek is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

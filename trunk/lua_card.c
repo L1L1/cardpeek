@@ -26,6 +26,7 @@
 #include "iso7816.h"
 #include "misc.h"
 #include "lua_ext.h"
+#include "gui.h"
 
 cardreader_t* READER=NULL;
 
@@ -80,10 +81,13 @@ static int subr_card_info(lua_State* L)
     lua_pushstring(L,info[index]);
     lua_pushstring(L,info[index+1]);
     lua_settable(L,-3);
-    free(info[index]);
-    free(info[index+1]);
+    g_free(info[index]);
+    g_free(info[index+1]);
   }
-  free(info);
+  g_free(info);
+
+  /* this update is needed since cardreader_get_info is silent upon success */
+  gui_update(0);
   return 1;
 }
 

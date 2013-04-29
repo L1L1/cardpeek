@@ -204,7 +204,7 @@ static void internal_clear_rendered(CustomCellRendererFlexi *cr)
 		a_strfree((a_string_t*)cr->rendered_value);
 		break;
 	case RENDER_PIXBUF:
-		gdk_pixbuf_unref((GdkPixbuf *)cr->rendered_value);
+		g_object_unref(cr->rendered_value);
 		break;
    }
    cr->rendered_type = RENDER_NONE;
@@ -495,7 +495,7 @@ static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src
 	cr->rendered_type  = RENDER_PIXBUF;
 	cr->rendered_value = (GdkPixbuf*) gdk_pixbuf_loader_get_pixbuf(loader);
 
-	gdk_pixbuf_ref((GdkPixbuf *)cr->rendered_value);
+	g_object_ref(cr->rendered_value);
 
 	g_object_unref(loader);
 

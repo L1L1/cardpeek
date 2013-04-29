@@ -69,6 +69,7 @@ static void menu_run_script_cb(GtkWidget *widget,
   UNUSED(widget);
   UNUSED(callback_action);
 
+  gui_set_title(script->script_name+1);
   luax_run_script(script->script_file);
   gtk_tree_view_expand_all (GTK_TREE_VIEW(CARDVIEW));
   gui_update(0);
@@ -309,6 +310,7 @@ static void menu_cardview_analyzer_load_cb(GtkWidget *w, gpointer user_data)
   {
     config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
     chdir(select_info[0]);
+    gui_set_title(select_info[1]);
     luax_run_script(select_info[1]);
     g_free(select_info[0]);
     g_free(select_info[1]);

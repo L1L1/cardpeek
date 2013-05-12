@@ -33,7 +33,7 @@ const char *CONFIG_OPTIONS[]={
   "",
   ".cardpeek",
   ".cardpeek/scripts",
-  ".cardpeek/logs",
+  ".cardpeek/replay",
   ".cardpeek/config.lua",
   ".cardpeek.log",
   ".cardpeek/version",

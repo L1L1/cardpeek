@@ -30,6 +30,7 @@
 #include "pathconfig.h"
 #include <string.h>
 #include <stdlib.h>
+#include <gdk/gdkkeysyms.h>
 
 #ifndef _WIN32
 #include "config.h"
@@ -99,7 +100,7 @@ static void menu_cardview_open_cb(GtkWidget *w, gpointer user_data)
     config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
-    a_sprintf(command,"ui.tree_load(\"%s\")",filename);
+    a_sprintf(command,"ui.load_view(\"%s\")",filename);
     luax_run_command(a_strval(command));
     a_strfree(command);
     g_free(select_info[0]);
@@ -122,7 +123,7 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
     config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
-    a_sprintf(command,"ui.tree_save(\"%s\")",filename);
+    a_sprintf(command,"ui.save_view(\"%s\")",filename);
     luax_run_command(a_strval(command));
     a_strfree(command);
     g_free(select_info[0]);
@@ -131,6 +132,7 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
   }
 }
 
+/*
 static gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
 		   		     gint        x,
 				     gint        y,
@@ -149,7 +151,7 @@ static gboolean menu_cardview_query_tooltip(GtkWidget  *widget,
   }
   return FALSE;
 }
-
+*/
 
 static void menu_cardview_switch_column(void)
 {
@@ -329,100 +331,85 @@ static int select_lua(DIRENT_T* de)
   return 0;
 }
 
-static GtkWidget *create_analyzer_menu(void)
+static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
 {
-  GtkItemFactory *item_factory;
-  GtkItemFactoryEntry fentry;
+  GtkWidget *menu = gtk_menu_new();
+  GtkWidget *menuitem;
+  struct menu_script* menuitem_data;
   struct dirent **namelist;
-  int n,i;
-  const char *script_path=config_get_string(CONFIG_FOLDER_SCRIPTS);
-  struct menu_script* menu_item;
+  int i,n;
   char *dot;
   char *underscore;
+  const char *script_path=config_get_string(CONFIG_FOLDER_SCRIPTS);
 
-  /* Make an ItemFactory */
-  item_factory = gtk_item_factory_new (GTK_TYPE_MENU, "<Analyzer>",NULL);
+  menu = gtk_menu_new();
 
-  if (item_factory==NULL)
+  n = scandir(script_path, &namelist, select_lua, alphasort);
+  if (n > 0)
   {
-	log_printf(LOG_ERROR,"Could not create menu for scripts in %s",script_path);
-	return NULL;
-  }
-
-  if (script_path)
-  {
-    n = scandir(script_path, &namelist, select_lua, alphasort);
-    if (n > 0)
-    {
       for (i=0;i<n;i++) 
       {
-	log_printf(LOG_INFO,"Adding %s script to menu", namelist[i]->d_name);
+        log_printf(LOG_INFO,"Adding %s script to menu", namelist[i]->d_name);
 
-        menu_item=(struct menu_script *)g_malloc(sizeof(struct menu_script));
-	menu_item->script_name = (char* )g_malloc(strlen(namelist[i]->d_name)+11);
-	strcpy(menu_item->script_name,"/");
-	strcat(menu_item->script_name,namelist[i]->d_name);
+        menuitem_data=(struct menu_script *)g_malloc(sizeof(struct menu_script));
+        menuitem_data->script_name = (char* )g_strdup(namelist[i]->d_name);
 
-	dot = rindex(menu_item->script_name,'.');
-	if (dot)
-	  *dot=0;
+        dot = rindex(menuitem_data->script_name,'.');
+        if (dot) *dot=0;
 
-	underscore=menu_item->script_name;
-	do 
-	  if (*underscore=='_') *underscore=' '; 
-	while (*underscore++);
+        for (underscore=menuitem_data->script_name;*underscore!=0;underscore++)
+        {
+          if (*underscore=='_') *underscore=' '; 
+	}
 
-	menu_item->script_file = strdup(namelist[i]->d_name);
-	menu_item->prev=SCRIPTS;
-	SCRIPTS = menu_item;
-
-	memset(&fentry,0,sizeof(fentry));
-	fentry.path=menu_item->script_name;
-	fentry.callback=G_CALLBACK(menu_run_script_cb);
-	fentry.callback_action=0;
-	fentry.item_type=(gchar*)"<StockItem>";
-	fentry.extra_data=GTK_STOCK_PROPERTIES;
-	gtk_item_factory_create_item(item_factory,&fentry,menu_item,2);
+        menuitem_data->script_file = strdup(namelist[i]->d_name);
+        menuitem_data->prev=SCRIPTS;
+        SCRIPTS = menuitem_data;
+	
+	menuitem = gtk_image_menu_item_new_with_label(menuitem_data->script_name);
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU));	
+	g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_run_script_cb),menuitem_data);
+	gtk_widget_show(menuitem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
+        
 	free(namelist[i]);
       }
       free(namelist);
-    }
-    else
-      log_printf(LOG_WARNING,"No scripts found in %s",script_path);
   }
- 
-  memset(&fentry,0,sizeof(fentry));
-  fentry.path=(gchar*)"/Sep1";
-  fentry.callback=NULL;
-  fentry.callback_action=0;
-  fentry.item_type=(gchar*)"<Separator>";
-  fentry.extra_data=NULL;
-  gtk_item_factory_create_item(item_factory,&fentry,NULL,2);
+  else
+      log_printf(LOG_WARNING,"No scripts found in %s",script_path);
 
-  memset(&fentry,0,sizeof(fentry));
-  fentry.path=(gchar*)"/Load a script";
-  fentry.callback=G_CALLBACK(menu_cardview_analyzer_load_cb);
-  fentry.callback_action=0;
-  fentry.item_type=(gchar*)"<StockItem>";
-  fentry.extra_data=GTK_STOCK_OPEN;
-  gtk_item_factory_create_item(item_factory,&fentry,NULL,2);
-  
-  return gtk_item_factory_get_widget (item_factory, "<Analyzer>");
+  menuitem = gtk_separator_menu_item_new();
+  gtk_widget_show(menuitem);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
+
+  menuitem = gtk_image_menu_item_new_with_label("Load a script");
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_OPEN,GTK_ICON_SIZE_MENU));
+  g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
+  gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE); 
+  gtk_widget_show(menuitem);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
+  return menu;
 }
 
 toolbar_item_t TB_CARD_VIEW[] = {
-	{ "card-view-analyzer", "cardpeek-analyzer", "Analyzer", G_CALLBACK(menu_cardview_analyzer_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
-	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_cardview_clear_cb), NULL },
-	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_cardview_open_cb), NULL },
-	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_cardview_save_as_cb), NULL },
-	{ NULL, 		TOOLBAR_ITEM_EXPANDER, NULL, NULL, NULL },
-	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(gui_toolbar_run_command_cb), "ui.about()" },
-	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
-	{ "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL },
-
+	{ "card-view-analyzer", "cardpeek-analyzer", "Analyzer", G_CALLBACK(menu_cardview_analyzer_cb), NULL, 
+	  "Analyze card contents." },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
+	{ "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_cardview_clear_cb), NULL, 
+	  "Clear the card view content." },
+	{ "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_cardview_open_cb), NULL, 
+	  "Load previously saved card view content (XML fomat)." },
+	{ "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_cardview_save_as_cb), NULL, 
+	  "Save current card view content into a file (XML fomat)." },
+	{ NULL, 		TOOLBAR_ITEM_EXPANDER, NULL, NULL, NULL, NULL },
+	{ "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(gui_toolbar_run_command_cb), "ui.about()", 
+	  "About cardpeek " VERSION },
+	{ NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
+	{ "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL, 
+	  "Quit cardpeek" },
 	/* END MARKER : */
-	{ NULL, 		NULL, NULL, NULL, NULL }
+	{ NULL, 		NULL, NULL, NULL, NULL, NULL }
 };
 
 static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
@@ -529,7 +516,7 @@ static void internal_cell_renderer_size_cb (GtkTreeViewColumn *col,
 }
 
 
-GtkWidget *gui_cardview_create_window(void)
+GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 {
   GtkCellRenderer     *renderer;
   GtkWidget           *scrolled_window;
@@ -545,7 +532,7 @@ GtkWidget *gui_cardview_create_window(void)
 
   /* Create the toolbar */
 
-  TB_CARD_VIEW[0].callback_data = create_analyzer_menu();
+  TB_CARD_VIEW[0].callback_data = create_analyzer_menu(accel_group);
 
   toolbar = gui_toolbar_new(TB_CARD_VIEW);
 
@@ -564,13 +551,14 @@ GtkWidget *gui_cardview_create_window(void)
   CARDVIEW = gtk_tree_view_new ();
   
   /* "enable-tree-lines" */
-  /* gtk_tree_view_set_enable_tree_lines (GTK_TREE_VIEW(view),TRUE);*/
+  /* gtk_tree_view_set_enable_tree_lines (GTK_TREE_VIEW(CARDVIEW),TRUE); */
   
+  /*
   g_object_set(CARDVIEW,
 	       "has-tooltip",TRUE, NULL);
 
   g_signal_connect(CARDVIEW, 
- 		   "query-tooltip", (GCallback) menu_cardview_query_tooltip, NULL);
+ 		   "query-tooltip", (GCallback) menu_cardview_query_tooltip, NULL); */
   g_signal_connect(CARDVIEW,
 		   "button-press-event", (GCallback) menu_cardview_button_press_event, NULL);
 
@@ -627,6 +615,7 @@ GtkWidget *gui_cardview_create_window(void)
   	gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
   }
   gtk_widget_show_all(colheader);
+  gtk_widget_set_tooltip_text(colheader,"Click to switch to 'interpreted' data.");
   gtk_tree_view_column_set_widget(column,colheader);
 
    /* --- Column #3 --- */
@@ -653,6 +642,7 @@ GtkWidget *gui_cardview_create_window(void)
   	gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
   }
   gtk_widget_show_all(colheader);
+  gtk_widget_set_tooltip_text(colheader,"Click to switch to 'raw' data.");
   gtk_tree_view_column_set_widget(column,colheader);
 
   /* add the dat model */

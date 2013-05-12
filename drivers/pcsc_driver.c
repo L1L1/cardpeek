@@ -20,6 +20,8 @@
 */
 
 #include <winscard.h>
+#include "gui.h"
+#include "gui_inprogress.h"
 
 #ifdef _WIN32
 /*
@@ -28,7 +30,7 @@
  * So here is an ugly trick.
  */
 #define SCARD_PCI_NULL NULL
-#elif __APPLE__
+#elif defined(__APPLE__)
 SCARD_IO_REQUEST pioRecvPci_dummy;
 #define SCARD_PCI_NULL (&pioRecvPci_dummy)
 #include <wintypes.h>
@@ -66,7 +68,7 @@ typedef struct
     LONG         hcontext;
     SCARDHANDLE  hcard;
     DWORD        protocol;
-    long         status;
+    LONG         status;
 } pcsc_data_t;
 
 static const char *pcsc_stringify_protocol(DWORD proto)
@@ -135,20 +137,8 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
     DWORD attr_maxinput_len = sizeof(unsigned int);
     SCARD_READERSTATE reader_state;
     pcsc_data_t* pcsc = cr->extra_data;
-
-    g_assert(pcsc!=NULL);
-
-    /*
-    pcsc->status = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL,
-    				       &(pcsc->hcontext));
-    if (pcsc->status!=SCARD_S_SUCCESS)
-    {
-      log_printf(LOG_ERROR,"Failed to establish PCSC card manager context: %s (error 0x%08x).",
-    	    pcsc_stringify_error(pcsc->status),
-    	    pcsc->status );
-      return 0;
-    }
-    */
+    int counter = 0;
+    GtkWidget *progress;
 
     memset(&reader_state,0,sizeof(reader_state));
     reader_state.szReader = cr->name+7;
@@ -163,26 +153,42 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
         return 0;
     }
 
+    progress = gui_inprogress_new("Connection","Waiting for the reader to connect to a card.");
     while ((reader_state.dwEventState & SCARD_STATE_PRESENT)==0)
     {
         reader_state.dwCurrentState = reader_state.dwEventState;
-        log_printf(LOG_INFO,"Waiting for card to be present (current state: %s)...",
-                   pcsc_stringify_state(reader_state.dwEventState));
-        pcsc->status = SCardGetStatusChange(pcsc->hcontext,3000,&reader_state,1);
-        if (pcsc->status != SCARD_S_SUCCESS && pcsc->status != SCARD_E_TIMEOUT)
+	if (((counter++)%30)==0)
+	{
+		log_printf(LOG_INFO,"Waiting for card to be present (current state: %s)...",
+				pcsc_stringify_state(reader_state.dwEventState));
+	}
+
+	if (!gui_inprogress_pulse(progress))
+	{
+	    log_printf(LOG_ERROR,"Connection aborted by user");
+	    gui_inprogress_free(progress);
+	    pcsc->status = 0x6FFF;
+	    return 0;	    
+	}
+        
+	pcsc->status = SCardGetStatusChange(pcsc->hcontext,100,&reader_state,1);
+        if ((pcsc->status!=(LONG)SCARD_S_SUCCESS) && (pcsc->status!=(LONG)SCARD_E_TIMEOUT))
         {
-            log_printf(LOG_ERROR,"Failed to query reader status change before connecting: %s (error 0x%08x).",
+            log_printf(LOG_ERROR,"Failed to query reader status change before connecting: %s (error 0x%08x/%08x).",
                        pcsc_stringify_error(pcsc->status),
-                       pcsc->status );
+                       pcsc->status,
+		       SCARD_E_TIMEOUT );
             return 0;
         }
     }
+    gui_inprogress_free(progress);
     
     log_printf(LOG_DEBUG,"Attempting to connect to '%s'",cr->name);
     pcsc->status = SCardConnect(pcsc->hcontext,
                                 cr->name+7,
-                                SCARD_SHARE_EXCLUSIVE,
-                                prefered_protocol,
+                                /* SCARD_SHARE_EXCLUSIVE, */
+                                SCARD_SHARE_SHARED,
+				prefered_protocol,
                                 &(pcsc->hcard),
                                 &(cr->protocol));
 

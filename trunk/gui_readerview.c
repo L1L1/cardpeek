@@ -69,13 +69,18 @@ static void menu_readerview_save_as_cb(GtkWidget *w, gpointer user_data)
 /*********************************************************/
 
 toolbar_item_t TB_READER_VIEW[] = {
-	{ "reader-view-connect", 	GTK_STOCK_CONNECT, "Connect", G_CALLBACK(gui_toolbar_run_command_cb), "card.connect()" },
-	{ "reader-view-reset", 		GTK_STOCK_REDO, "Reset", G_CALLBACK(gui_toolbar_run_command_cb), "card.warm_reset()" },
-	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, "Disconnect", G_CALLBACK(gui_toolbar_run_command_cb), "card.disconnect()" },
-	{ NULL,				TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL },
-	{ "reader-view-clear", 		GTK_STOCK_CLEAR, "Clear", G_CALLBACK(gui_toolbar_run_command_cb), "card.log_clear()" },
-	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, "Save replay", G_CALLBACK(menu_readerview_save_as_cb), NULL },	
-	{ NULL, 			NULL, NULL, NULL, NULL }
+	{ "reader-view-connect", 	GTK_STOCK_CONNECT, "Connect", G_CALLBACK(gui_toolbar_run_command_cb), "card.connect()", 
+	  "Connect a card to the reader." },
+	{ "reader-view-reset", 		GTK_STOCK_REDO, "Reset", G_CALLBACK(gui_toolbar_run_command_cb), "card.warm_reset()", 
+	  "Reset the card in the reader." },
+	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, "Disconnect", G_CALLBACK(gui_toolbar_run_command_cb), "card.disconnect()", 
+	  "Diconnect the card in the reader." },
+	{ NULL,				TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
+	{ "reader-view-clear", 		GTK_STOCK_CLEAR, "Clear", G_CALLBACK(gui_toolbar_run_command_cb), "card.log_clear()", 
+	  "Clear the reader view." },
+	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, "Save replay", G_CALLBACK(menu_readerview_save_as_cb), NULL, 
+	  "Save card/reader data exchange for later replay\nYou can then select a replay during application startup." },	
+	{ NULL, 			NULL, NULL, NULL, NULL, NULL }
 };
 
 

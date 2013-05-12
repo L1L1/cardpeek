@@ -787,6 +787,8 @@ char *bytestring_to_format(const char *format, const bytestring_t *bs)
 		  break;
 	case 'P': x_bytestring_append_as_printable(s,bs);
 		  break;
+	case 'C': a_strncat(s,bs->len,(char *)bs->data);
+		  break;
 	case 'l': sprintf(tmp,"%i",bs->len);
 		  a_strcat(s,tmp);
 		  break;

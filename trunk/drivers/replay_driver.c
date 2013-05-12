@@ -24,6 +24,7 @@
 static int replay_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
   cardreplay_t* emul = cr->extra_data;
+  UNUSED(prefered_protocol);
 
   cr->connected = 1;
   return cardreplay_run_cold_reset(emul);
@@ -66,6 +67,7 @@ static const bytestring_t* replay_last_atr(cardreader_t* cr)
 
 static char** replay_get_info(cardreader_t* cr)
 {
+  UNUSED(cr);
   return NULL; /* nothing to add */
 }
 

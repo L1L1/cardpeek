@@ -569,39 +569,42 @@ FILES = {
 
 repeat
 	MRZ_DATA = ui.readline("Enter the code from the lower MRZ data (printed inside the passport)",44,MRZ_DATA)
+	if MRZ_DATA==nil then
+		break
+	end
 	if #MRZ_DATA<28 then
 		ui.question("You must enter at least 28 characters",{"OK"})
 	end
 until #MRZ_DATA>=28
 
-
-if card.connect() then
-  local ke,km,i,v,r
-
-  CARD = card.tree_startup("e-passport")
-  sw, resp = card.select(AID_MRTD,0)
-  APP = CARD:append({classname="application", label="application", id=AID_MRTD})
-  if #resp>0 then
-	  tlv_parse(APP,resp)
-  end
-  epass_create_master_keys(MRZ_DATA)
-  if epass_create_session_keys(ke,km)
-     then
-       for i,v in ipairs(FILES) do
-	 log.print(log.INFO,"Attempt to select " .. v['name'])
-         sw, resp = epass_select(v['FID'])
+if MRZ_DATA then
+  if card.connect() then
+    local ke,km,i,v,r
   
-         FID = APP:append({ classname="file", label=v['name'], id=string.format(".%04X",v['FID']) })
-	 FID:append({classname="header", label="header", size=#resp, val=resp })
-	 CONTENT = FID:append({classname="body", label="content" })
+    CARD = card.tree_startup("e-passport")
+    sw, resp = card.select(AID_MRTD,0)
+    APP = CARD:append({classname="application", label="application", id=AID_MRTD})
+    if #resp>0 then
+  	  tlv_parse(APP,resp)
+    end
+    epass_create_master_keys(MRZ_DATA)
+    if epass_create_session_keys(ke,km)
+       then
+         for i,v in ipairs(FILES) do
+      	   log.print(log.INFO,"Attempt to select " .. v['name'])
+           sw, resp = epass_select(v['FID'])
+  
+           FID = APP:append({ classname="file", label=v['name'], id=string.format(".%04X",v['FID']) })
+	   FID:append({classname="header", label="header", size=#resp, val=resp })
+	   CONTENT = FID:append({classname="body", label="content" })
 	 
-	if sw==0x9000 then
-   	    log.print(log.INFO,"Attempt to read from " .. v['name'])
+	  if sw==0x9000 then
+   	      log.print(log.INFO,"Attempt to read from " .. v['name'])
 
-	    r = epass_read_file()
+	      r = epass_read_file()
 	         
-	    if r then
-		nodes.set_attribute(CONTENT,"size",#r)
+	      if r then
+	  	nodes.set_attribute(CONTENT,"size",#r)
                 if r:get(0)==0x6D then
 	       		tag_6D, value_6D = asn1.split(r)
 	       		TAG6D = CONTENT:append({ classname="item", label="National specific data", size=#value_6D })
@@ -609,21 +612,22 @@ if card.connect() then
 	    	else
                		tlv_parse(CONTENT,r,MRP_REFERENCE)
 	    	end
-	    else
+	      else
 		    nodes.set_attribute(CONTENT,"alt","Selected file, but data is not accessible")
-            end
+              end
 	   
-         else
-	    nodes.set_attribute(CONTENT,"alt",string.format("Content not accessible (code %04X)",sw))
+           else
+	      nodes.set_attribute(CONTENT,"alt",string.format("Content not accessible (code %04X)",sw))
+           end
          end
+       else
+  	     ui.question("Could not create session keys. Perhaps you didn't enter the correct MRZ data.",{"OK"})
        end
-     else
-	     ui.question("Could not create session keys. Perhaps you didn't enter the correct MRZ data.",{"OK"})
-     end
-  card.disconnect()
+    card.disconnect()
+  else
+    ui.question("No passport detected in proximity of the reader",{"OK"})
+  end
 else
-  ui.question("No passport detected in proximity of the reader",{"OK"})
+  log.print(log.ERROR,"Aborted by the user.")
 end
-
-
 

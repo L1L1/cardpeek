@@ -30,6 +30,7 @@ typedef struct {
         const gchar *text;
         GCallback callback;
         gconstpointer callback_data;
+	const gchar *tooltip;
 } toolbar_item_t; 
 
 #define TOOLBAR_ITEM_SEPARATOR  "separator"

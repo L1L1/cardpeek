@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009 by 'L1L1'
+-- Copyright 2009i-2013 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ function process_moneo(card_ctx)
 	local AID = "#A00000006900"
 	local r
 	local SFI
-	local REC
 
 	sw, resp = card.select(AID,nil,0)
 
@@ -49,21 +48,20 @@ function process_moneo(card_ctx)
 	end
 
 	-- this is for a strange bug seen in some moneo cards: --
-	if resp[1]>=0x82 then
+	if resp:get(1)>=0x82 then
 	   asn1.enable_single_byte_length(true)
 	end
 
-	APP = ui.tree_add_node(card_ctx,"application","application",AID)
+	APP = nodes.append(card_ctx, { classname="application", label="application", id=AID })
 	tlv_parse(APP,resp)
 	for name,sfi in pairs(MONEO_SFI) do
-	    SFI = ui.tree_add_node(APP,"file",name,string.format("%02X",sfi))
+	    SFI = nodes.append(APP,{ classname="file", label=name, id=string.format("%02X",sfi) })
 	    for r=1,255 do
 	        sw,resp = card.read_record(sfi,r)
 	        if (#resp==0) then
                    break
 		end
-		REC = ui.tree_add_node(SFI,"record","record",r,#resp)
-		ui.tree_set_value(REC,resp)
+		nodes.append(SFI, { classname="record", label="record", id=r, size=#resp, val=resp })
 	    end
 	end
 end

@@ -106,6 +106,8 @@ GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 				gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),tbitems[i].text);
 			if (tbitems[i].callback)
 				g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(tbitems[i].callback),(gpointer)tbitems[i].callback_data);
+			if (tbitems[i].tooltip)
+				gtk_widget_set_tooltip_text(GTK_WIDGET(item),tbitems[i].tooltip);
 			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
 		}
 		/*

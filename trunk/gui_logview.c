@@ -29,7 +29,7 @@
 /*********************************************************/
   
 GtkTextBuffer* LOG_BUFFER=NULL;
-GtkScrolledWindow* LOG_WINDOW=NULL;
+GtkWidget* LOG_WINDOW=NULL;
 GtkStatusbar *STATUS_BAR=NULL;
 guint STATUS_BAR_CONTEXT_ID=0;
 
@@ -63,7 +63,7 @@ static void gui_logview_function(int log_level, const char* str)
   gtk_text_buffer_insert_with_tags_by_name(LOG_BUFFER,&iter,str,-1,tag,NULL);
   if (LOG_WINDOW)
   {
-    adj = gtk_scrolled_window_get_vadjustment(LOG_WINDOW);
+    adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(LOG_WINDOW));
     adj -> value = adj -> upper;
     gtk_adjustment_value_changed(adj);
   }
@@ -134,5 +134,6 @@ GtkWidget *gui_logview_create_status_bar(void)
 
 void gui_logview_cleanup(void)
 {
-	/* FIXME: check this */
+	LOG_BUFFER = NULL;
+	log_set_function(NULL);
 }

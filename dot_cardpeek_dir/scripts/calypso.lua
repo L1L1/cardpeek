@@ -53,7 +53,7 @@ end
 LFI_LIST = {
   { "ICC",              "/0002",      "file" },
   { "ID",               "/0003",      "file" },
-  { "Ticketing",        "/2000",      "application" },
+  { "Ticketing",        "/2000",      "folder" },
   { "Environment",      "/2000/2001", "file" },
   { "Holder",           "/2000/2002", "file" }, 
   { "Event logs",       "/2000/2010", "file" },
@@ -119,8 +119,21 @@ function calypso_guess_network(cardenv)
 			if #data > 36 then
 				local country_bin = data:sub(13,24)
 				local network_bin = data:sub(25,36)
-				return tonumber(country_bin:convert(4):format("%D")),
-			       	       tonumber(network_bin:convert(4):format("%D"))
+				local country_num = tonumber(country_bin:convert(4):format("%D"))
+			       	local network_num = tonumber(network_bin:convert(4):format("%D"))
+
+				if country_num==250 or country_num==56 then
+					return country_num, network_num
+				end
+				
+				country_bin = data:sub(3,14)
+				country_num = tonumber(country_bin:convert(4):format("%D"))
+				if country_num==376 then
+					return 376,0
+				end
+
+				log.print(log.WARNING,"Unknown Calypso card.")
+				
 			else
 				log.print(log.WARNING,"Could not find enough data in 'Environement/record#1'")
 			end
@@ -161,7 +174,7 @@ function calypso_process(cardenv)
 			end
 		end
 	end
-	
+
 	country, network = calypso_guess_network(cardenv)
 	filename = "calypso/c"..country..".lua"
 	file = io.open(filename);
@@ -187,22 +200,7 @@ local atr, hex_card_num, card_num
 if card.connect() then 
 
   CARD = card.tree_startup("CALYPSO")
-  atr = card.last_atr();
-  hex_card_num = bytes.sub(atr,-7,-4)
-  card_num     = (hex_card_num:get(0)*256*65536)+(hex_card_num:get(1)*65536)+(hex_card_num:get(2)*256)+hex_card_num:get(3)
-
-  CARD:append{ classname = "block", 
-  	       label="Card number", 
-               size=4,
-	       val = hex_card_num,
-	       alt = card_num }
-  --local ref = ui.tree_add_node(CARD,"block","Card number",nil,4)
-  --ui.tree_set_value(ref,hex_card_num)
-  --ui.tree_set_alt_value(ref,card_num)
-  --ref:set_attribute("val",hex_card_num)
-  --ref:set_attribute("alt",card_num)
-
-  
+ 
   sw = card.select("#2010")
   if sw==0x9000 then
      sel_method = SEL_BY_LFI
@@ -216,8 +214,20 @@ if card.connect() then
      end
   end 
 
-  calypso_process(CARD)
- 
+  if sw~=0x6E00 then
+     atr = card.last_atr();
+     hex_card_num = bytes.sub(atr,-7,-4)
+     card_num     = (hex_card_num:get(0)*256*65536)+(hex_card_num:get(1)*65536)+(hex_card_num:get(2)*256)+hex_card_num:get(3)
+
+     CARD:append{ classname = "block", 
+     	          label="Card number", 
+                  size=4,
+	          val = hex_card_num,
+	          alt = card_num }
+
+      calypso_process(CARD)
+  end
+
   card.disconnect()
 else
   ui.question("Connection to card failed. Are you sure a card is inserted in the reader or in proximity of a contactless reader?\n\nNote: French 'navigo' cards cannot be accessed through a contactless interface.",{"OK"});

@@ -409,17 +409,6 @@ static int subr_bytes_is_printable(lua_State *L)
   return 1;
 }
 
-static int subr_bytes_to_printable(lua_State *L)
-{
-  bytestring_t *bs = luaL_check_bytestring(L, 1);
-  char *ret=bytestring_to_format("%P",bs);
-  
-  lua_pushstring(L,ret);
-  free(ret);
-  return 1;
-}
-
-
 static int subr_bytes_convert(lua_State *L)
 {
   bytestring_t *bs = luaL_check_bytestring(L, 1);
@@ -484,7 +473,6 @@ static const struct luaL_reg byteslib_m [] = {
   {"sub",subr_bytes_sub},
   {"width",subr_bytes_width},
   {"is_printable",subr_bytes_is_printable},
-  {"toprintable",subr_bytes_to_printable}, 
   {"convert",subr_bytes_convert},
   {"tonumber",subr_bytes_to_number},
   {"format",subr_bytes_format},
@@ -506,7 +494,6 @@ static const struct luaL_reg byteslib_f [] = {
   {"sub",subr_bytes_sub},
   {"width",subr_bytes_width},
   {"is_printable",subr_bytes_is_printable},
-  {"toprintable",subr_bytes_to_printable}, 
   {"convert",subr_bytes_convert},
   {"tonumber",subr_bytes_to_number},
   {"format",subr_bytes_format},

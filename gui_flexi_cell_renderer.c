@@ -741,6 +741,7 @@ static void internal_text_render(GtkCellRenderer *cell,
 	width  -= cell->xpad*2;
 	height -= cell->ypad*2;
 
+	/* TODO: in gtk3 we need gtk_render_layout */
 	gtk_paint_layout (widget->style,
 			window,
 			state,
@@ -763,25 +764,17 @@ static void internal_image_render(GtkCellRenderer *cell,
                                                guint            flags)
 {
 	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
-
+        cairo_t *cr = gdk_cairo_create(window);
 	UNUSED(widget);
 	UNUSED(background_area);
-	UNUSED(cell_area);
 	UNUSED(expose_area);
 	UNUSED(flags);
 
-	/*cairo_t *cr = gdk_cairo_create(window);*/
 	
-	/*gdk_cairo_set_source_pixbuf(cr, (GdkPixbuf *)cellflexi->rendered_value,0,0);
+	gdk_cairo_set_source_pixbuf(cr, (GdkPixbuf *)cellflexi->rendered_value,cell_area->x,cell_area->y);
 	cairo_paint(cr);
 	cairo_fill(cr);
-	cairo_destroy(cr); */
-
-	gdk_draw_pixbuf(window, NULL,
-			(GdkPixbuf *)cellflexi->rendered_value, 
-			0, 0, cell_area->x, cell_area->y, 
-			-1, -1,  
-			GDK_RGB_DITHER_NONE, 0, 0);
+	cairo_destroy(cr); 
 }
 
 static void custom_cell_renderer_flexi_render (GtkCellRenderer *cell,

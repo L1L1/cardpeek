@@ -39,9 +39,6 @@
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
 int cardmanager_search_replay_readers(cardmanager_t *cm);
-#ifndef _WIN32
-int cardmanager_search_acg_readers(cardmanager_t *cm);
-#endif
 
 /********************************************************************
  * CARDMANAGER
@@ -52,9 +49,6 @@ cardmanager_t *cardmanager_new(void)
   cardmanager_t *cm = (cardmanager_t *)malloc(sizeof(cardmanager_t));
   memset(cm,0,sizeof(cardmanager_t));
   cardmanager_search_pcsc_readers(cm);
-#ifndef _WIN32
-  cardmanager_search_acg_readers(cm);
-#endif
   cardmanager_search_replay_readers(cm);
   return cm;
 }
@@ -93,9 +87,6 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
 #include "drivers/replay_driver.c"
-#ifndef _WIN32
-#include "drivers/acg_driver.c"
-#endif
 
 cardreader_t* cardreader_new(const char *card_reader_name)
 {
@@ -117,14 +108,8 @@ cardreader_t* cardreader_new(const char *card_reader_name)
     reader->name=strdup(card_reader_name);
     if (replay_initialize(reader)==0) return NULL;
   }
-#ifndef _WIN32
-  else if (strncmp(card_reader_name,"acg://",6)==0)
+  else 
   {
-    reader->name=strdup(card_reader_name);
-    if (acg_initialize(reader)==0) return NULL;
-  }
-#endif
-  else {
     free(reader);
     log_printf(LOG_ERROR,"Unknown reader type : %s",card_reader_name);
     return NULL;
@@ -457,48 +442,7 @@ int cardmanager_search_replay_readers(cardmanager_t *cm)
   free(namelist);
   return count;
 }
-#ifndef _WIN32
-int cardmanager_search_acg_readers(cardmanager_t *cm)
-{
-  a_string_t* reader;
-  const char *reader_name;
-  int count=0;
-  const char *device_name;
 
-  device_name = luax_get_string_value("ACG_MULTI_ISO_TTY");
-  if (device_name)
-  {
-    reader_name=acg_detect(device_name);
-    if (reader_name)
-    {
-      count++;
-      cm->readers=(char **)realloc(cm->readers,sizeof(char*)*(cm->readers_count+1));
-      reader=a_strnew("acg://");
-      a_strcat(reader,device_name);
-      a_strcat(reader,"/");
-      a_strcat(reader,reader_name);
-      cm->readers[cm->readers_count++]=a_strfinalize(reader);
-    }
-  }
- 
-  device_name = luax_get_string_value("ACG_LFX_TTY");
-  if (device_name)
-  {
-    reader_name=acg_detect(device_name);
-    if (reader_name)
-    {
-      count++;
-      cm->readers=(char **)realloc(cm->readers,sizeof(char*)*(cm->readers_count+1));
-      reader=a_strnew("acg://");
-      a_strcat(reader,device_name);
-      a_strcat(reader,"/");
-      a_strcat(reader,reader_name);
-      cm->readers[cm->readers_count++]=a_strfinalize(reader);
-    }
-  }
-  return count;
-}
-#endif
 void cardreader_set_callback(cardreader_t *reader, cardreader_callback_t func, void *user_data)
 {
   reader->cb_func=func;

@@ -164,6 +164,11 @@ static int install_dot_file(void)
   return 1;
 }
 
+static gboolean run_command_crom_cli(gpointer data)
+{
+	luax_run_command((const char *)data);	
+	return FALSE;
+}
 
 static const char *message = 
 "***************************************************************\n"
@@ -207,35 +212,37 @@ static void display_readers_and_version(void)
 
 	luax_init();
 
-	fprintf(stderr,"This is %s.\n",system_string_info());
-	fprintf(stderr,"Cardpeek path is %s\n",config_get_string(CONFIG_FOLDER_CARDPEEK));
+	fprintf(stdout,"This is %s.\n",system_string_info());
+	fprintf(stdout,"Cardpeek path is %s\n",config_get_string(CONFIG_FOLDER_CARDPEEK));
 	
 	CTX = cardmanager_new();
 	reader_count = cardmanager_count_readers(CTX);
 	reader_list  = cardmanager_reader_name_list(CTX);
 	if (reader_count == 0)
-		fprintf(stderr,"There are no readers detected\n");
+		fprintf(stdout,"There are no readers detected\n");
 	else if (reader_count==1)
-		fprintf(stderr,"There is 1 reader detected:\n");
+		fprintf(stdout,"There is 1 reader detected:\n");
 	else
-		fprintf(stderr,"There are %i readers detected:\n",reader_count);
+		fprintf(stdout,"There are %i readers detected:\n",reader_count);
 	for (i=0;i<reader_count;i++)
-		fprintf(stderr," -> %s\n", reader_list[i]);
-	fprintf(stderr,"\n");
+		fprintf(stdout," -> %s\n", reader_list[i]);
+	fprintf(stdout,"\n");
 	cardmanager_free(CTX);
 	luax_release();
 }
 
-static void display_help(void)
+static void display_help(char *progname)
 {
-	
+	fprintf(stderr, "Usage: %s [-r|--reader reader-name] [-e|--exec lua-command] [-v|--version]\n",
+			progname);
 }
 
 static struct option long_options[] = {
             {"reader",  	required_argument, 0,  'r' },
             {"exec",    	required_argument, 0,  'e' },
-            {"version", 	required_argument, 0,  'v' },
-            {0,        	 	0,                 0,  0 }
+            {"version", 	no_argument, 	   0,  'v' },
+            {"help", 		no_argument, 	   0,  'h' },
+            {0,        	 	0,                 0,   0 }
         };
 
 int main(int argc, char **argv)
@@ -254,9 +261,14 @@ int main(int argc, char **argv)
     
   log_open_file();
 
+  /* if we want threads: 
+	gdk_threads_init(); 
+  	gdk_threads_enter();
+  */
+
   gui_init(&argc,&argv);
 
-  while ((opt = getopt_long(argc,argv,"r:e:v",long_options,&opt_index))!=-1) 
+  while ((opt = getopt_long(argc,argv,"r:e:vh",long_options,&opt_index))!=-1) 
   {
 	  switch (opt) {
 		case 'r':
@@ -270,8 +282,7 @@ int main(int argc, char **argv)
 			options_ok = 0;
 			break;
 		default:
-			log_printf(LOG_ERROR, "Usage: %s [-r|--reader reader-name] [-e|--exec lua-command] [-v|--version]\n",
-				   argv[0]);
+			display_help(argv[0]);
 			options_ok = 0;
 	  }
   }
@@ -295,14 +306,16 @@ int main(int argc, char **argv)
 	  }
 
 	  READER = cardreader_new(reader_name);
+
 	  cardmanager_free(CTX);
+
 	  if (READER)
 	  {
 		  luax_set_card_reader(READER);
 
 		  cardreader_set_callback(READER,gui_readerview_print,NULL);
 
-		  if (exec_command) luax_run_command(exec_command);
+		  if (exec_command) g_idle_add(run_command_crom_cli,exec_command);
 
 		  gui_run();
 
@@ -321,6 +334,10 @@ int main(int argc, char **argv)
   log_close_file();
 
   config_release();  
+
+  /* if we want threads:
+	gdk_threads_leave();
+   */
 
   return 0;
 }

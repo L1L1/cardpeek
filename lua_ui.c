@@ -32,7 +32,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
-static int subr_ui_tree_save(lua_State* L)
+static int subr_ui_save_view(lua_State* L)
 {
   const char *filename;
 
@@ -51,10 +51,11 @@ static int subr_ui_tree_save(lua_State* L)
     log_printf(LOG_INFO,"Wrote card data to '%s'",filename);
     lua_pushboolean(L,1);
   }
+  
   return 1;
 }
 
-static int subr_ui_tree_load(lua_State* L)
+static int subr_ui_load_view(lua_State* L)
 {
   const char *filename;
   int retval;
@@ -71,7 +72,7 @@ static int subr_ui_tree_load(lua_State* L)
   }
 
   retval =  dyntree_model_iter_from_xml_file(gui_cardview_get_store(),NULL,filename);
-
+  
   lua_pushboolean(L,retval);
   return 1;
 }
@@ -134,11 +135,14 @@ static int subr_ui_readline(lua_State* L)
   else
     default_value = "";
 
-  value = malloc(len+1);
+  value = g_malloc(len+1);
   strncpy(value,default_value,len);
-  gui_readline(message,len,value);
-  lua_pushstring(L,value);
-  free(value);
+  
+  if (gui_readline(message,len,value)) 
+	 lua_pushstring(L,value);
+  else
+	 lua_pushnil(L);
+  g_free(value);
   return 1;
 }
 
@@ -192,8 +196,8 @@ static int subr_ui_exit(lua_State* L)
 }
 
 static const struct luaL_reg uilib [] = {
-  {"save_view",subr_ui_tree_save },
-  {"load_view",subr_ui_tree_load },
+  {"save_view",subr_ui_save_view },
+  {"load_view",subr_ui_load_view },
   {"readline",subr_ui_readline },
   {"question",subr_ui_question },
   {"select_file",subr_ui_select_file },
@@ -204,9 +208,6 @@ static const struct luaL_reg uilib [] = {
 
 int luaopen_ui(lua_State* L)
 {
-/*
-  luaL_newmetatable(L, "node_ref.type");
-  luaL_openlib(L, NULL, nodereflib_mt, 0);*/
   luaL_openlib(L, "ui", uilib, 0);
   return 1;
 }

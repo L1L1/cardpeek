@@ -27,7 +27,7 @@
 
 DyntreeModel* gui_cardview_get_store(void);
 
-GtkWidget *gui_cardview_create_window(void);
+GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group);
 
 void gui_cardview_expand_all(void);
 

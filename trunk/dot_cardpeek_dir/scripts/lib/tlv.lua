@@ -82,6 +82,11 @@ end
 
 function ui_parse_printable(node,data)
 	nodes.set_attribute(node,"val",data)
+
+	if #data==0 then
+		return false
+	end
+
 	if bytes.is_printable(data) then
 		nodes.set_attribute(node,"alt",bytes.format(data,"%P"))
 	else 

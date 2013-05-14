@@ -87,7 +87,7 @@ static int replay_initialize(cardreader_t *reader)
   char fname[PATH_MAX];
   cardreplay_t* emul = cardreplay_new_from_file(fname);
 
-  sprintf(fname,"%s/%s",config_get_string(CONFIG_FOLDER_LOGS), reader->name+9);
+  sprintf(fname,"%s/%s",config_get_string(CONFIG_FOLDER_REPLAY), reader->name+9);
   
   emul = cardreplay_new_from_file(fname);
 

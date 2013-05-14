@@ -43,13 +43,11 @@
 #include <getopt.h>
 #include "cardpeek_resources.gresource"
 
-/*extern unsigned char _binary_dot_cardpeek_tar_gz_start;
-  extern int _binary_dot_cardpeek_tar_gz_size;*/
-/* extern unsigned char _binary_dot_cardpeek_tar_gz_end; */
-
 static int install_dot_file(void)
 {
   const char* dot_dir = config_get_string(CONFIG_FOLDER_CARDPEEK);
+  const char* old_replay_dir = config_get_string(CONFIG_FOLDER_OLD_REPLAY);
+  const char* new_replay_dir = config_get_string(CONFIG_FOLDER_REPLAY);
   const char* home_dir = config_get_string(CONFIG_FOLDER_HOME);
   const char* version_file = config_get_string(CONFIG_FILE_SCRIPT_VERSION);
   struct stat sbuf;
@@ -112,6 +110,20 @@ static int install_dot_file(void)
       return 0;
     }
     a_strfree(astr);
+  }
+
+  if (stat(old_replay_dir,&sbuf)==0)
+  {
+	if (rename(old_replay_dir,new_replay_dir)==0)
+	{
+		log_printf(LOG_INFO,"Renamed %s to %s.", 
+		           old_replay_dir, new_replay_dir);
+	}
+	else
+	{
+		log_printf(LOG_WARNING,"Failed to rename %s to %s: %s",
+			   old_replay_dir, new_replay_dir, strerror(errno));
+	}
   }
 
   cardpeek_resources = cardpeek_resources_get_resource();

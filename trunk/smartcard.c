@@ -421,7 +421,7 @@ int cardmanager_search_replay_readers(cardmanager_t *cm)
 {
   a_string_t* fn;
   struct dirent **namelist;
-  const char* log_folder = config_get_string(CONFIG_FOLDER_LOGS); 
+  const char* log_folder = config_get_string(CONFIG_FOLDER_REPLAY); 
   int count,n;
 
   n = scandir(log_folder,&namelist,select_clf,alphasort);

@@ -246,7 +246,7 @@ static gboolean dyntree_model_get_iter (GtkTreeModel *tree_model,
                                         GtkTreeIter *iter,
                                         GtkTreePath *path)
 {
-    DyntreeModel *dyntree_model;
+    /* DyntreeModel *dyntree_model; */
     GtkTreeIter parent;
     gint *indices, n, depth;
 
@@ -254,7 +254,7 @@ static gboolean dyntree_model_get_iter (GtkTreeModel *tree_model,
 
     g_assert(path!=NULL);
 
-    dyntree_model = DYNTREE_MODEL(tree_model);
+    /* dyntree_model = DYNTREE_MODEL(tree_model); */
 
     indices = gtk_tree_path_get_indices(path);
     depth = gtk_tree_path_get_depth(path);
@@ -309,13 +309,13 @@ static void dyntree_model_get_value (GtkTreeModel *tree_model,
                                      GValue *value)
 {
     DyntreeModelNode *node;
-    DyntreeModel *ctm;
+    /* DyntreeModel *ctm; */
 
     g_return_if_fail (DYNTREE_IS_MODEL (tree_model));
     g_return_if_fail (iter != NULL);
     g_return_if_fail (column < DYNTREE_MODEL(tree_model)->n_columns);
 
-    ctm = DYNTREE_MODEL(tree_model);
+    /* ctm = DYNTREE_MODEL(tree_model); */
 
     node = (DyntreeModelNode*) iter->user_data;
 
@@ -1160,7 +1160,7 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
         {
             g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
                         "Error on line %i[%i]: unrecognized attribute '%s' in <cardpeek>",
-                        line_number,char_number,attribute_names[attr_index]);
+                        line_number,char_number,attribute_names[0]);
             return;
         }
     }

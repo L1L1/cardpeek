@@ -555,12 +555,12 @@ int gui_create(void)
 
     label = gtk_label_new ("reader");
     gtk_notebook_append_page (GTK_NOTEBOOK (tabs), readerview, label);
-    gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), readerview, TRUE);
+    /* gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), readerview, TRUE); */
     gtk_notebook_set_tab_detachable (GTK_NOTEBOOK (tabs), readerview, TRUE);
 
     label = gtk_label_new ("logs");
     gtk_notebook_append_page (GTK_NOTEBOOK (tabs), logview, label);
-    gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), logview, TRUE);
+    /* gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), logview, TRUE); */
     gtk_notebook_set_tab_detachable (GTK_NOTEBOOK (tabs), logview, TRUE);
 
     /* vertical packing */

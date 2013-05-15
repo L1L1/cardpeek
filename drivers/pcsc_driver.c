@@ -133,7 +133,7 @@ static const char *pcsc_stringify_state(DWORD state)
 
 static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 {
-    DWORD attr_maxinput;
+    DWORD attr_maxinput = 0;
     DWORD attr_maxinput_len = sizeof(unsigned int);
     SCARD_READERSTATE reader_state;
     pcsc_data_t* pcsc = cr->extra_data;

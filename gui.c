@@ -377,6 +377,7 @@ static int gui_load_icons(void)
 
         pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
         icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
+	g_object_unref(pixbuf);
         gtk_icon_factory_add(icon_factory,icon_resources[u*2+1],icon_set);
 
         if (strcmp(icon_resources[u*2+1],"cardpeek-cardpeek")==0)
@@ -388,6 +389,7 @@ static int gui_load_icons(void)
     }
 
     gtk_icon_factory_add_default(icon_factory);
+    g_object_unref(icon_factory);
     return is_ok;
 }
 
@@ -591,6 +593,8 @@ int gui_run(void)
     gui_scratchpad_cleanup();
     gui_readerview_cleanup();
     gui_cardview_cleanup();
+
+    gtk_widget_destroy(MAIN_WINDOW);
     return 1;
 }
 

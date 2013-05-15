@@ -60,6 +60,7 @@ void cardmanager_free(cardmanager_t* cm)
     free(cm->readers[u]);
   if (cm->readers)
     free(cm->readers);
+  free(cm);
 }
 
 unsigned cardmanager_count_readers(cardmanager_t* cm)
@@ -337,7 +338,7 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 {
   DWORD dwReaders;
   char *p;
-  LONG hcontext;
+  LONG hcontext = 0;
   long status;
   a_string_t *rlist;
   char *readers;

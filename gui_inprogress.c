@@ -110,7 +110,7 @@ unsigned gui_inprogress_set_fraction(GtkWidget *dialog, gdouble level)
 
 void gui_inprogress_free(GtkWidget *dialog)
 {
-	progress_info_t *progress = g_object_get_data(G_OBJECT(dialog),"in-progress");
+	progress_info_t *progress = g_object_get_data(G_OBJECT(dialog),"progress");
 
 	g_free(progress);
 	gtk_widget_destroy(dialog);

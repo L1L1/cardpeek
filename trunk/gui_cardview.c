@@ -418,7 +418,7 @@ static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
                            GtkTreeIter       *iter,
                            gpointer           user_data)
 {
-        const char *classname;
+        char *classname;
         const char *icon_name = NULL;
 	UNUSED(col);
 	UNUSED(user_data);
@@ -442,11 +442,13 @@ static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
 			case 'r': if (strcmp("t:record",classname)==0)      icon_name="cardpeek-record";      	break;
 		}
 	}
-	
+
 	if (icon_name==NULL)
 		icon_name="cardpeek-item";
 
 	g_object_set(renderer, "stock-id", icon_name, NULL);
+
+	g_free(classname);
 }
 
 static void internal_cell_renderer_markup_cb (GtkTreeViewColumn *col,
@@ -456,9 +458,9 @@ static void internal_cell_renderer_markup_cb (GtkTreeViewColumn *col,
                            gpointer           user_data)
 {
         a_string_t *markup_label_id;
-        const char *classname;
-        const char *id;
-        const char *label;
+        char *classname;
+        char *id;
+        char *label;
 	UNUSED(col);
 	UNUSED(user_data);
 
@@ -491,6 +493,10 @@ static void internal_cell_renderer_markup_cb (GtkTreeViewColumn *col,
 	g_object_set(renderer, "markup", a_strval(markup_label_id), NULL);
         
 	a_strfree(markup_label_id);
+
+	g_free(classname);
+	g_free(label);
+	g_free(id);
 }
 
 static void internal_cell_renderer_size_cb (GtkTreeViewColumn *col,
@@ -499,7 +505,7 @@ static void internal_cell_renderer_size_cb (GtkTreeViewColumn *col,
                            GtkTreeIter       *iter,
                            gpointer           user_data)
 {
-        const char *size;
+        char *size;
 	UNUSED(col);
 	UNUSED(user_data);
 
@@ -513,6 +519,8 @@ static void internal_cell_renderer_size_cb (GtkTreeViewColumn *col,
 		g_object_set(renderer, "text", size+2, NULL);
 	else        
 		g_object_set(renderer, "text", "", NULL);
+
+	g_free(size);
 }
 
 
@@ -650,6 +658,8 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
   CARDTREE = dyntree_model_new();
 
   gtk_tree_view_set_model(GTK_TREE_VIEW(CARDVIEW),GTK_TREE_MODEL(CARDTREE));  
+
+  g_object_unref(CARDTREE);
 
   return base_container;
 }

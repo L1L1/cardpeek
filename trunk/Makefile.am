@@ -12,6 +12,8 @@ doc_DATA=doc/cardpeek_ref.en.pdf
 
 cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@
 
+cardpeek_LDFLAGS=-g -O0
+
 dist_man_MANS=cardpeek.1
 
 DRIVERS=drivers/replay_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c 

@@ -68,8 +68,11 @@ static gboolean dyntree_model_iter_parent (GtkTreeModel *tree_model,
         GtkTreeIter *iter,
         GtkTreeIter *child);
 
-
 static GObjectClass *parent_class = NULL;
+
+static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
+                                                   GtkTreeIter *iter,
+				                   gboolean emit_signal);
 
 /* implementation */
 
@@ -190,7 +193,7 @@ static void dyntree_model_finalize (GObject *object)
     DyntreeModel *ctm = DYNTREE_MODEL(object);
     int i;
 
-    dyntree_model_iter_remove(ctm,NULL);
+    internal_dyntree_model_iter_remove(ctm,NULL,FALSE);
 
     for (i=0; i<ctm->n_columns; i++)
     {
@@ -691,8 +694,9 @@ static void dyntree_model_node_reindex_from_parent(DyntreeModel *ct, DyntreeMode
         parent->n_children = n;
 }
 
-gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
-                                   GtkTreeIter *iter)
+static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
+                                                   GtkTreeIter *iter,
+				                   gboolean emit_signal)
 {
     DyntreeModelNode *node;
     int i;
@@ -704,7 +708,7 @@ gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
         while (ctm->root)
         {
             other.user_data = ctm->root;
-            dyntree_model_iter_remove(ctm,&other);
+            internal_dyntree_model_iter_remove(ctm,&other,emit_signal);
         }
         return TRUE;
     }
@@ -717,10 +721,11 @@ gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
     {
         other.stamp = ctm->stamp;
         other.user_data = node->children;
-        dyntree_model_iter_remove(ctm,&other);
+        internal_dyntree_model_iter_remove(ctm,&other,emit_signal);
     }
 
-    path = dyntree_model_get_path(GTK_TREE_MODEL(ctm),iter);
+    if (emit_signal)
+	    path = dyntree_model_get_path(GTK_TREE_MODEL(ctm),iter);
 
     if (node->prev==NULL)
     {
@@ -745,12 +750,21 @@ gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
 
     g_free(node);
 
-    gtk_tree_model_row_deleted(GTK_TREE_MODEL(ctm), path);
-
-    gtk_tree_path_free(path);
+    if (emit_signal)
+    {
+	    gtk_tree_model_row_deleted(GTK_TREE_MODEL(ctm), path);
+	    gtk_tree_path_free(path);
+    }
 
     return TRUE;
 }
+
+gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
+                                   GtkTreeIter *iter)
+{
+	return internal_dyntree_model_iter_remove(ctm,iter,TRUE);	
+}
+
 
 #define dyntree_model_clear(ctm) dyntree_model_iter_remove(ctm,NULL)
 

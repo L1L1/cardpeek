@@ -8,11 +8,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-#ifndef HAVE_GSTATBUF
-#include <unistd.h>
-typedef struct stat GStatBuf;
-#endif
-
 /*
  * NOTE: Integration of the data model in GTK+ is based on the GtkTreeView
  * tutorial by Tim-Philipp Müller (thanks!).
@@ -142,7 +137,7 @@ static void dyntree_model_tree_model_init (GtkTreeModelIface *iface)
 int dyntree_model_column_name_to_index(DyntreeModel *ctm, const char *column_name)
 {
     /* the value in the table is c+1 to differentiate the NULL from N=0, so we substract 1 */
-    return GPOINTER_TO_INT(g_hash_table_lookup(ctm->columns_by_name,(gpointer)column_name))-1;
+    return GPOINTER_TO_INT((char *)g_hash_table_lookup(ctm->columns_by_name,(gpointer)column_name))-1;
 }
 
 const char *dyntree_model_column_index_to_name(DyntreeModel *ctm, int c_index)
@@ -939,7 +934,7 @@ static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTr
                     case '8':
                     case '4':
                     case '2':
-                        a_strcat(res,"\" encoding=\"bytes\">");
+                        a_strcat(res,"\" type=\"bytes\">");
                         a_strcat(res,node->attributes[attr_index].value);
                         break;
                     default:
@@ -974,7 +969,7 @@ char* dyntree_model_iter_to_xml(DyntreeModel* ct, GtkTreeIter *root, gboolean fu
 
     if (full_xml)
     {
-        res = a_strnew("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+        res = a_strnew("<?xml version=\"1.0\" type=\"UTF-8\"?>\n");
 
         a_strcat(res,"<cardpeek>\n");
         a_strcat(res,"  <version>0.8</version>\n");
@@ -999,7 +994,7 @@ char* dyntree_model_iter_to_xml(DyntreeModel* ct, GtkTreeIter *root, gboolean fu
 
     if (full_xml)
     {
-        a_strcat(res,"</cardpeek>");
+        a_strcat(res,"</cardpeek>\n");
     }
     return a_strfinalize(res);
 }
@@ -1055,6 +1050,7 @@ const char *ND_STATE[6] =
 
 typedef struct
 {
+    gboolean      ctx_is_root;
     unsigned      ctx_version;
     DyntreeModel *ctx_tree;
     GtkTreeIter   ctx_node;
@@ -1083,10 +1079,15 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
     {
         if (ctx->ctx_state==ND_ROOT)
         {
-            if ((ctx->ctx_tree)->root == NULL)
+            if (ctx->ctx_is_root)
+	    {
                 dyntree_model_iter_append (ctx->ctx_tree, &child, NULL);
+		ctx->ctx_is_root = FALSE;
+            }
             else
+            {
                 dyntree_model_iter_append (ctx->ctx_tree, &child, &ctx->ctx_node);
+	    }
         }
         else if (ctx->ctx_state==ND_NODE)
         {
@@ -1133,7 +1134,7 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
                 }
 
             }
-            else if (g_strcmp0("encoding",attribute_names[attr_index])==0)
+            else if (g_strcmp0("type",attribute_names[attr_index])==0)
             {
                 if (g_strcmp0("bytes",attribute_values[attr_index])==0)
                 {
@@ -1142,7 +1143,7 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
                 else
                 {
                     g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
-                                "Error on line %i[%i]: unrecognized encoding '%s' in <attr>",
+                                "Error on line %i[%i]: unrecognized type '%s' in <attr>",
                                 line_number,char_number,attribute_values[attr_index]);
                     return;
                 }
@@ -1329,14 +1330,21 @@ gboolean dyntree_model_iter_from_xml(DyntreeModel *ct, GtkTreeIter *parent, gboo
         ctx.ctx_state = ND_ROOT;
 
     if (parent != NULL)
+    {
+	ctx.ctx_is_root = FALSE;
         ctx.ctx_node = *parent;
+    }
+    else
+    {
+	ctx.ctx_is_root = TRUE;
+	memset(&ctx.ctx_node,0,sizeof(ctx.ctx_node));
+    }
 
     markup_ctx = g_markup_parse_context_new(&dyntree_parser,0,&ctx,NULL);
-    if (g_markup_parse_context_parse(markup_ctx,source_text,strlen(source_text),&err)==TRUE)
+    if (g_markup_parse_context_parse(markup_ctx,source_text,source_len,&err)==TRUE)
     {
         g_markup_parse_context_end_parse(markup_ctx,&err);
     }
-
     g_markup_parse_context_free(markup_ctx);
 
     if (err!=NULL)
@@ -1377,7 +1385,7 @@ gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *iter, c
         if (dyntree_model_iter_from_xml(ct,iter,TRUE,buf_val,buf_len)==FALSE)
         {
             retval = FALSE;
-            dyntree_model_clear(ct);
+            /* dyntree_model_clear(ct); */
         }
         else
             retval = TRUE;
@@ -1465,6 +1473,8 @@ gboolean dyntree_model_iter_find_next(DyntreeModel *ctm,
         if (dyntree_model_iter_children(GTK_TREE_MODEL(ctm),&next,result)==FALSE)
         {
             next = *result;
+            if (root->user_data == next.user_data) return FALSE;
+
             if (dyntree_model_iter_next(GTK_TREE_MODEL(ctm),&next)==FALSE)
             {
                 child = *result;

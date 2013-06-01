@@ -5,6 +5,7 @@ Kind contributors:
 - Ludovic Lange: Initial patch for Mac OS X version.
 - Adam Laurie: CVM parsing in EMV.
 - Kalev Lember: bug and compatibility fixes.
+- Darius Matboo: Human friendly data parsing for Moneo
 - Ludovic Rousseau: Lots of code cleanup, better use of autotools. 
 - Pascal Terjan: Paris metro/RER name decoding and bug fixes.
 - and a few anonymous contributors...

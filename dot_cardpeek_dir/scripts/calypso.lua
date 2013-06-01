@@ -16,7 +16,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
-
+-- @name Calypso
+-- @description Calypso tranport cards: Navigo, MOBIB, Korrigo, RavKav, ...
+-- @targets 0.8 
+--
 -------------------------------------------------------------------------
 -- *PLEASE NOTE*
 -- This work is based on:
@@ -195,8 +198,6 @@ function calypso_process(cardenv)
 	end
 end
 
-local atr, hex_card_num, card_num
-
 if card.connect() then 
 
   CARD = card.tree_startup("CALYPSO")
@@ -215,16 +216,6 @@ if card.connect() then
   end 
 
   if sw~=0x6E00 then
-     atr = card.last_atr();
-     hex_card_num = bytes.sub(atr,-7,-4)
-     card_num     = (hex_card_num:get(0)*256*65536)+(hex_card_num:get(1)*65536)+(hex_card_num:get(2)*256)+hex_card_num:get(3)
-
-     CARD:append{ classname = "block", 
-     	          label="Card number", 
-                  size=4,
-	          val = hex_card_num,
-	          alt = card_num }
-
       calypso_process(CARD)
   end
 

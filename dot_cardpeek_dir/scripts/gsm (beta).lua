@@ -16,6 +16,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- @name GSM SIM
+-- @description Analyzes GSM SIM cards only (not 3G/USIM data)
+-- @targets 0.8
 
 require('lib.strict')
 require('lib.apdu')
@@ -139,11 +142,9 @@ function GSM_SMS_decode_default_alphabet(node,data)
 	local back_char = 0
 	local pos
 
-	local dmy
-	
 	for pos=0,#data-1 do
 		shifted = (pos%7)
-		dmy = bit.AND(data:get(pos),bit.SHR(0xFF,shifted+1))
+		-- dmy = bit.AND(data:get(pos),bit.SHR(0xFF,shifted+1))
 		
 		char = bit.AND(bit.SHL(data:get(pos),shifted),0x7F)+back_char
 		back_char = bit.SHR(data:get(pos),7-shifted)
@@ -387,7 +388,7 @@ function gsm_read_content_binary(node,fsize,alt)
 		fsize = fsize - try_read
 	end
 	
-	node = node:append{classname="block", label="data", size=#data, val=data}
+	node = node:append{classname="body", label="data", size=#data, val=data}
 	if alt then
 		alt(node,data)
 	end

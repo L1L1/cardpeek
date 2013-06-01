@@ -23,6 +23,17 @@
 #define MISC_H
 #include <glib.h>
 
+#ifdef _WIN32
+#include "win32/config.h"
+#else
+#include "config.h"
+#endif
+
+#ifndef HAVE_GSTATBUF
+#include <unistd.h>
+typedef struct stat GStatBuf;
+#endif
+
 
 #ifdef __APPLE__
 #define DIRENT_T struct dirent

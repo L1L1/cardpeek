@@ -148,8 +148,8 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
     if (pcsc->status != SCARD_S_SUCCESS)
     {
         log_printf(LOG_ERROR,"Failed to query reader status before connecting: %s (error 0x%08x).",
-                   pcsc_stringify_error(pcsc->status),
-                   pcsc->status );
+                pcsc_stringify_error(pcsc->status),
+                pcsc->status );
         return 0;
     }
 
@@ -157,46 +157,46 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
     while ((reader_state.dwEventState & SCARD_STATE_PRESENT)==0)
     {
         reader_state.dwCurrentState = reader_state.dwEventState;
-	if (((counter++)%30)==0)
-	{
-		log_printf(LOG_INFO,"Waiting for card to be present (current state: %s)...",
-				pcsc_stringify_state(reader_state.dwEventState));
-	}
+        if (((counter++)%30)==0)
+        {
+            log_printf(LOG_INFO,"Waiting for card to be present (current state: %s)...",
+                    pcsc_stringify_state(reader_state.dwEventState));
+        }
 
-	if (!gui_inprogress_pulse(progress))
-	{
-	    log_printf(LOG_ERROR,"Connection aborted by user");
-	    gui_inprogress_free(progress);
-	    pcsc->status = 0x6FFF;
-	    return 0;	    
-	}
-        
-	pcsc->status = SCardGetStatusChange(pcsc->hcontext,100,&reader_state,1);
+        if (!gui_inprogress_pulse(progress))
+        {
+            log_printf(LOG_ERROR,"Connection aborted by user");
+            gui_inprogress_free(progress);
+            pcsc->status = 0x6FFF;
+            return 0;	    
+        }
+
+        pcsc->status = SCardGetStatusChange(pcsc->hcontext,100,&reader_state,1);
         if ((pcsc->status!=(LONG)SCARD_S_SUCCESS) && (pcsc->status!=(LONG)SCARD_E_TIMEOUT))
         {
             log_printf(LOG_ERROR,"Failed to query reader status change before connecting: %s (error 0x%08x/%08x).",
-                       pcsc_stringify_error(pcsc->status),
-                       pcsc->status,
-		       SCARD_E_TIMEOUT );
+                    pcsc_stringify_error(pcsc->status),
+                    pcsc->status,
+                    SCARD_E_TIMEOUT );
             return 0;
         }
     }
     gui_inprogress_free(progress);
-    
+
     log_printf(LOG_DEBUG,"Attempting to connect to '%s'",cr->name);
     pcsc->status = SCardConnect(pcsc->hcontext,
-                                cr->name+7,
-                                /* SCARD_SHARE_EXCLUSIVE, */
-                                SCARD_SHARE_SHARED,
-				prefered_protocol,
-                                &(pcsc->hcard),
-                                &(cr->protocol));
+            cr->name+7,
+            /* SCARD_SHARE_EXCLUSIVE, */
+            SCARD_SHARE_SHARED,
+            prefered_protocol,
+            &(pcsc->hcard),
+            &(cr->protocol));
 
     if (pcsc->status!=SCARD_S_SUCCESS)
     {
         log_printf(LOG_ERROR,"Connection failed: %s (error 0x%08x).",
-                   pcsc_stringify_error(pcsc->status),
-                   pcsc->status );
+                pcsc_stringify_error(pcsc->status),
+                pcsc->status );
         return 0;
     }
 
@@ -207,7 +207,7 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
 
     log_printf(LOG_INFO,"Connection successful, protocol is %s",pcsc_stringify_protocol(cr->protocol));
     cr->connected=1;
-    
+
     return 1;
 }
 
@@ -320,7 +320,7 @@ static const bytestring_t* pcsc_last_atr(cardreader_t* cr)
     DWORD atrlen=MAX_ATR_SIZE;
     char readername[MAX_READERNAME];
     DWORD readernamelen=MAX_READERNAME;
-    char *tmp;
+    /*char *tmp;*/
 
     pcsc->status = SCardStatus(pcsc->hcard,
                                readername,&readernamelen,
@@ -331,9 +331,9 @@ static const bytestring_t* pcsc_last_atr(cardreader_t* cr)
     if (pcsc->status==SCARD_S_SUCCESS)
     {
         bytestring_assign_data(cr->atr,atrlen,pbAtr);
-        tmp = bytestring_to_format("%D",cr->atr);
+        /*tmp = bytestring_to_format("%D",cr->atr);
         log_printf(LOG_INFO,"ATR is %i bytes: %s",atrlen,tmp);
-        free(tmp);
+        free(tmp);*/
     }
     else
     {

@@ -50,7 +50,7 @@ static void menu_readerview_save_as_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Save recorded data",config_get_string(CONFIG_FOLDER_REPLAY),"card.clf");
+  select_info = gui_select_file("Save recorded data",path_config_get_string(PATH_CONFIG_FOLDER_REPLAY),"card.clf");
   if (select_info[1])
   {  
     filename = luax_escape_string(select_info[1]);
@@ -225,5 +225,5 @@ void gui_readerview_print(unsigned event,
 
 void gui_readerview_cleanup(void)
 {
-	/* FIXME: check this */
+	READER_BUFFER=NULL;
 }

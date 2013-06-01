@@ -1,8 +1,8 @@
-/********************************************************************** 
+/**********************************************************************
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -27,79 +27,87 @@
 #include <unistd.h>
 #include "misc.h"
 
-const char *CONFIG_OPTIONS[]={
-  NULL,
-  NULL,
-  "",
-  ".cardpeek",
-  ".cardpeek/scripts",
-  ".cardpeek/replay",
-  ".cardpeek/logs",
-  ".cardpeek/config.lua",
-  ".cardpeek.log",
-  ".cardpeek/version",
-  NULL
+const char *PATH_CONFIG_OPTIONS[]=
+{
+    NULL,
+    NULL,
+    "",
+    ".cardpeek",
+    ".cardpeek/scripts",
+    ".cardpeek/replay",
+    ".cardpeek/logs",
+    ".cardpeek/config.lua",
+    ".cardpeek/cardpeekrc.lua",
+    ".cardpeek.log",
+    ".cardpeek/version",
+    ".cardpeek/scripts/etc/smartcard_list.txt",
+    ".cardpeek/scripts/etc/smartcard_list.download",
+    NULL
 };
 
-char *CONFIG_STRING[NUM_CONFIG_OPTIONS];
+char *PATH_CONFIG_STRING[NUM_PATH_CONFIG_OPTIONS];
 
 
-int config_init(void)
+int path_config_init(void)
 {
-  char config_path[PATH_MAX];
-  char cwd_path[PATH_MAX];
-  char *home;
-  unsigned i;
+    char path_config_path[PATH_MAX];
+    char cwd_path[PATH_MAX];
+    char *home;
+    unsigned i;
 
+    home = getenv("CARDPEEK_HOME");
+
+    if (home==NULL)
+    {
 #ifndef _WIN32
-  home = getenv("HOME");
+        home = getenv("HOME");
 #else
-  home = getenv("USERDATA");
-  if (home==NULL)
-      home = getenv("USERPROFILE"); 
+        home = getenv("USERDATA");
+        if (home==NULL)
+            home = getenv("USERPROFILE");
 #endif
-  
-  if (home==NULL)
-    return 0;
+        if (home==NULL)
+            return 0;
+    }
 
-  if (!getcwd(cwd_path,PATH_MAX))
-    strcpy(cwd_path,config_path);
+    if (!getcwd(cwd_path,PATH_MAX))
+        strcpy(cwd_path,path_config_path);
 
-  CONFIG_STRING[0]=strdup(cwd_path);
-  CONFIG_STRING[1]=strdup(cwd_path);
+    PATH_CONFIG_STRING[0]=strdup(cwd_path);
+    PATH_CONFIG_STRING[1]=strdup(cwd_path);
 
-  for (i=2;i<NUM_CONFIG_OPTIONS;i++)
-  {
-    sprintf(config_path,"%s/%s",home,CONFIG_OPTIONS[i]);
-    CONFIG_STRING[i]=strdup(config_path);
-  }
-  return 1;
+    for (i=2; i<NUM_PATH_CONFIG_OPTIONS; i++)
+    {
+        sprintf(path_config_path,"%s/%s",home,PATH_CONFIG_OPTIONS[i]);
+        PATH_CONFIG_STRING[i]=strdup(path_config_path);
+    }
+    return 1;
 }
 
-const char *config_get_string(unsigned c_index)
+const char *path_config_get_string(unsigned c_index)
 {
-  if (c_index>NUM_CONFIG_OPTIONS)
-    return NULL;
-  return CONFIG_STRING[c_index];
+    if (c_index>NUM_PATH_CONFIG_OPTIONS)
+        return NULL;
+    return PATH_CONFIG_STRING[c_index];
 }
 
-int config_set_string(unsigned c_index, const char *path)
+int path_config_set_string(unsigned c_index, const char *path)
 {
-  if (c_index>NUM_CONFIG_OPTIONS)
-    return 0;
-  if (CONFIG_STRING[c_index])
-    free(CONFIG_STRING[c_index]);
-  if (path)
-    CONFIG_STRING[c_index]=strdup(path);
-  else
-    CONFIG_STRING[c_index]=strdup("");
-  return 1;
+    if (c_index>NUM_PATH_CONFIG_OPTIONS)
+        return 0;
+    if (PATH_CONFIG_STRING[c_index])
+        free(PATH_CONFIG_STRING[c_index]);
+    if (path)
+        PATH_CONFIG_STRING[c_index]=strdup(path);
+    else
+        PATH_CONFIG_STRING[c_index]=strdup("");
+    return 1;
 }
 
-void config_release(void)
+void path_config_release(void)
 {
-  unsigned i;
-  for (i=0;i<NUM_CONFIG_OPTIONS;i++)
-    free(CONFIG_STRING[i]);
+    unsigned i;
+    for (i=0; i<NUM_PATH_CONFIG_OPTIONS; i++)
+        free(PATH_CONFIG_STRING[i]);
 }
 

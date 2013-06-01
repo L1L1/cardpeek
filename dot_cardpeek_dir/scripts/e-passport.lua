@@ -566,6 +566,7 @@ FILES = {
   { ['FID']=0x011D, ['name']='EF.SOD' } 
 }
 
+local MRZ_DATA=""
 
 repeat
 	MRZ_DATA = ui.readline("Enter the code from the lower MRZ data (printed inside the passport)",44,MRZ_DATA)

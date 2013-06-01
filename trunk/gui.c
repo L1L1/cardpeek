@@ -321,8 +321,6 @@ char* gui_select_reader(unsigned list_size, const char** list)
     }
     gtk_widget_destroy (dialog);
     return retval;
-    /*if (retval) g_free(retval);
-    return NULL;*/
 }
 
 const char *icon_resources[] =
@@ -443,6 +441,7 @@ static GtkNotebook* notebook_create_extra(GtkNotebook *source_notebook,
     UNUSED(data);
 
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
     notebook = gtk_notebook_new ();
 
 
@@ -483,8 +482,6 @@ static void internal_unmap_accel_group(GtkWidget* widget, gpointer userdata)
     gtk_window_remove_accel_group(GTK_WINDOW(toplevel), accel_group);
 }
 
-
-
 int gui_create(void)
 {
     GtkWidget *widget;
@@ -497,7 +494,7 @@ int gui_create(void)
     GtkWidget *tabs;
     GtkWidget *label;
     GtkAccelGroup *accel_group;
-    
+ 
     /* gui_widget_table_init(); */
 
     /* Build icon sets */
@@ -509,9 +506,7 @@ int gui_create(void)
     MAIN_WINDOW = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(MAIN_WINDOW),600,400);
     gtk_container_set_border_width (GTK_CONTAINER (MAIN_WINDOW), 0);
-    g_signal_connect (MAIN_WINDOW, "delete_event", gtk_main_quit, NULL); /* dirty */
-
-    accel_group = gtk_accel_group_new();
+    g_signal_connect (MAIN_WINDOW, "destroy", G_CALLBACK(gtk_main_quit), NULL); 
 
     /* log frame */
 
@@ -529,6 +524,8 @@ int gui_create(void)
 
     /* tree view frame */
 
+    accel_group = gtk_accel_group_new();
+    
     widget = gui_cardview_create_window(accel_group);
     g_signal_connect(G_OBJECT(widget),"map",G_CALLBACK(internal_map_accel_group),accel_group);
     g_signal_connect(G_OBJECT(widget),"unmap",G_CALLBACK(internal_unmap_accel_group),accel_group);
@@ -553,7 +550,7 @@ int gui_create(void)
 
     label = gtk_label_new ("card view");
     gtk_notebook_append_page (GTK_NOTEBOOK (tabs), cardview, label);
-    gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), cardview, TRUE);
+    /* gtk_notebook_set_tab_reorderable (GTK_NOTEBOOK (tabs), cardview, TRUE); */
 
     label = gtk_label_new ("reader");
     gtk_notebook_append_page (GTK_NOTEBOOK (tabs), readerview, label);
@@ -594,7 +591,8 @@ int gui_run(void)
     gui_readerview_cleanup();
     gui_cardview_cleanup();
 
-    gtk_widget_destroy(MAIN_WINDOW);
+    MAIN_WINDOW=NULL;
+    MAIN_NOTEBOOK=NULL;
     return 1;
 }
 

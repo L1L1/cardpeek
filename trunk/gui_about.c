@@ -33,7 +33,7 @@
 const char* LICENSE="CARDPEEK is free software: you can redistribute it and/or modify it under the terms of the GNU "
 	 	    "General Public License as published by the Free Software Foundation, either version 3 of the "
 		    "License, or (at your option) any later version.\n\n"
-		    "As an exemption to the GNU General Public Licence, compiling, linking, and/or using OpenSSL is " 
+		    "As an exemption to the GNU General Public License, compiling, linking, and/or using OpenSSL is " 
 		    "allowed.\n\n"
 		    "CARDPEEK is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without "
 		    "even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU "

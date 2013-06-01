@@ -16,6 +16,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- @name EMV
+-- @description Bank cards 'PIN and chip'
+-- @targets 0.8
+--
 -- History:
 -- Aug 07 2010: Corrected bug in GPO command.
 -- Aug 08 2010: Corrected bug in AFL data processing
@@ -519,11 +523,11 @@ function emv_process_application(cardenv,aid)
 	end
 
 	-- Read extra data 
-	extra = nodes.append(APP,{classname="block",label="extra emv data"})
+	--extra = nodes.append(APP,{classname="block",label="extra emv data"})
 	for j=1,#EXTRA_DATA do
 	    sw,resp = card.get_data(EXTRA_DATA[j])
 	    if sw == 0x9000 then
-	       emv_parse(extra,resp)
+	       emv_parse(APP,resp):set_attribute("classname","block")
 	    end
 	end
 	

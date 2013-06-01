@@ -43,14 +43,124 @@
 #include <getopt.h>
 #include "cardpeek_resources.gresource"
 
+#include "gui_inprogress.h"
+#include <curl/curl.h>
+
+static int progress_update_smartcard_list_txt(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow)
+{
+    GtkWidget *progress = (GtkWidget *)clientp;
+
+    if (dltotal==0) 
+        return !gui_inprogress_pulse(progress);
+    return !gui_inprogress_set_fraction(progress,dlnow/dltotal);
+}
+
+static int update_smartcard_list_txt(void)
+{
+    CURL *curl;
+    CURLcode res;
+    const char* smartcard_list_txt = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_TXT);
+    const char* smartcard_list_download = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_DOWNLOAD);
+    FILE* smartcard_list;
+    char *url;
+    int retval = 0;    
+    char user_agent[100];
+    time_t now = time(NULL);
+    unsigned next_update = (unsigned)luax_variable_get_integer("cardpeek.smartcard_list.next_update");
+    GtkWidget *progress;
+
+    if (luax_variable_get_boolean("cardpeek.smartcard_list.auto_update")!=TRUE)
+    {
+        log_printf(LOG_INFO,"smartcard_list.txt auto-update is disabled.");
+        return 0;
+    }
+
+    if (now<next_update) return 0;
+
+    switch (gui_question("The local copy of the ATR database may be outdated.\nDo you whish to do an online update?",
+                         "Yes","No, ask me again later","No, always use the local copy")) 
+    {
+        case 0:
+            break;
+        case 1:
+            luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+(24*3600)));
+            return 0;
+        case 2:
+            luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
+            return 0;
+        default:
+            return 0;
+    }
+
+    log_printf(LOG_INFO,"Attempting to update smartcard_list.txt");
+
+    url=luax_variable_get_strdup("cardpeek.smartcard_list.url");
+
+    if (url==NULL)
+        url = g_strdup("http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt");
+
+    progress = gui_inprogress_new("Downloading file","Please wait...");
+
+    curl = curl_easy_init();
+
+    if (curl) 
+    {
+        g_sprintf(user_agent,"cardpeek %s (this is a test)",VERSION); 
+    
+        smartcard_list = fopen(smartcard_list_download,"w");
+        
+        curl_easy_setopt(curl,CURLOPT_URL,url);
+        curl_easy_setopt(curl,CURLOPT_WRITEDATA, smartcard_list);
+        curl_easy_setopt(curl,CURLOPT_USERAGENT, user_agent);
+        curl_easy_setopt(curl,CURLOPT_FAILONERROR, 1L);
+        curl_easy_setopt(curl,CURLOPT_NOPROGRESS, 0L);
+        curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION, progress_update_smartcard_list_txt);
+        curl_easy_setopt(curl,CURLOPT_PROGRESSDATA, progress);
+
+        res = curl_easy_perform(curl);
+        
+        fclose(smartcard_list);
+        
+        if (res!=CURLE_OK)
+        {
+            log_printf(LOG_ERROR,"Failed to update smartcard_list.txt: %s", curl_easy_strerror(res));
+            unlink(smartcard_list_download);
+        }
+        else
+        {
+            if (rename(smartcard_list_download,smartcard_list_txt)==0)
+            {
+                log_printf(LOG_INFO,"Updated smartcard_list.txt");
+            }
+            else
+            {
+                /* this should not happen... but you never know */
+                log_printf(LOG_ERROR,"Failed to copy smartcard_list.dowload as smartcard_list.txt: %s", strerror(errno));    
+                unlink(smartcard_list_download);
+            }
+            luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+30*(24*3600)));
+        }
+
+        curl_easy_cleanup(curl);
+
+        retval = (res==CURLE_OK);
+    }
+
+    gui_inprogress_free(progress);
+
+    luax_config_table_save();
+    g_free(url);
+    return 0;
+}
+
 static int install_dot_file(void)
 {
-  const char* dot_dir = config_get_string(CONFIG_FOLDER_CARDPEEK);
-  const char* old_replay_dir = config_get_string(CONFIG_FOLDER_OLD_REPLAY);
-  const char* new_replay_dir = config_get_string(CONFIG_FOLDER_REPLAY);
-  const char* home_dir = config_get_string(CONFIG_FOLDER_HOME);
-  const char* version_file = config_get_string(CONFIG_FILE_SCRIPT_VERSION);
-  struct stat sbuf;
+  const char* dot_dir = path_config_get_string(PATH_CONFIG_FOLDER_CARDPEEK);
+  const char* old_replay_dir = path_config_get_string(PATH_CONFIG_FOLDER_OLD_REPLAY);
+  const char* new_replay_dir = path_config_get_string(PATH_CONFIG_FOLDER_REPLAY);
+  const char* home_dir = path_config_get_string(PATH_CONFIG_FOLDER_HOME);
+  const char* version_file = path_config_get_string(PATH_CONFIG_FILE_SCRIPT_VERSION);
+  GStatBuf sbuf;
   FILE* f;
   int status;
   a_string_t* astr;
@@ -61,7 +171,7 @@ static int install_dot_file(void)
   unsigned char *dot_cardpeek_tar_gz_start;
   gsize dot_cardpeek_tar_gz_size;
 
-  if (stat(dot_dir,&sbuf)==0)
+  if (g_stat(dot_dir,&sbuf)==0)
   {
     log_printf(LOG_DEBUG,"Found directory '%s'",dot_dir);
 
@@ -112,7 +222,7 @@ static int install_dot_file(void)
     a_strfree(astr);
   }
 
-  if (stat(old_replay_dir,&sbuf)==0)
+  if (g_stat(old_replay_dir,&sbuf)==0)
   {
 	if (rename(old_replay_dir,new_replay_dir)==0)
 	{
@@ -176,11 +286,19 @@ static int install_dot_file(void)
   return 1;
 }
 
-static gboolean run_command_crom_cli(gpointer data)
+static gboolean run_command_from_cli(gpointer data)
 {
 	luax_run_command((const char *)data);	
 	return FALSE;
 }
+
+/*
+static gboolean run_update_checks(gpointer data)
+{
+    update_smartcard_list_txt();
+	return FALSE;
+}
+*/
 
 static const char *message = 
 "***************************************************************\n"
@@ -204,7 +322,7 @@ static void save_what_can_be_saved(int sig_num)
   char buf[32];
 
   write(2,message,strlen(message));
-  logfile = config_get_string(CONFIG_FILE_LOG);
+  logfile = path_config_get_string(PATH_CONFIG_FILE_LOG);
   write(2,logfile,strlen(logfile));
   write(2,signature,strlen(signature));
   sprintf(buf,"Received signal %i\n",sig_num); 
@@ -224,8 +342,8 @@ static void display_readers_and_version(void)
 
 	luax_init();
 
-	fprintf(stdout,"This is %s.\n",system_string_info());
-	fprintf(stdout,"Cardpeek path is %s\n",config_get_string(CONFIG_FOLDER_CARDPEEK));
+	fprintf(stdout,"%sThis is %s.%s\n",ANSI_GREEN,system_string_info(),ANSI_RESET);
+	fprintf(stdout,"Cardpeek path is %s\n",path_config_get_string(PATH_CONFIG_FOLDER_CARDPEEK));
 	
 	CTX = cardmanager_new();
 	reader_count = cardmanager_count_readers(CTX);
@@ -263,22 +381,15 @@ int main(int argc, char **argv)
   cardreader_t* READER;
   int opt;
   int opt_index = 0;
-  int options_ok = 1;
+  int run_gui = 1;
   char* reader_name = NULL;
   char* exec_command = NULL;
 
   signal(SIGSEGV, save_what_can_be_saved); 
   
-  config_init();
+  path_config_init();
     
   log_open_file();
-
-  /* if we want threads: 
-	gdk_threads_init(); 
-  	gdk_threads_enter();
-  */
-
-  gui_init(&argc,&argv);
 
   while ((opt = getopt_long(argc,argv,"r:e:vh",long_options,&opt_index))!=-1) 
   {
@@ -291,16 +402,23 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 			display_readers_and_version();
-			options_ok = 0;
+			run_gui = 0;
 			break;
 		default:
 			display_help(argv[0]);
-			options_ok = 0;
+			run_gui = 0;
 	  }
   }
    
-  if (options_ok)
+  if (run_gui)
   {
+      /* if we want threads: 
+         gdk_threads_init(); 
+         gdk_threads_enter();
+       */
+
+      gui_init(&argc,&argv);
+
 	  gui_create();
 
 	  log_printf(LOG_INFO,"Running %s",system_string_info());
@@ -308,6 +426,7 @@ int main(int argc, char **argv)
 	  install_dot_file(); 
 
 	  luax_init();
+
 
 	  CTX = cardmanager_new();
 
@@ -327,8 +446,13 @@ int main(int argc, char **argv)
 
 		  cardreader_set_callback(READER,gui_readerview_print,NULL);
 
-		  if (exec_command) g_idle_add(run_command_crom_cli,exec_command);
-
+		  if (exec_command) 
+                g_idle_add(run_command_from_cli,exec_command);
+          else
+                update_smartcard_list_txt();
+          /*else
+                g_idle_add(run_update_checks,NULL);
+            */
 		  gui_run();
 
 		  cardreader_free(READER);
@@ -338,18 +462,21 @@ int main(int argc, char **argv)
 		  fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
 		  log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
 	  }
+
+	  luax_config_table_save();
+
 	  luax_release();
+        
+      /* if we want threads:
+         gdk_threads_leave();
+       */
   }
 
   if (reader_name) g_free(reader_name);
   
   log_close_file();
 
-  config_release();  
-
-  /* if we want threads:
-	gdk_threads_leave();
-   */
+  path_config_release();  
 
   return 0;
 }

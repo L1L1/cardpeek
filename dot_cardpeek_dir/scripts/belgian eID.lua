@@ -16,6 +16,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- @name Belgian eID
+-- @description Belgian electronic ID card.
+-- @targets 0.8
 
 require('lib.apdu')
 require('lib.tlv')

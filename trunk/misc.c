@@ -114,12 +114,12 @@ void log_open_file(void)
 {
   time_t now = time(NULL);
   
-  LOGFILE = g_fopen(config_get_string(CONFIG_FILE_LOG),"w+");
+  LOGFILE = g_fopen(path_config_get_string(PATH_CONFIG_FILE_LOG),"w+");
 
   if (LOGFILE)
     fprintf(LOGFILE,"cardpeek log start: %s",ctime(&now));
   else
-    fprintf(stderr,"Could not open %s for output. Proceeding without a log file.\n",config_get_string(CONFIG_FILE_LOG));
+    fprintf(stderr,"Could not open %s for output. Proceeding without a log file.\n",path_config_get_string(PATH_CONFIG_FILE_LOG));
 }
 
 void log_close_file(void)

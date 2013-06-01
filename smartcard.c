@@ -125,7 +125,7 @@ int cardreader_connect(cardreader_t *reader, unsigned protocol)
 {
   int retval = reader->connect(reader,protocol);
 
-  cardreader_last_atr(reader);
+  reader->last_atr(reader);
 
   cardreplay_add_reset(reader->cardlog,reader->atr);
   if (reader->cb_func)
@@ -238,7 +238,16 @@ unsigned short cardreader_get_sw(cardreader_t *reader)
 
 const bytestring_t *cardreader_last_atr(cardreader_t *reader)
 {
-  return reader->last_atr(reader);
+  const bytestring_t *atr = reader->last_atr(reader);
+  char *tmp;
+
+  if (atr)
+  {
+	tmp = bytestring_to_format("%D",atr);
+        log_printf(LOG_INFO,"ATR is %i bytes: %s",bytestring_get_size(atr),tmp);
+        free(tmp);
+  }
+  return atr;
 }
 
 char** cardreader_get_info(cardreader_t *reader)
@@ -422,7 +431,7 @@ int cardmanager_search_replay_readers(cardmanager_t *cm)
 {
   a_string_t* fn;
   struct dirent **namelist;
-  const char* log_folder = config_get_string(CONFIG_FOLDER_REPLAY); 
+  const char* log_folder = path_config_get_string(PATH_CONFIG_FOLDER_REPLAY); 
   int count,n;
 
   n = scandir(log_folder,&namelist,select_clf,alphasort);

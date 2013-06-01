@@ -556,7 +556,7 @@ static int subr_nodes_to_xml(lua_State* L)
   return 1;
 }
 
-static int subr_nodes_from_xml(lua_State* L)
+static int subr_nodes_append_xml(lua_State* L)
 {
   GtkTreeIter *iter;
   const char *xml;
@@ -602,7 +602,7 @@ static const struct luaL_reg nodelib_f [] = {
   {"set_attribute", subr_nodes_set_attribute },
   {"get_attribute", subr_nodes_get_attribute },
   {"to_xml", subr_nodes_to_xml },
-  {"from_xml", subr_nodes_from_xml },
+  {"append_xml", subr_nodes_append_xml },
   {NULL,NULL}  /* sentinel */
 };
 
@@ -618,7 +618,7 @@ static const struct luaL_reg nodelib_m [] = {
   {"set_attribute", subr_nodes_set_attribute },
   {"get_attribute", subr_nodes_get_attribute },
   {"to_xml", subr_nodes_to_xml },
-  {"from_xml", subr_nodes_from_xml },
+  {"append_xml", subr_nodes_append_xml },
   {NULL,NULL}  /* sentinel */
 };
 

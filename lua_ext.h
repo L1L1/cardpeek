@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smartcard reader utility.
 *
-* Copyright 2009 by 'L1L1'
+* Copyright 2009-2013 by 'L1L1'
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #define LUAX_H
 
 #include "smartcard.h"
+#include <glib.h>
 
 void luax_set_card_reader(cardreader_t* r);
 
@@ -34,8 +35,22 @@ int luax_init(void);
 
 void luax_release(void);
 
-const char *luax_get_string_value(const char *identifier);
-
 char *luax_escape_string(const char *src);
+
+/*****/
+
+gboolean luax_config_table_save(void);
+
+char *luax_variable_get_strdup(const char *vname);
+
+gboolean luax_variable_set_strval(const char *vname, const char *value);
+
+int luax_variable_get_integer(const char *vname);
+
+gboolean luax_variable_set_integer(const char *vname, int value);
+
+gboolean luax_variable_get_boolean(const char *vname);
+
+gboolean luax_variable_set_boolean(const char *vname, gboolean value);
 
 #endif

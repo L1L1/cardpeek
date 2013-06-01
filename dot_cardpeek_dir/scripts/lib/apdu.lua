@@ -24,8 +24,9 @@
 --
 ----------------------------------------------------------
 
-local TABLE_BASE={}
-local TABLE_REGEX={}
+TABLE_BASE={}
+TABLE_REGEX={}
+TABLE_LOADED=false
 
 function card.load_smartcard_list()
 	local current=nil
@@ -65,6 +66,8 @@ function card.load_smartcard_list()
 
 	io.close(f)
 
+	TABLE_LOADED = true
+
 	return true
 end
 
@@ -72,7 +75,7 @@ function card.identify_atr(atr)
 	local k,v
 	local target=tostring(atr)
 
-	if #TABLE_BASE==0 then
+	if TABLE_LOADED==false then
 		card.load_smartcard_list()
 	end
 
@@ -85,6 +88,9 @@ function card.identify_atr(atr)
 		if string.match(target,k) then
 			return v
 		end
+	end
+	if TABLE_LOADED==true then
+		log.print(log.INFO,"Could not find ATR in smartcard database.")
 	end
 	return nil
 end

@@ -23,23 +23,26 @@
 #define PATH_CONFIG_H
 
 enum {
-  CONFIG_FOLDER_CARDTREES,
-  CONFIG_FOLDER_SCRIPTS_OTHER,
-  CONFIG_FOLDER_HOME,
-  CONFIG_FOLDER_CARDPEEK,
-  CONFIG_FOLDER_SCRIPTS,
-  CONFIG_FOLDER_REPLAY,
-  CONFIG_FOLDER_OLD_REPLAY,
-  CONFIG_FILE_CONFIG,
-  CONFIG_FILE_LOG,
-  CONFIG_FILE_SCRIPT_VERSION,
-  NUM_CONFIG_OPTIONS
+  PATH_CONFIG_FOLDER_CARDTREES,
+  PATH_CONFIG_FOLDER_SCRIPTS_OTHER,
+  PATH_CONFIG_FOLDER_HOME,
+  PATH_CONFIG_FOLDER_CARDPEEK,
+  PATH_CONFIG_FOLDER_SCRIPTS,
+  PATH_CONFIG_FOLDER_REPLAY,
+  PATH_CONFIG_FOLDER_OLD_REPLAY,
+  PATH_CONFIG_FILE_CONFIG,
+  PATH_CONFIG_FILE_RC,
+  PATH_CONFIG_FILE_LOG,
+  PATH_CONFIG_FILE_SCRIPT_VERSION,
+  PATH_CONFIG_FILE_SMARTCARD_LIST_TXT,
+  PATH_CONFIG_FILE_SMARTCARD_LIST_DOWNLOAD,
+  NUM_PATH_CONFIG_OPTIONS
 };
 
 
-int config_init(void);
-const char *config_get_string(unsigned index);
-int config_set_string(unsigned index, const char *path);
-void config_release(void);
+int path_config_init(void);
+const char *path_config_get_string(unsigned index);
+int path_config_set_string(unsigned index, const char *path);
+void path_config_release(void);
 
 #endif

@@ -134,7 +134,8 @@ GtkWidget *gui_logview_create_status_bar(void)
 
 void gui_logview_cleanup(void)
 {
-	gtk_statusbar_pop (STATUS_BAR, STATUS_BAR_CONTEXT_ID);
 	LOG_BUFFER = NULL;
 	log_set_function(NULL);
+	LOG_WINDOW=NULL;
+	STATUS_BAR=NULL;
 }

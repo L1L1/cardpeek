@@ -39,10 +39,14 @@
 #include "win32/win32compat.h"
 #endif
 
-struct menu_script {
+typedef struct _ScriptInfo ScriptInfo;
+
+struct _ScriptInfo {
         char *script_name;
         char *script_file;
-        struct menu_script* prev;
+	char *script_description;
+	char *script_targeted_version;
+        ScriptInfo* prev;
 };
 
 /*********************************************************/
@@ -51,7 +55,7 @@ struct menu_script {
   
 DyntreeModel* CARDTREE=0;
 GtkWidget* CARDVIEW=NULL;
-struct menu_script *SCRIPTS=NULL;
+ScriptInfo *SCRIPTS=NULL;
 
 DyntreeModel* gui_cardview_get_store(void)
 {
@@ -66,11 +70,17 @@ static void menu_run_script_cb(GtkWidget *widget,
                        gpointer callback_data,
                        guint callback_action)
 {
-  struct menu_script *script = (struct menu_script *)callback_data;
+  ScriptInfo *script = (ScriptInfo *)callback_data;
   UNUSED(widget);
   UNUSED(callback_action);
 
-  gui_set_title(script->script_name+1);
+  if (!script->script_targeted_version)
+  {
+	log_printf(LOG_WARNING,"The script '%s' does not contain version information, and may use an older incompatible API", script->script_file);
+	log_printf(LOG_WARNING,"To remove this warning, add the following line at the begining of '%s':\n\t -- @targets %s", script->script_file, VERSION);
+  }
+
+  gui_set_title(script->script_name);
   luax_run_script(script->script_file);
   gtk_tree_view_expand_all (GTK_TREE_VIEW(CARDVIEW));
   gui_update(0);
@@ -94,10 +104,10 @@ static void menu_cardview_open_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Load xml card description",config_get_string(CONFIG_FOLDER_CARDTREES),NULL);
+  select_info = gui_select_file("Load xml card description",path_config_get_string(PATH_CONFIG_FOLDER_CARDTREES),NULL);
   if (select_info[1])
   {
-    config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
     a_sprintf(command,"ui.load_view(\"%s\")",filename);
@@ -117,10 +127,10 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Save xml card description",config_get_string(CONFIG_FOLDER_CARDTREES),"card.xml");
+  select_info = gui_select_file("Save xml card description",path_config_get_string(PATH_CONFIG_FOLDER_CARDTREES),"card.xml");
   if (select_info[1])
   {  
-    config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
     a_sprintf(command,"ui.save_view(\"%s\")",filename);
@@ -269,6 +279,12 @@ static gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventBu
     menu_cardview_context_menu(treeview,event,userdata);
     return TRUE;
   }
+  /*
+  else if (event->type == GDK_2BUTTON_PRESS  &&  event->button == 1)
+  {
+    g_printf("double click\n");
+  }
+  */
   return FALSE;
 }
 
@@ -307,10 +323,10 @@ static void menu_cardview_analyzer_load_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Load card script",config_get_string(CONFIG_FOLDER_SCRIPTS),NULL);
+  select_info = gui_select_file("Load card script",path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS),NULL);
   if (select_info[1])
   {
-    config_set_string(CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
     chdir(select_info[0]);
     gui_set_title(select_info[1]);
     luax_run_script(select_info[1]);
@@ -331,16 +347,106 @@ static int select_lua(DIRENT_T* de)
   return 0;
 }
 
+static void rtrim(char *line)
+{
+  char *eol = line+strlen(line)-1;
+  while (eol>=line && *eol<=' ') *eol--=0; 		
+}
+
+static const char *locate_after_prefix(const char *prefix, const char *line)
+{
+	char *pos = strstr(line,prefix);
+	if (pos)
+	{
+		pos+=strlen(prefix);
+		while (*pos<=' ' && *pos>0) pos++;
+		return pos;
+	}
+ 	return NULL;
+}
+
+static GtkWidget* script_info_add(const char *path, const char *fname)
+{
+  char *fullname;
+  ScriptInfo* si;
+  FILE* script;
+  int i;
+  char line[1024];
+  const char *str;
+  char *dot;
+  char *underscore;
+  GtkWidget *menuitem = NULL;
+  
+  fullname = g_malloc(strlen(path)+strlen(fname)+2);
+  sprintf(fullname,"%s/%s",path,fname);
+
+  script = fopen(fullname,"r");
+  if (script)
+  {
+	si = (ScriptInfo *)g_malloc0(sizeof(ScriptInfo));
+	si->script_file = strdup(fname);
+
+	rtrim(line);
+
+	for (i=0;i<30;i++)
+	{
+		if (fgets(line,1024,script)==NULL) break;
+			
+		rtrim(line);
+
+		if ((str=locate_after_prefix("@name",line))!=NULL)
+		{
+			si->script_name = g_strdup(str);
+		}
+		else if ((str=locate_after_prefix("@description",line))!=NULL)
+		{
+			si->script_description = g_strdup(str);	
+		}
+		else if ((str=locate_after_prefix("@targets",line))!=NULL)
+		{
+			si->script_targeted_version = g_strdup(str);
+		}
+	}
+
+	fclose(script);
+
+	if (si->script_name==NULL)
+	{
+		si->script_name = g_strdup(fname);
+
+		dot = rindex(si->script_name,'.');
+		if (dot) *dot=0;
+
+		for (underscore=si->script_name;*underscore!=0;underscore++)
+		{
+			if (*underscore=='_') *underscore=' '; 
+		}
+	}
+	
+	si->prev = SCRIPTS;
+	SCRIPTS = si;
+
+	menuitem = gtk_image_menu_item_new_with_label(si->script_name);
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU));	
+	if (si->script_description) gtk_widget_set_tooltip_text(menuitem,si->script_description);
+        g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_run_script_cb),si);
+	gtk_widget_show(menuitem);
+  }
+  else
+  {
+	log_printf(LOG_ERROR,"Failed to open %s for reading",fullname);	
+  }
+  g_free(fullname);
+  return menuitem;
+}
+
 static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
 {
   GtkWidget *menu = gtk_menu_new();
-  GtkWidget *menuitem;
-  struct menu_script* menuitem_data;
+  GtkWidget *menuitem = NULL;
   struct dirent **namelist;
   int i,n;
-  char *dot;
-  char *underscore;
-  const char *script_path=config_get_string(CONFIG_FOLDER_SCRIPTS);
+  const char *script_path=path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS);
 
   menu = gtk_menu_new();
 
@@ -351,26 +457,9 @@ static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
       {
         log_printf(LOG_INFO,"Adding %s script to menu", namelist[i]->d_name);
 
-        menuitem_data=(struct menu_script *)g_malloc(sizeof(struct menu_script));
-        menuitem_data->script_name = (char* )g_strdup(namelist[i]->d_name);
+	menuitem = script_info_add(script_path, namelist[i]->d_name);
 
-        dot = rindex(menuitem_data->script_name,'.');
-        if (dot) *dot=0;
-
-        for (underscore=menuitem_data->script_name;*underscore!=0;underscore++)
-        {
-          if (*underscore=='_') *underscore=' '; 
-	}
-
-        menuitem_data->script_file = strdup(namelist[i]->d_name);
-        menuitem_data->prev=SCRIPTS;
-        SCRIPTS = menuitem_data;
-	
-	menuitem = gtk_image_menu_item_new_with_label(menuitem_data->script_name);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU));	
-	g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_run_script_cb),menuitem_data);
-	gtk_widget_show(menuitem);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
+	if (menuitem) gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
         
 	free(namelist[i]);
       }
@@ -386,7 +475,9 @@ static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
   menuitem = gtk_image_menu_item_new_with_label("Load a script");
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_OPEN,GTK_ICON_SIZE_MENU));
   g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
+
   gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE); 
+ 
   gtk_widget_show(menuitem);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
   return menu;
@@ -558,15 +649,6 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
   CARDVIEW = gtk_tree_view_new ();
   
-  /* "enable-tree-lines" */
-  /* gtk_tree_view_set_enable_tree_lines (GTK_TREE_VIEW(CARDVIEW),TRUE); */
-  
-  /*
-  g_object_set(CARDVIEW,
-	       "has-tooltip",TRUE, NULL);
-
-  g_signal_connect(CARDVIEW, 
- 		   "query-tooltip", (GCallback) menu_cardview_query_tooltip, NULL); */
   g_signal_connect(CARDVIEW,
 		   "button-press-event", (GCallback) menu_cardview_button_press_event, NULL);
 
@@ -666,14 +748,18 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
 void gui_cardview_cleanup(void)
 {
-  struct menu_script *it;
+  ScriptInfo *prev;
 
   while (SCRIPTS)
   {
-     it=SCRIPTS->prev;
-     free(SCRIPTS->script_name);
-     free(SCRIPTS->script_file);
+     prev=SCRIPTS->prev;
+     g_free(SCRIPTS->script_name);
+     g_free(SCRIPTS->script_file);
+     if (SCRIPTS->script_description) g_free(SCRIPTS->script_description);
+     if (SCRIPTS->script_targeted_version) g_free(SCRIPTS->script_targeted_version);
      free(SCRIPTS);
-     SCRIPTS=it;
+     SCRIPTS=prev;
   }
+  CARDTREE=NULL;
+  CARDVIEW=NULL;
 }  

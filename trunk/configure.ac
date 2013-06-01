@@ -81,6 +81,11 @@ Please install the lua 5.1 library first.])
 ])
 ])
 
+AM_PATH_PACKAGE([libcurl],[CURL],,AC_MSG_ERROR([
+Could not find libcurl.
+This program requires the libcurl library.
+Please install libcurl first.]))
+
 ##AM_PATH_PACKAGE([openssl],[OPENSSL],,AC_MSG_ERROR([Could not find openssl-dev.
 ##This program requires the openssl dev. library.
 ##Please install it first.]))

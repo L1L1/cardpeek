@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = gnu
 
-AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GLIB_CFLAGS@ @GTK_CFLAGS@
+AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GLIB_CFLAGS@ @GTK_CFLAGS@ @CURL_CFLAGS@
 
 #AM_LDFLAGS=@LUA_LIBS@ @PCSC_LIBS@ @GTK_LIBS@
 
@@ -10,9 +10,9 @@ cardpeek_SOURCES = asn1.c asn1.h bytestring.c bytestring.h gui_flexi_cell_render
 
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
-cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@
+cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@
 
-cardpeek_LDFLAGS=-g -O0
+cardpeek_LDFLAGS=-O2
 
 dist_man_MANS=cardpeek.1
 

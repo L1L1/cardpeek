@@ -224,51 +224,51 @@ TLV_TYPES = {
 }
 
 function internal_tlv_parse(cardenv,tlv,reference,parent)
-        local ref
-        local tlv_tag
+    local ref = false
+    local tlv_tag
 	local tlv_value
 	local tlv_tail
-        local tlv_name
+    local tlv_name
 	local tlv_ui_func
 
 	while tlv do
-            tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
+        tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
 	    
 	    if tlv_tag==nil or tlv_tag==0 then 
 	       return false
 	    end--if
 
-            tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
+        tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
 	    
 	    if tlv_name==nil then
 	       tlv_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tlv_tag),6)+1]
 	    end--if
 
 	    ref = nodes.append(cardenv,{ classname="item",
-					     label=tostring(tlv_name),
-					     id=string.format('%X',tlv_tag), 
-					     size=#tlv_value })
+					                 label=tostring(tlv_name),
+					                 id=string.format('%X',tlv_tag), 
+					                 size=#tlv_value })
 
-            if (tlv_tag_is_compound(tlv_tag)) then
-	       if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
-		  nodes.remove(ref)
-		  return false
-	       end
-            else
-	       if tlv_ui_func then
-	          tlv_ui_func(ref,tlv_value)
-               else
-                  nodes.set_attribute(ref,"val",tlv_value)
-               end--if
+        if (tlv_tag_is_compound(tlv_tag)) then
+            if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
+		        nodes.remove(ref)
+                return false
+	        end
+        else
+	        if tlv_ui_func then
+	            tlv_ui_func(ref,tlv_value)
+                else
+                    nodes.set_attribute(ref,"val",tlv_value)
+                end--if
             end--if
 	    tlv = tlv_tail
         end--while
-	return true
+	return ref
 end
 
 function tlv_parse(cardenv,tlv,reference)
 	if reference == nil then
-	   reference = {}
+        reference = {}
 	end
 	return internal_tlv_parse(cardenv,tlv,reference,0)
 end

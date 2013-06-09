@@ -308,6 +308,12 @@ static int subr_bytes_set(lua_State *L)
 	  {
 		  bytestring_pushback(bs,c);
 	  }
+      else
+      {
+          char error_msg[100];
+          sprintf(error_msg,"Index %i is out of bounds in 'bytes': acceptable range is 0 to %i.", i, bytestring_get_size(bs));
+          return luaL_error(L,error_msg);
+      }
   }
   lua_settop(L,1);
   return 1;
@@ -411,9 +417,28 @@ static int subr_bytes_is_printable(lua_State *L)
 
 static int subr_bytes_convert(lua_State *L)
 {
-  bytestring_t *bs = luaL_check_bytestring(L, 1);
-  int width=luaL_checkint(L,2);
+  static int warn_obsolete=0; 
+  bytestring_t *bs;
+  int width;
   bytestring_t *ret; 
+
+  if (lua_type(L,2)==LUA_TUSERDATA && lua_type(L,1)==LUA_TNUMBER)
+  {
+      if (!warn_obsolete)
+      {
+          warn_obsolete = 1;
+          log_printf(LOG_WARNING,"The calling convention of bytes.convert() has changed in cardpeek 0.8, please update your scripts\n"
+                                 "\tchange bytes.convert(A,B) to bytes.convert(B,A)\n"
+                                 "\tThis warning will only appear once.");
+      }
+      width=luaL_checkint(L,1);
+      bs = luaL_check_bytestring(L, 2);
+  } 
+  else
+  {
+      bs = luaL_check_bytestring(L, 1);
+      width=luaL_checkint(L,2);
+  }
 
   if (width!=8 && width!=4 && width!=1)
   	return luaL_error(L,"bytes.convert() only recognizes 8, 4 or 1 as parameter value.");
@@ -442,12 +467,67 @@ static int subr_bytes_to_number(lua_State *L)
 
 static int subr_bytes_format(lua_State *L)
 {
-  bytestring_t *bs = luaL_check_bytestring(L,1);
-  const char *format = lua_tostring(L,2);
-  char *s=bytestring_to_format(format,bs);
-  lua_pushstring(L,s);
-  free(s);
-  return 1;
+  static int warn_obsolete=0; 
+    bytestring_t *bs;
+    const char *format;
+    char *s;
+
+    if (lua_type(L,2)==LUA_TUSERDATA && lua_type(L,1)==LUA_TSTRING)
+    {
+        if (!warn_obsolete)
+        {
+            warn_obsolete = 1;
+            log_printf(LOG_WARNING,"The calling convention of bytes.format() has changed in version 0.8, please update your scripts\n"
+                                   "\tchange bytes.format(A,B) to bytes.format(B,A)\n"
+                                   "\tThis warning will only appear once.");
+        }
+        format = lua_tostring(L,1);
+        bs = luaL_check_bytestring(L,2);
+    } 
+    else
+    { 
+        bs = luaL_check_bytestring(L,1);
+        format = lua_tostring(L,2);
+    }
+
+    s=bytestring_to_format(format,bs);
+    lua_pushstring(L,s);
+    free(s);
+    return 1;
+}
+
+static int subr_bytes_index(lua_State *L)
+{
+  if (lua_gettop(L)<2)
+    return luaL_error(L,"missing arguement to bytes.__index() function."); 
+
+  switch (lua_type(L,2)) 
+  {
+    case LUA_TNUMBER:
+        return subr_bytes_get(L);
+    case LUA_TSTRING:
+        luaL_getmetatable(L, "bytes.type"); /* st: mt */ 
+        lua_pushvalue(L,2);                 /* st: mt, key */
+        lua_rawget(L,-2);                   /* st: mt, val */
+        lua_remove(L,-2);                   /* st: val */
+        return 1;
+  } 
+  return luaL_error(L,"Invalid index type for bytes.");
+}
+
+static int subr_bytes_newindex(lua_State *L)
+{
+  if (lua_gettop(L)<2)
+    return luaL_error(L,"missing arguement to bytes.__newindex() function."); 
+
+  switch (lua_type(L,2))
+  {
+    case LUA_TNUMBER:
+        return subr_bytes_set(L);
+    case LUA_TSTRING:
+        return luaL_error(L,"The 'bytes' type does not accept new indices.");
+  } 
+  return luaL_error(L,"Invalid index type for bytes.");
 }
 
 /**********************************************
@@ -456,12 +536,14 @@ static int subr_bytes_format(lua_State *L)
  */
 
 
-static const struct luaL_reg byteslib_m [] = {
+static const struct luaL_Reg byteslib_m [] = {
   {"__gc",subr_bytes_gc},
   {"__tostring",subr_bytes_tostring},
   {"__len",subr_bytes_len},
   {"__concat",subr_bytes_concat},
   {"__eq", subr_bytes_eq},
+  {"__index", subr_bytes_index },
+  {"__newindex", subr_bytes_newindex },
 
   {"ipairs",subr_bytes_ipairs},
   {"get",subr_bytes_get},
@@ -479,7 +561,7 @@ static const struct luaL_reg byteslib_m [] = {
   {NULL,NULL}
 };
 
-static const struct luaL_reg byteslib_f [] = {
+static const struct luaL_Reg byteslib_f [] = {
   {"new", subr_bytes_new},
   {"new_from_chars",subr_bytes_new_from_chars},
   {"concat", subr_bytes_concat},
@@ -503,11 +585,9 @@ static const struct luaL_reg byteslib_f [] = {
 int luaopen_bytes(lua_State* L) 
 {
   luaL_newmetatable(L, "bytes.type");
-  lua_pushstring(L, "__index");
-  lua_pushvalue(L, -2);  /* pushes the metatable */
-  lua_settable(L, -3);  /* metatable.__index = metatable */
-  luaL_openlib(L, NULL, byteslib_m, 0);
-  luaL_openlib(L, "bytes", byteslib_f, 0);
+  luaL_register(L, NULL, byteslib_m); /* metatable.* = byteslib_m */
+  luaL_register(L, "bytes", byteslib_f);
+
   return 1;
 }
 

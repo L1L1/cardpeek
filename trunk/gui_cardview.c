@@ -1,8 +1,8 @@
 /********************************************************************** 
 *
-* This file is part of Cardpeek, the smartcard reader utility.
+* This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by 'L1L1'
+* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -526,7 +526,7 @@ static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
 				  else if (strcmp("t:atr",classname)==0)    icon_name="cardpeek-atr"; 		break;
 			case 'b': if (strcmp("t:block",classname)==0)       icon_name="cardpeek-block"; 
 				  else if (strcmp("t:body",classname)==0)   icon_name="cardpeek-body";       	break;
-			case 'c': if (strcmp("t:card",classname)==0)        icon_name="cardpeek-smartcard";   	break;
+			case 'c': if (strcmp("t:card",classname)==0)        icon_name="cardpeek-smart card";   	break;
 			case 'f': if (strcmp("t:file",classname)==0)        icon_name="cardpeek-file";
 			          else if (strcmp("t:folder",classname)==0) icon_name="cardpeek-folder";        break;
 			case 'h': if (strcmp("t:header",classname)==0)      icon_name="cardpeek-header";      	break;

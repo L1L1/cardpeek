@@ -1,8 +1,8 @@
 /********************************************************************** 
 *
-* This file is part of Cardpeek, the smartcard reader utility.
+* This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by 'L1L1'
+* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -52,5 +52,7 @@ gboolean luax_variable_set_integer(const char *vname, int value);
 gboolean luax_variable_get_boolean(const char *vname);
 
 gboolean luax_variable_set_boolean(const char *vname, gboolean value);
+
+gboolean luax_variable_is_defined(const char *vname);
 
 #endif

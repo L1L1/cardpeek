@@ -1,8 +1,8 @@
 /********************************************************************** 
 *
-* This file is part of Cardpeek, the smartcard reader utility.
+* This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by 'L1L1'
+* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -63,11 +63,19 @@ static int update_smartcard_list_txt(void)
     const char* smartcard_list_download = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_DOWNLOAD);
     FILE* smartcard_list;
     char *url;
-    int retval = 0;    
     char user_agent[100];
     time_t now = time(NULL);
     unsigned next_update = (unsigned)luax_variable_get_integer("cardpeek.smartcard_list.next_update");
     GtkWidget *progress;
+    int retval = 0;
+
+    if (!luax_variable_is_defined("cardpeek.smartcard_list"))
+    {
+        luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
+	luax_variable_set_integer("cardpeek.smartcard_list.next_update",0);
+	luax_variable_set_strval("cardpeek.smartcard_list.url", 
+                                 "http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt");
+    }
 
     if (luax_variable_get_boolean("cardpeek.smartcard_list.auto_update")!=TRUE)
     {
@@ -78,7 +86,7 @@ static int update_smartcard_list_txt(void)
     if (now<next_update) return 0;
 
     switch (gui_question("The local copy of the ATR database may be outdated.\nDo you whish to do an online update?",
-                         "Yes","No, ask me again later","No, always use the local copy")) 
+                         "Yes","No, ask me again later","No, always use the local copy",NULL)) 
     {
         case 0:
             break;
@@ -105,7 +113,7 @@ static int update_smartcard_list_txt(void)
 
     if (curl) 
     {
-        g_sprintf(user_agent,"cardpeek %s (this is a test)",VERSION); 
+        g_sprintf(user_agent,"cardpeek %s",VERSION); 
     
         smartcard_list = fopen(smartcard_list_download,"w");
         
@@ -138,6 +146,7 @@ static int update_smartcard_list_txt(void)
                 log_printf(LOG_ERROR,"Failed to copy smartcard_list.dowload as smartcard_list.txt: %s", strerror(errno));    
                 unlink(smartcard_list_download);
             }
+	    /* update again in a month */
             luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+30*(24*3600)));
         }
 
@@ -150,7 +159,7 @@ static int update_smartcard_list_txt(void)
 
     luax_config_table_save();
     g_free(url);
-    return 0;
+    return retval;
 }
 
 static int install_dot_file(void)
@@ -377,108 +386,108 @@ static struct option long_options[] = {
 
 int main(int argc, char **argv)
 {
-  cardmanager_t* CTX;
-  cardreader_t* READER;
-  int opt;
-  int opt_index = 0;
-  int run_gui = 1;
-  char* reader_name = NULL;
-  char* exec_command = NULL;
+	cardmanager_t* CTX;
+	cardreader_t* READER;
+	int opt;
+	int opt_index = 0;
+	int run_gui = 1;
+	char* reader_name = NULL;
+	char* exec_command = NULL;
 
-  signal(SIGSEGV, save_what_can_be_saved); 
-  
-  path_config_init();
-    
-  log_open_file();
+	signal(SIGSEGV, save_what_can_be_saved); 
 
-  while ((opt = getopt_long(argc,argv,"r:e:vh",long_options,&opt_index))!=-1) 
-  {
-	  switch (opt) {
-		case 'r':
-			reader_name = g_strdup(optarg);
-                        break;
-		case 'e':
-			exec_command = optarg;
-			break;
-		case 'v':
-			display_readers_and_version();
-			run_gui = 0;
-			break;
-		default:
-			display_help(argv[0]);
-			run_gui = 0;
-	  }
-  }
-   
-  if (run_gui)
-  {
-      /* if we want threads: 
-         gdk_threads_init(); 
-         gdk_threads_enter();
-       */
+	path_config_init();
 
-      gui_init(&argc,&argv);
+	log_open_file();
 
-	  gui_create();
+	while ((opt = getopt_long(argc,argv,"r:e:vh",long_options,&opt_index))!=-1) 
+	{
+		switch (opt) {
+			case 'r':
+				reader_name = g_strdup(optarg);
+				break;
+			case 'e':
+				exec_command = optarg;
+				break;
+			case 'v':
+				display_readers_and_version();
+				run_gui = 0;
+				break;
+			default:
+				display_help(argv[0]);
+				run_gui = 0;
+		}
+	}
 
-	  log_printf(LOG_INFO,"Running %s",system_string_info());
+	if (run_gui)
+	{
+		/* if we want threads: 
+		   gdk_threads_init(); 
+		   gdk_threads_enter();
+		 */
 
-	  install_dot_file(); 
+		gui_init(&argc,&argv);
 
-	  luax_init();
+		gui_create();
+
+		log_printf(LOG_INFO,"Running %s",system_string_info());
+
+		install_dot_file(); 
+
+		luax_init();
 
 
-	  CTX = cardmanager_new();
+		CTX = cardmanager_new();
 
-	  if (reader_name == NULL)
-	  {
-		  reader_name = gui_select_reader(cardmanager_count_readers(CTX),
-				                  cardmanager_reader_name_list(CTX));
-	  }
+		if (reader_name == NULL)
+		{
+			reader_name = gui_select_reader(cardmanager_count_readers(CTX),
+					cardmanager_reader_name_list(CTX));
+		}
 
-	  READER = cardreader_new(reader_name);
+		READER = cardreader_new(reader_name);
 
-	  cardmanager_free(CTX);
+		cardmanager_free(CTX);
 
-	  if (READER)
-	  {
-		  luax_set_card_reader(READER);
+		if (READER)
+		{
+			luax_set_card_reader(READER);
 
-		  cardreader_set_callback(READER,gui_readerview_print,NULL);
+			cardreader_set_callback(READER,gui_readerview_print,NULL);
 
-		  if (exec_command) 
-                g_idle_add(run_command_from_cli,exec_command);
-          else
-                update_smartcard_list_txt();
-          /*else
-                g_idle_add(run_update_checks,NULL);
-            */
-		  gui_run();
+			if (exec_command) 
+				g_idle_add(run_command_from_cli,exec_command);
+			else
+				update_smartcard_list_txt();
+			/*else
+			  g_idle_add(run_update_checks,NULL);
+			 */
+			gui_run();
 
-		  cardreader_free(READER);
-	  }
-	  else
-	  {
-		  fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
-		  log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
-	  }
+			cardreader_free(READER);
+		}
+		else
+		{
+			fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
+			log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
+		}
 
-	  luax_config_table_save();
+		luax_config_table_save();
 
-	  luax_release();
-        
-      /* if we want threads:
-         gdk_threads_leave();
-       */
-  }
+		luax_release();
 
-  if (reader_name) g_free(reader_name);
-  
-  log_close_file();
+		/* if we want threads:
+		   gdk_threads_leave();
+		 */
+	}
 
-  path_config_release();  
+	if (reader_name) g_free(reader_name);
 
-  return 0;
+	log_close_file();
+
+	path_config_release();  
+
+	return 0;
 }
 
 

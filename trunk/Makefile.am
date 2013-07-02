@@ -47,10 +47,8 @@ dot_cardpeek.tar.gz:    dot_cardpeek_dir
 cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
 			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"
 			@$(GLIB_COMPILE_RESOURCES) --generate-source --sourcedir=. --sourcedir=$(srcdir) --target=cardpeek_resources.c $(srcdir)/cardpeek_resources.gresource.xml
-			@echo "  CC       cardpeek_resource.c"
-			@$(COMPILE) -c cardpeek_resources.c
+			$(AM_V_CC)$(COMPILE) -c cardpeek_resources.c
 
 smartcard.$(OBJEXT):	smartcard.c smartcard.h $(DRIVERS)
-			@echo "  CC       $<"
-			@$(COMPILE) -c $<
+			$(AM_V_CC)$(COMPILE) -c $<
 

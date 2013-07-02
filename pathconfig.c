@@ -1,8 +1,8 @@
 /**********************************************************************
 *
-* This file is part of Cardpeek, the smartcard reader utility.
+* This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by 'L1L1'
+* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ int path_config_init(void)
 {
     char path_config_path[PATH_MAX];
     char cwd_path[PATH_MAX];
-    char *home;
+    const char *home;
     unsigned i;
 
     home = getenv("CARDPEEK_HOME");
@@ -88,6 +88,7 @@ const char *path_config_get_string(unsigned c_index)
 {
     if (c_index>NUM_PATH_CONFIG_OPTIONS)
         return NULL;
+	
     return PATH_CONFIG_STRING[c_index];
 }
 

@@ -70,7 +70,6 @@ LFI_LIST = {
   { "Counters",         "/2000/2060", "file" },
   { "Counters",         "/2000/2061", "file" },
   { "Counters",         "/2000/2062", "file" },
---  { "Contracts", "/2000/2030" }, -- this is a copy of 0x2050
   { "Special events",   "/2000/2040", "file" },
   { "Contract list",    "/2000/2050", "file" },
   { "Counters",         "/2000/2069", "file" },
@@ -98,11 +97,16 @@ function calypso_select(ctx,desc,path,klass)
 			file_node = parent_node:find_first({id=item})
 			if file_node==nil then
 				file_node = parent_node:append{ classname = klass,
-		                                                label = desc,
-							        id = item }
+                                                label = desc,
+                                                id = item }
 			end
 			parent_node = file_node
 		end
+
+        if resp and #resp>0 then
+            parent_node:append{ classname="header", label="answer to select", size=#resp, val=resp}
+        end
+
 		return file_node
 	end
 	return nil
@@ -123,16 +127,18 @@ function calypso_guess_network(cardenv)
 				local country_bin = data:sub(13,24)
 				local network_bin = data:sub(25,36)
 				local country_num = tonumber(country_bin:convert(4):format("%D"))
-			       	local network_num = tonumber(network_bin:convert(4):format("%D"))
+			    local network_num = tonumber(network_bin:convert(4):format("%D"))
 
 				if country_num==250 or country_num==56 then
 					return country_num, network_num
 				end
 				
 				country_bin = data:sub(3,14)
+                network_bin = data:sub(15,22)
 				country_num = tonumber(country_bin:convert(4):format("%D"))
+			    network_num = tonumber(network_bin:convert(4):format("%D"))
 				if country_num==376 then
-					return 376,0
+					return 376,network_num
 				end
 
 				log.print(log.WARNING,"Unknown Calypso card.")
@@ -162,8 +168,8 @@ function calypso_process(cardenv)
 	for lfi_index,lfi_desc in ipairs(LFI_LIST) do
 		lfi_node = calypso_select(cardenv,lfi_desc[1],lfi_desc[2], lfi_desc[3])
 		
-		if lfi_node then
-	        	local record
+		if lfi_node and lfi_desc[3]=="file" then
+            local record
 			for record=1,255 do
 				sw,resp=card.read_record(0,record,0x1D)
 				if sw ~= 0x9000 then
@@ -202,7 +208,7 @@ if card.connect() then
 
   CARD = card.tree_startup("CALYPSO")
  
-  sw = card.select("#2010")
+--[[  sw = card.select("#315449432e494341")
   if sw==0x9000 then
      sel_method = SEL_BY_LFI
   else
@@ -216,8 +222,9 @@ if card.connect() then
   end 
 
   if sw~=0x6E00 then
+--]]
       calypso_process(CARD)
-  end
+--  end
 
   card.disconnect()
 else

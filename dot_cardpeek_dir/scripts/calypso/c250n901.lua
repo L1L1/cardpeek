@@ -96,7 +96,7 @@ function navigo_process_events(cardenv,node_label)
 	    ref_node:set_attribute("alt",code_transport_string.." - "..code_transition_string)
 
 	    -- service_provider_value == RATP and code_transport in { metro, tram, train } ? 
-	    if (service_provider_value==3 or service_provider_value==5) and code_transport>=3 and code_transport<=5 then
+	    if (service_provider_value==3 or service_provider_value==2) and code_transport>=3 and code_transport<=5 then
 	       ref_node = record_node:find_first({label="EventLocationId"})
 	       location_id_value = bytes.tonumber(ref_node:get_attribute("val"))
 	       sector_id = bit.SHR(location_id_value,9)

@@ -24,7 +24,7 @@
 # You can get the latest version of this file from:
 # http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt
 #
-# $Id: smartcard_list.txt 6636 2013-05-26 11:13:42Z rousseau $
+# $Id: smartcard_list.txt 6679 2013-06-30 15:22:28Z rousseau $
 #
 
 # syntax:
@@ -576,6 +576,10 @@
 3B 3D 94 00 44 4D 54 11 00 06 06 17 62 11 00 30 00
 	China Unicom SIM card
 
+3B 3D 95 00 80 67 AF 03 0F 01 7C 06 0E 83 3E 9F 16
+	(Sprint) Nextel USA iDEN SIM card
+	http://www.sprint.com/index_n.html?brand=Nextel
+
 3B 3E 94 00 80 31 00 73 FE 21 13 62 00 31 83 81 90 00
 	Vodafone (Italy) 64kB GSM SIM card
 
@@ -719,6 +723,12 @@
 3B 65 00 00 20 63 CB A3 A0
 	VISA card from Banque Populaire
 
+3B 65 00 00 20 63 CB A7 20
+	ING Direct (French Bank) Gold MasterCard
+
+3B 65 00 00 20 63 CB A8 A0
+	HSBC VISA Card
+
 3B 65 00 00 20 63 CB AB 80
 	Portugal Caixa Geral de Depósitos Mastercard "Caixa Classic"
 
@@ -734,6 +744,9 @@
 3B 65 00 00 58 01 01 00 80
 	RBS Advanta Platinum Reserve Master Card
 	UK Lloyds TSB Visa Debit (issued 2003, Gemplus)
+
+3B 65 00 00 9C 02 02 01 02
+	Dectel CI692
 
 3B 65 00 00 9C 02 02 07 02
 	US Department of Defense, TEST Common Access Card (CAC)
@@ -906,6 +919,7 @@
 3B 68 00 00 00 73 C8 40 11 00 90 00
 	Woolworths Everyday Money prepaid Mastercard
 	Nordea Bank Norway Visa + national debet card [BankAxept]
+	VISA Classic - Nordlandsbanken (Norway)
 
 3B 68 00 00 00 73 C8 40 12 00 90 00
 	Brazilian "e-CPF" card
@@ -1564,10 +1578,16 @@
 3B 6F 00 00 80 5A 0A 07 06 20 04 2B 10 5A 8F 94 82 90 00
 	Rav-Kav, Used by Israeli public transportation companies (Transport)
 
+3B 6F 00 00 80 5A 28 13 02 10 12 2B 92 92 E6 42 82 90 00
+	Transport card in côte d'or France (mobigo)
+
 3B 6F 00 00 80 5A 29 13 09 10 11 3[3,5] .. .. .. .. 82 90 00
 	MOBIB (reseau transport en commun Bruxelles, Belgique)
 	http://www.uclouvain.be/sites/security/mobib.html
 	Calypso application similar to French NAVIGO
+
+3B 6F 00 00 80 5A 2C 23 C2 10 10 05 .. .. .. .. 82 90 00
+	MOBIB (reseau transport en commun Bruxelles, Belgique)
 
 3B 6F 00 00 80 5A 43 4F 4C 44 00 00 00 00 00 00 82 90 00
 	LBB Berlin, MasterCard (ADAC branding?)
@@ -1578,6 +1598,10 @@
 
 3B 6F 00 00 80 66 45 46 01 38 18 03 53 02 31 24 82 90 00
 	Electronic purse of the Universidad Politecnica of Madrid (provided by Banco Santander)
+
+3B 6F 00 00 80 66 45 46 01 38 18 03 53 07 61 04 82 90 00
+	Vitrasa Card municipal city card for Vigo, Spain. Electronic wallet for paying bus transportation.
+	http://www.vitrasa.es/php/index.php
 
 3B 6F 00 00 80 66 57 59 01 00 08 03 53 07 61 14 82 90 00
 	E-money Vitrasa Card - Public transport in Vigo
@@ -1824,6 +1848,9 @@
 
 3B 7D 96 00 00 80 31 80 65 B0 83 11 11 AC 83 00 90 00
 	GEMALTO WM GX4 72 DHS TSA
+
+3B 7D 96 00 00 80 31 80 65 B0 83 11 11 E5 83 00 90 00
+	eCPF (Cadastro de Pessoas Físicas) from Imprensa Oficial do Brasil
 
 3B 7D 96 00 00 80 31 80 65 B0 83 11 13 AC 83 00 90 00
 	CAC card (GEMALTO GCX4 72K DI)
@@ -2181,6 +2208,9 @@
 3B 86 80 01 4A 43 4F 50 33 31 13
 	JCOP BIO 31 Contactless Card
 
+3B 86 80 01 4B 4F 4E 41 14 11 09
+	Mastercard paypass enabled credit card
+
 3B 86 81 31 70 34 45 50 41 20 45 4B 08
 	Austrian Quick E-purse "Einreichkarte" (transfer card) (http://www.quick.at/)
 
@@ -2228,11 +2258,15 @@
 	http://wiki.forum.nokia.com/index.php/Nokia_6131_NFC_-_FAQs
 	Giesecke & Devrient’s (G&D) Sm@rtCafé Expert 3.1
 
+3B 88 80 01 04 02 00 20 00 71 C1 40 DF
+	Seoul Citypass+ T-Money Card
+
 3B 88 80 01 31 CC CC 01 77 81 C1 00 0E
 	Ideal v 1.4 (Transport)
 
 3B 88 80 01 4A 43 4F 50 76 32 34 31 5E
 	RFID - ISO 14443 Type A - NXP JCOP
+	NXP J3A081 JavaCard (contactless interface)
 
 3B 88 80 01 C9 12 07 52 02 00 81 10 14
 	electronic Tickes from the german Transport Association VGN (Verkehrsgemeinschaft Niederrhein)
@@ -2365,6 +2399,10 @@
 3B 8C 80 01 50 7F 9C 66 8A 00 00 00 00 00 81 87 54
 	NFC Mastercard issued by CSOB bank Czech Republic, first 4 digits 5168
 
+3B 8C 80 01 80 5A 41 4B 44 65 44 4C 76 31 2E 30 AD
+	Electronic driving license card
+	http://www.akd.hr/?p=10
+
 3B 8C 80 01 80 91 E1 65 D0 00 43 00 00 82 90 00 19
 	French passport (issued in late 2008)
 
@@ -2395,6 +2433,9 @@
 
 3B 8E 80 01 80 31 80 66 40 90 89 12 08 02 83 01 90 00 0B
 	ISO 14443B Type T = CL Infineon Card
+
+3B 8E 80 01 80 31 80 66 B0 07 03 00 AC 01 83 00 90 00 52
+	BCA Flazz Card (Bank) www.bca.com
 
 3B 8E 80 01 80 31 80 66 B0 84 0C 01 6E 01 83 00 90 00 1D
 	Barclaycard Platinum contact/contactless (wave)
@@ -2789,6 +2830,10 @@
 3B 98 96 00 93 94 03 07 03 04 04 04
 	SIM card
 
+3B 98 96 00 93 94 03 08 05 03 03 03
+	SIMple Mobile SIM Card
+	http://www.simplemobile.com
+
 3B 99 18 00 11 88 22 33 44 55 66 77 60
 	sysmocom sysmoSIM-GR1
 
@@ -2916,6 +2961,9 @@
 3B 9E 96 80 1F 83 80 31 E0 73 FE 21 12 66 55 57 4E 41 32 33 91
 	TDC mobile UICC (Telecommunication)
 
+3B 9E 96 80 1F C3 80 31 E0 73 FE 21 1B 66 D0 01 7B 98 0D 00 EB
+	Lycamobile Pay As You Go SIM
+
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 00 28 24 01 00 0D
 	United Mobile SIM
 
@@ -2939,6 +2987,7 @@
 
 3B 9F 11 40 60 49 52 44 45 54 4F 20 41 43 53 20 56 36 2E 30
 	skylink, Pay TV, http://www.skylink.cz
+	T-Mobile Czech Republic, Irdeto Satellite TV encryption card
 
 3B 9F 11 80 1F C3 80 31 E0 73 FE 21 1B 64 07 53 63 01 82 90 00 74
 	Cingular SIM
@@ -3069,6 +3118,9 @@
 	sysmocom sysmoUSIM-GR1
 	http://sysmocom.de/
 
+3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 05 2E 32 34 00
+	SIM card
+
 3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 0E 07 32 30 00 99
 	Bell Canada 3G SIM
 
@@ -3177,6 +3229,9 @@
 
 3B 9F 96 80 1F C7 80 31 E0 73 FE 21 1B 64 40 41 12 00 82 90 00 D2
 	Free Mobile SIM Card
+
+3B 9F 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 01 6B 82 0E 18 01 FE
+	Telekom Deutschland GmbH - Xtra Data Karte (3G SIM)
 
 3B 9F 96 80 1F C7 80 31 E0 73 FE 21 1B B3 E2 03 94 83 0F 90 00 6D
 	GemXplore 3G v2.2
@@ -3402,6 +3457,9 @@
 
 3B BC 18 00 81 31 20 75 5A 43 33 2E 31 32 20 52 45 56 20 41 46
 	ZeitControl BasicCard Enhanced 3.7, http://www.basiccard.com/
+
+3B BC 18 00 81 31 20 75 5A 43 33 2E 31 34 20 52 45 56 20 44 45
+	ZeitControl BasicCard Enhanced 3.14 Rev D, http://www.basiccard.com/
 
 3B BC 94 00 40 14 47 47 33 48 33 35 58 53 32 30 30 30
 	GSM-SIM Era-PL
@@ -3776,6 +3834,7 @@
 
 3B E6 00 FF 81 31 FE 45 44 49 20 30 32 4D 70
 	Alior Sync (Poland) - MasterCard Debit Card with PayPass (Bank)
+	MasterCard Contactless Debit Card issued by Raiffeisen Bank in Czech Republic
 
 3B E6 00 FF 81 31 FE 45 44 49 20 30 32 56 6B
 	VISA credit card (DKB)
@@ -3815,6 +3874,7 @@
 	EMV (MasterCard) card, issued by Raiffeisen Bank in Russia
 	"Deutsche Kreditbank AG" Visa Card produced by AustriaCard GNC
 	All cards (MasterCard, Maestro, VISA Electron) issued by Raiffeisen Bank in Romania
+	EMV (MasterCard) Card, issued by Raiffeisen Bank in Czech Republic
 
 3B E8 00 00 81 31 20 45 00 73 C8 40 00 00 90 00 56
 	Visa credit card for Standard Chartered, Taiwan
@@ -3837,6 +3897,9 @@
 	Visa Card - Maximum - Oyak Bank / Turkey
 	VISA, issued by Austrian bank "Erste Bank"
 	VISA card, issued by the Latvian bank "Latvijas Krajbanka"
+
+3B E9 00 00 81 31 FE 45 43 44 32 69 09 00 00 00 00 B7
+	Swiss UBS MasterCard Creditcard
 
 3B E9 00 00 81 31 FE 45 45 4D 56 20 30 33 20 20 06 99
 	Visa credit card
@@ -4188,9 +4251,17 @@
 	NXP JCOP2.4.1
 	J3A080 80KB T=1 GP2.1.1 JC2.2.2 SCP02
 
+3B F8 18 00 00 81 31 FE 45 4A 43 4F 50 76 32 34 31 BC
+	NXP J2A080 JavaCard
+
+3B F8 18 00 FF 81 31 FE 45 00 73 C8 40 00 00 90 00 7F
+	NXP JCOP 10
+	NXP JCOP 31 (contact interface)
+
 3B F8 18 00 FF 81 31 FE 45 4A 43 4F 50 76 32 34 31 43
 	VIVOtech SAM
 	NXP JCOP V241
+	NXP J3A081 JavaCard (contact interface)
 
 3B F9 13 00 00 81 31 FE 45 4A 43 4F 50 32 34 .. .. .. ..
 	NXP JCOP v2.4.x (see hist bytes for more info)
@@ -4233,6 +4304,9 @@
 3B FA 11 00 02 40 60 43 C6 02 F8 03 03 00 00 90 00
 	DeLaRue DX(?)
 
+3B FA 13 00 00 81 31 FE 15 59 75 62 69 6B 65 79 4E 45 4F A6
+	Yubikey NEO
+
 3B FA 13 00 00 81 31 FE 45 44 65 78 61 20 43 46 20 76 31 98
 	Dexa Systems Crossfire Card (PKI)
 	http://www.dexasystems.com/products-services/products/dexa-smartcards-credential-tokens-peripherals
@@ -4262,6 +4336,10 @@
 	NXP J3A 40K
 	Java Card v2.2.2 - Global Platform v2.2.1
 	Dual-interface functionality (features 1K Mifare emulation)
+
+3B FA 18 00 00 81 31 FE 45 4A 33 41 30 38 31 56 32 34 31 89
+	NXP JCOP CJ3A081
+	http://www.usmartcards.com/media/downloads/492/NXP%20P5CX012%2002X%2040%2073%2080%20144%20%20%202011.pdf
 
 3B FA 18 00 00 81 31 FE 45 4A 43 4F 50 34 31 56 32 32 31 9D
 	NXP JCOP 41 v2.2.1 72k SmartCard I/F
@@ -5078,6 +5156,9 @@
 
 3F FF 14 25 03 10 80 54 B0 01 69 FF 4A 50 70 00 00 4B 57 01 00 00
 	PayTV Card Kabel BW (www.kabelbw.de), Encryption: NDS by Videoguard, Distribution Standard: DVB-C
+
+3F FF 3F 3F 3F 3F 00 3F 3F FF 3F 3F 3F 3F 3F FF 3F FF 95 3F FF 95 3F FF
+	Premium joker card to see Spanish TDT premium (goltv)
 
 3F FF 95 00 FF 91 81 71 .. 47 00 .. 4. 4. .. .. 3. 3. 3. 20 .. 65 7. .. .. .. ..
 	Nagravision TV CAM card — http://en.wikipedia.org/wiki/Nagravision

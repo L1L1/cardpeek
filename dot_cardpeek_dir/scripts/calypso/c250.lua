@@ -136,7 +136,7 @@ intercode_Contract = {
 	[3] = { en1545_TIME, 11, "ContractEndTime" },
 	[4] = { en1545_UNDEFINED, 8, "ContractDuration" },
 	[5] = { en1545_DATE, 14, "ContractLimitDate" },
-	[6] = { en1545_UNDEFINED, 8, "ContractZones" },
+	[6] = { en1545_ZONES, 8, "ContractZones" },
 	[7] = { en1545_UNDEFINED, 16, "ContractJourneys" },
 	[8] = { en1545_UNDEFINED, 16, "ContractPeriodJourneys" },
       }},

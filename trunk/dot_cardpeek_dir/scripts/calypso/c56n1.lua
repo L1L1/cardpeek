@@ -120,7 +120,7 @@ function mobib_process_event(ref)
 	mobib_process_block(ref,"EventDataTimeFirstStamp",200,210,block,en1545_TIME)
 	
 	mobib_process_block(ref,"EventCountOfCoupons",139,161,block,en1545_NUMBER)
-	transport_type = mobib_process_block(ref,"EventTransportType",99,104,block,mobib_TRANSPORT)
+	transport_type = mobib_process_block(ref,"EventTransportType",99,103,block,mobib_TRANSPORT)
 	if transport_type=="metro" or transport_type=="premetro" then
 		mobib_process_block(ref,"EventLocationId",104,120,block,mobib_TRANSPORT_METRO)
 		ref2 = ref:find_first({label="EventLocationId"})	

@@ -208,7 +208,7 @@ if card.connect() then
 
   CARD = card.tree_startup("CALYPSO")
  
---[[  sw = card.select("#315449432e494341")
+  sw = card.select("#2000")
   if sw==0x9000 then
      sel_method = SEL_BY_LFI
   else
@@ -222,9 +222,8 @@ if card.connect() then
   end 
 
   if sw~=0x6E00 then
---]]
       calypso_process(CARD)
---  end
+  end
 
   card.disconnect()
 else

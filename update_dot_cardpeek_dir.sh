@@ -37,7 +37,7 @@ if [ -d ~/.cardpeek ]; then
             mkdir -p "$DOT_CARDPEEK_DIR/$i"
             MODIFIED='yes' 
         fi
-     else
+     elif (diff -q "$i" "$DOT_CARDPEEK_DIR/$i" | grep differ) &> /dev/null; then
         if [ "$i" -nt "$DOT_CARDPEEK_DIR/$i" ]; then
             echo ">> $i is newer than $DOT_CARDPEEK_DIR/$i"
             if [ $TODO = "update" ]; then
@@ -54,16 +54,17 @@ if [ -d ~/.cardpeek ]; then
      fi
   done 
 
-  if [ $TODO = "update" -a $MODIFIED = 'yes' ]; then
-     echo "## Removing unecessary files and updating directory modfication time:"
-     rm -vf $DOT_CARDPEEK_DIR/replay/* 
-     touch $DOT_CARDPEEK_DIR
+  if [ "$TODO" = "update" ]; then
+     if [ "$MODIFIED" = 'yes' ]; then
+        echo "## Removing unecessary files and updating directory modfication time:"
+        rm -vf $DOT_CARDPEEK_DIR/replay/* 
+        touch $DOT_CARDPEEK_DIR
 
-     echo "## Set version info:"
-     echo "   Version ID is now $VERSION"
-     echo $VERSION > $DOT_CARDPEEK_DIR/version
-     echo $VERSION > ~/.cardpeek/version
-     cat > "$SOURCE_DIR/script_version.h" << __EOF
+        echo "## Set version info:"
+        echo "   Version ID is now $VERSION"
+        echo $VERSION > $DOT_CARDPEEK_DIR/version
+        echo $VERSION > ~/.cardpeek/version
+        cat > "$SOURCE_DIR/script_version.h" << __EOF
 #ifndef SCRIPT_VERSION_H
 #define SCRIPT_VERSION_H
 
@@ -71,8 +72,9 @@ if [ -d ~/.cardpeek ]; then
 
 #endif
 __EOF
-  else
-    echo "## No updates needed."
+     else
+        echo "## No updates performed."
+     fi
   fi
   echo "## Done"
 else

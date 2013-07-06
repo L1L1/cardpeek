@@ -75,6 +75,25 @@ end
 function en1545_AMOUNT(source)
         return string.format("%.2f euros",bytes.tonumber(source)/100)
 end
+function en1545_ZONES(source)
+	local zones = bytes.tonumber(source)
+	local n = 8
+	local maxzone = 0
+	local minzone
+	while n >= 1 do
+		if zones >= 2^(n-1) then
+			if maxzone == 0 then
+				maxzone = n
+			end
+			zones = zones - 2^(n-1)
+			if zones == 0 then
+				minzone = n
+			end
+		end
+		n = n - 1
+	end
+	return string.format("%d-%d",minzone,maxzone)
+end
 
 function en1545_UNDEFINED(source)
         local hex_info = source:convert(8)

@@ -167,7 +167,7 @@ function RavKav_parseBits(data, bitOffset, nBits, REC, a_label, func, a_id)
 	local NEW_REF = nil
 	if REC then
 	    NEW_REF = nodes.append(REC, {classname="item", label=a_label, id=a_id, size=nBits })
-        nodes.set_attribute(NEW_REF,"val", bytes.convert(8, valData))
+        nodes.set_attribute(NEW_REF,"val", bytes.convert(valData,8))
         nodes.set_attribute(NEW_REF,"alt", value)
     end
 	return bitOffset + nBits, value, NEW_REF, intVal
@@ -210,7 +210,7 @@ function RavKav_calculateMonthEnd(dateSeconds, addMonths)
 end
 
 function RavKav_BCD_DATE(source)
-	local dob = tostring(bytes.convert(8, source))
+	local dob = tostring(bytes.convert(source,8))
 	local dobYear   = string.sub(dob, 1, 4)
 	local dobMonth  = string.sub(dob, 5, 6)
 	local dobDay    = string.sub(dob, 7, 8)
@@ -326,7 +326,7 @@ function RavKav_getField(SRC_REF, a_label, a_id)
     local REF = nodes.find_first(SRC_REF, {label=a_label, id=a_id})
     if REF then
         data = nodes.get_attribute(REF,"val")
-        text = ui.tree_get_alt_value(REF)
+        text = nodes.get_attribute(REF,"alt")
     end
     return REF, data, text
 end
@@ -371,7 +371,7 @@ function RavKav_parseEnvironment(ENV_REF, nRec)
     local record = nodes.get_attribute(ENV_REC_REF,"val")
     if nil == record then return false end
 
-    local data = bytes.convert(1, record)
+    local data = bytes.convert(record,1)
 
     local bitOffset = 0
     bitOffset = RavKav_parseBits(data, bitOffset,  3, ENV_REC_REF, "Version number",        en1545_NUMBER)
@@ -413,7 +413,7 @@ function RavKav_parseCounter(CNTRS_REF, nRec)
     if CNTR_REC_REF then
         local record = nodes.get_attribute(CNTR_REC_REF,"val")
         if record then
-            local data = bytes.convert(1, record)
+            local data = bytes.convert(record,1)
             local bitOffset = 0
             local maxCounters = math.floor(#data / 24)
             local nRec, nCnt
@@ -448,7 +448,7 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     local record = nodes.get_attribute(EVENT_REC_REF,"val")
     if nil == record then return end
 
-    local data = bytes.convert(1, record)
+    local data = bytes.convert(record,1)
 
 	if bytes.is_all(data, 0) then return end
 
@@ -583,7 +583,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
     local record = nodes.get_attribute(CONTRACT_REC_REF,"val")
     if nil == record then return end
 
-    local data = bytes.convert(1, record)
+    local data = bytes.convert(record,1)
 	if bytes.is_all(data, 0) then 
         nodes.set_attribute(CONTRACT_REC_REF,"alt","empty")
         return 
@@ -722,7 +722,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
 
         if 15 == validityType then  --end of validity locations
             log.print(log.DBG, string.format("Contract %d: Validity location[%d]: validityType: 15 (end of validity locations)", nRec, nLoc))
-            ui.tree_delete_node(LOC_REF)
+            nodes.remove(LOC_REF)
             break
         end
 

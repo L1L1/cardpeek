@@ -585,9 +585,13 @@ static const struct luaL_Reg byteslib_f [] = {
 int luaopen_bytes(lua_State* L) 
 {
   luaL_newmetatable(L, "bytes.type");
-  luaL_register(L, NULL, byteslib_m); /* metatable.* = byteslib_m */
-  luaL_register(L, "bytes", byteslib_f);
-
+  lua_pushstring(L, "__index");
+  lua_pushvalue(L, -2);  /* pushes the metatable */
+  lua_settable(L, -3);  /* metatable.__index = metatable */
+  luaL_setfuncs(L, byteslib_m, 0);
+  luaL_newlib(L, byteslib_f);
+  lua_setglobal(L,"bytes");
+  lua_pop(L,1); /* pop the metatable */ 
   return 1;
 }
 

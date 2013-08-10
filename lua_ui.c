@@ -71,6 +71,8 @@ static int subr_ui_load_view(lua_State* L)
         " menu instead to open this file.",filename_base(filename));
   }
 
+  dyntree_model_iter_remove(gui_cardview_get_store(),NULL);
+
   retval =  dyntree_model_iter_from_xml_file(gui_cardview_get_store(),NULL,filename);
   
   lua_pushboolean(L,retval);
@@ -93,7 +95,7 @@ static int subr_ui_question(lua_State* L)
   else
     message = "";
 
-  item_count = lua_objlen(L,2);
+  item_count = lua_rawlen(L,2);
   items = malloc(sizeof(char *)*item_count);
   for (i=0;i<item_count;i++)
   {
@@ -195,7 +197,7 @@ static int subr_ui_exit(lua_State* L)
   return 0;
 }
 
-static const struct luaL_reg uilib [] = {
+static const struct luaL_Reg uilib [] = {
   {"save_view",subr_ui_save_view },
   {"load_view",subr_ui_load_view },
   {"readline",subr_ui_readline },
@@ -208,7 +210,8 @@ static const struct luaL_reg uilib [] = {
 
 int luaopen_ui(lua_State* L)
 {
-  luaL_openlib(L, "ui", uilib, 0);
+  luaL_newlib(L, uilib);
+  lua_setglobal(L,"ui");
   return 1;
 }
 

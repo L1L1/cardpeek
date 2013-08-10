@@ -104,7 +104,7 @@ static int run_file(lua_State* L, const char *filename)
     }
     line_num = 0;
     lua_pushcfunction(L,print_debug_message);
-    if (lua_load(L,read_chunk,input,filename)!=0)
+    if (lua_load(L,read_chunk,input,filename,NULL)!=0)
     {
         log_printf(LOG_ERROR,"Syntax error on line %i in %s",line_num,filename);
         return 0;
@@ -145,7 +145,7 @@ void run_card_shell(lua_State* L)
 
 static lua_State* x_lua_begin(void)
 {
-    lua_State* L = lua_open();
+    lua_State* L = luaL_newstate();
     luaL_openlibs(L);
     log_printf(LOG_DEBUG,"Lua is loaded.");
     return L;
@@ -231,8 +231,8 @@ int luax_init(void)
     lua_newtable(LUA_STATE);
     lua_setglobal(LUA_STATE,"cardpeek");
 
-    config_lua = path_config_get_string(PATH_CONFIG_FILE_CONFIG);
-    cardpeekrc_lua = path_config_get_string(PATH_CONFIG_FILE_RC);
+    config_lua = path_config_get_string(PATH_CONFIG_FILE_CONFIG_LUA);
+    cardpeekrc_lua = path_config_get_string(PATH_CONFIG_FILE_CARDPEEK_RC);
 
     chdir(path_config_get_string(PATH_CONFIG_FOLDER_CARDPEEK));
 
@@ -374,7 +374,7 @@ void internal_save_table(FILE *cf, int depth)
 
 gboolean luax_config_table_save(void)
 {
-    FILE *cf = fopen(path_config_get_string(PATH_CONFIG_FILE_CONFIG),"w");
+    FILE *cf = fopen(path_config_get_string(PATH_CONFIG_FILE_CONFIG_LUA),"w");
 
     if (cf==NULL)
     {

@@ -71,12 +71,12 @@ Please install the libpcsclite library first.]))
     ;;
 esac
 
-AM_PATH_PACKAGE([lua-5.1],[LUA],,[
-  AM_PATH_PACKAGE([lua5.1],[LUA],,[
-    AM_PATH_PACKAGE(['lua >= 5.1'],[LUA],,[
-AC_MSG_ERROR([Could not find lua 5.1-dev. 
-This program requires the lua 5.1 library. 
-Please install the lua 5.1 library first.])
+AM_PATH_PACKAGE([lua-5.2],[LUA],,[
+  AM_PATH_PACKAGE([lua5.2],[LUA],,[
+    AM_PATH_PACKAGE(['lua >= 5.2'],[LUA],,[
+AC_MSG_ERROR([Could not find lua 5.2-dev. 
+This program requires the lua 5.2 development library. 
+Please install the lua 5.2 library first.])
 ])
 ])
 ])

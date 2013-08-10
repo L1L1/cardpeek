@@ -181,7 +181,7 @@ static int subr_asn1_enable_single_byte_length(lua_State* L)
 }
 
 
-static const struct luaL_reg asn1lib [] = {
+static const struct luaL_Reg asn1lib [] = {
   {"join",                       subr_asn1_join },
   {"split",                      subr_asn1_split },
   {"split_tag",                  subr_asn1_split_tag },
@@ -192,6 +192,8 @@ static const struct luaL_reg asn1lib [] = {
 
 int luaopen_asn1(lua_State* L)
 {
-  luaL_openlib(L,"asn1",asn1lib,0);
+  luaL_newlib(L,asn1lib);
+  lua_setglobal(L,"asn1");
+  /* luaL_openlib(L,"asn1",asn1lib,0); */
   return 1;
 }

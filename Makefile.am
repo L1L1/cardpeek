@@ -40,9 +40,7 @@ dist-hook:
 
 dot_cardpeek.tar.gz:    dot_cardpeek_dir	
 			@echo "  TAR      $<"
-			@cp -R $(srcdir)/dot_cardpeek_dir .cardpeek
-			@chmod -R u+w .cardpeek/
-			@tar czf dot_cardpeek.tar.gz --exclude=.svn .cardpeek
+			tar czf dot_cardpeek.tar.gz --directory $(srcdir)/dot_cardpeek_dir --exclude=.svn .
 
 cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
 			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"

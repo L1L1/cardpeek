@@ -34,21 +34,19 @@ static int subr_log_print(lua_State* L)
   return 0;
 }
 
-static const struct luaL_reg loglib [] = {
+static const struct luaL_Reg loglib [] = {
   { "print", subr_log_print },
   { NULL, NULL}  /* sentinel */
 };
 
 int luaopen_log(lua_State* L)
 {
-  luaL_openlib(L, "log", loglib, 0);
-
-  lua_getglobal(L, "log");
+  luaL_newlib(L,loglib);
   lua_pushstring(L,"GOOD");    lua_pushinteger(L, 0); lua_settable(L,-3);
   lua_pushstring(L,"INFO");    lua_pushinteger(L, 1); lua_settable(L,-3);
   lua_pushstring(L,"WARNING"); lua_pushinteger(L, 2); lua_settable(L,-3);
   lua_pushstring(L,"ERROR");   lua_pushinteger(L, 3); lua_settable(L,-3);
-  lua_pop(L,1);
+  lua_setglobal(L, "log");
 
   return 1;
 }

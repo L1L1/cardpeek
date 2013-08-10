@@ -166,7 +166,7 @@ static int subr_card_log_clear(lua_State* L)
   return 0;  
 }
 
-static const struct luaL_reg cardlib [] = {
+static const struct luaL_Reg cardlib [] = {
   {"connect", subr_card_connect },
   {"disconnect", subr_card_disconnect },
   {"warm_reset", subr_card_warm_reset },
@@ -182,11 +182,10 @@ static const struct luaL_reg cardlib [] = {
 
 int luaopen_card(lua_State* L)
 {
-  luaL_openlib(L, "card", cardlib, 0);
-
-  lua_getglobal(L, "card");
+  
+  luaL_newlib(L, cardlib);
   lua_pushstring(L, "CLA"); lua_pushinteger(L, 0); lua_settable(L,-3);
-  lua_pop(L,1);
+  lua_setglobal(L,"card");
 
   return 1;
 }

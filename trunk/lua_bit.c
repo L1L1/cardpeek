@@ -66,7 +66,7 @@ static int subr_bit_shr(lua_State* L)
   return 1;
 }
 
-static const struct luaL_reg bitlib [] = {
+static const struct luaL_Reg bitlib [] = {
   { "AND", subr_bit_and },
   { "OR", subr_bit_or },
   { "XOR", subr_bit_xor },
@@ -77,7 +77,9 @@ static const struct luaL_reg bitlib [] = {
 
 int luaopen_bit(lua_State* L)
 {
-  luaL_openlib(L, "bit", bitlib, 0);
+  luaL_newlib(L,bitlib);
+  lua_setglobal(L,"bit");
+  /* luaL_openlib(L, "bit", bitlib, 0);*/
   return 1;
 }
 

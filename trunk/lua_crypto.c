@@ -129,7 +129,7 @@ static int subr_crypto_digest(lua_State* L)
   return 1;
 }
 
-static const struct luaL_reg cryptolib [] = {
+static const struct luaL_Reg cryptolib [] = {
   { "create_context", subr_crypto_create_context },
   { "encrypt", subr_crypto_encrypt },
   { "decrypt", subr_crypto_decrypt },
@@ -159,16 +159,15 @@ static const struct luaL_reg_integer cryptoconstants [] = {
 int luaopen_crypto(lua_State* L)
 {
   int i;
-  luaL_openlib(L, "crypto", cryptolib, 0);
+  luaL_newlib(L,cryptolib);
 
-  lua_getglobal(L, "crypto");
   for (i=0;cryptoconstants[i].name;i++)
   {
     lua_pushstring (L, cryptoconstants[i].name);    
     lua_pushinteger(L, cryptoconstants[i].value); 
     lua_settable(L,-3);
   }
-  lua_pop(L,1);
+  lua_setglobal(L,"crypto");
 
   return 1;
 }

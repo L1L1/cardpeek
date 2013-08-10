@@ -542,7 +542,7 @@ static int subr_nodes_to_xml(lua_State* L)
   iter = luaL_check_node_ref(L,1);
   if (internal_is_pseudo_root(iter)) iter = NULL;
 
-  res = dyntree_model_iter_to_xml(gui_cardview_get_store(),iter,FALSE);
+  res = dyntree_model_iter_to_xml(gui_cardview_get_store(),iter,TRUE);
   if (res==NULL)
   {  
     	lua_pushnil(L);
@@ -567,7 +567,7 @@ static int subr_nodes_append_xml(lua_State* L)
 
   xml = luaL_checkstring(L,2);
 
-  res = dyntree_model_iter_from_xml(gui_cardview_get_store(),iter,FALSE,xml,-1);
+  res = dyntree_model_iter_from_xml(gui_cardview_get_store(),iter,TRUE,xml,-1);
   
   lua_pushboolean(L,res);
   
@@ -590,7 +590,7 @@ static int subr_nodes_tostring(lua_State* L)
 }
 
 
-static const struct luaL_reg nodelib_f [] = {
+static const struct luaL_Reg nodelib_f [] = {
   {"root", subr_nodes_root },
   {"append", subr_nodes_append },
   {"children", subr_nodes_children },
@@ -606,7 +606,7 @@ static const struct luaL_reg nodelib_f [] = {
   {NULL,NULL}  /* sentinel */
 };
 
-static const struct luaL_reg nodelib_m [] = {
+static const struct luaL_Reg nodelib_m [] = {
   {"__tostring", subr_nodes_tostring },
   {"append", subr_nodes_append },
   {"children", subr_nodes_children },
@@ -636,8 +636,10 @@ int luaopen_nodes(lua_State* L)
   lua_pushstring(L, "__index");
   lua_pushvalue(L, -2);  /* pushes the metatable */
   lua_settable(L, -3);  /* metatable.__index = metatable */
-  luaL_openlib(L, NULL, nodelib_m, 0);
-  luaL_openlib(L, "nodes", nodelib_f, 0);
+  luaL_setfuncs(L, nodelib_m, 0);
+  luaL_newlib(L, nodelib_f);
+  lua_setglobal(L,"nodes");
+  lua_pop(L,2); /* pop the two metatables */
   return 1;
 }
 

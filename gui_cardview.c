@@ -104,10 +104,10 @@ static void menu_cardview_open_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Load xml card description",path_config_get_string(PATH_CONFIG_FOLDER_CARDTREES),NULL);
+  select_info = gui_select_file("Load xml card description",path_config_get_string(PATH_CONFIG_FOLDER_WORKING),NULL);
   if (select_info[1])
   {
-    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_WORKING,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
     a_sprintf(command,"ui.load_view(\"%s\")",filename);
@@ -127,10 +127,10 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
-  select_info = gui_select_file("Save xml card description",path_config_get_string(PATH_CONFIG_FOLDER_CARDTREES),"card.xml");
+  select_info = gui_select_file("Save xml card description",path_config_get_string(PATH_CONFIG_FOLDER_WORKING),"card.xml");
   if (select_info[1])
   {  
-    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_WORKING,select_info[0]);
     filename = luax_escape_string(select_info[1]);
     command=a_strnew(NULL);
     a_sprintf(command,"ui.save_view(\"%s\")",filename);
@@ -326,7 +326,7 @@ static void menu_cardview_analyzer_load_cb(GtkWidget *w, gpointer user_data)
   select_info = gui_select_file("Load card script",path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS),NULL);
   if (select_info[1])
   {
-    path_config_set_string(PATH_CONFIG_FOLDER_CARDTREES,select_info[0]);
+    path_config_set_string(PATH_CONFIG_FOLDER_WORKING,select_info[0]);
     chdir(select_info[0]);
     gui_set_title(select_info[1]);
     luax_run_script(select_info[1]);
@@ -562,6 +562,7 @@ static void internal_cell_renderer_markup_cb (GtkTreeViewColumn *col,
                         CC_ID, &id,
                         -1);
 
+	/* TODO: escape markup characters that may appear in classname, id and label */	
 
         markup_label_id = a_strnew(NULL);
 

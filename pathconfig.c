@@ -27,22 +27,19 @@
 #include <unistd.h>
 #include "misc.h"
 
-const char *PATH_CONFIG_OPTIONS[]=
+const char *PATH_CONFIG_OPTIONS[NUM_PATH_CONFIG_OPTIONS]=
 {
     NULL,
     NULL,
     "",
-    ".cardpeek",
-    ".cardpeek/scripts",
-    ".cardpeek/replay",
-    ".cardpeek/logs",
-    ".cardpeek/config.lua",
-    ".cardpeek/cardpeekrc.lua",
-    ".cardpeek.log",
-    ".cardpeek/version",
-    ".cardpeek/scripts/etc/smartcard_list.txt",
-    ".cardpeek/scripts/etc/smartcard_list.download",
-    NULL
+    "scripts",
+    "replay",
+    "logs",
+    "config.lua",
+    "cardpeekrc.lua",
+    "version",
+    "scripts/etc/smartcard_list.txt",
+    "scripts/etc/smartcard_list.download"
 };
 
 char *PATH_CONFIG_STRING[NUM_PATH_CONFIG_OPTIONS];
@@ -50,36 +47,39 @@ char *PATH_CONFIG_STRING[NUM_PATH_CONFIG_OPTIONS];
 
 int path_config_init(void)
 {
-    char path_config_path[PATH_MAX];
-    char cwd_path[PATH_MAX];
-    const char *home;
+    char path_config_string[PATH_MAX];
+    char current_working_dir[PATH_MAX];
+    char cardpeek_dir[PATH_MAX];
+    const char *home_dir;
     unsigned i;
 
-    home = getenv("CARDPEEK_HOME");
-
-    if (home==NULL)
-    {
 #ifndef _WIN32
-        home = getenv("HOME");
+    home_dir = getenv("HOME");
 #else
-        home = getenv("USERDATA");
-        if (home==NULL)
-            home = getenv("USERPROFILE");
+    home_dir = getenv("USERDATA");
+        if (home_dir==NULL)
+            home_dir = getenv("USERPROFILE");
 #endif
-        if (home==NULL)
-            return 0;
-    }
+    if (home_dir==NULL)
+        return 0;
 
-    if (!getcwd(cwd_path,PATH_MAX))
-        strcpy(cwd_path,path_config_path);
+    if (getenv("CARDPEEK_DIR"))
+        strncpy(cardpeek_dir,getenv("CARDPEEK_DIR"),PATH_MAX);
+    else
+        snprintf(cardpeek_dir,PATH_MAX,"%s/.cardpeek",home_dir);
 
-    PATH_CONFIG_STRING[0]=strdup(cwd_path);
-    PATH_CONFIG_STRING[1]=strdup(cwd_path);
+    if (getcwd(current_working_dir,PATH_MAX))
+        PATH_CONFIG_STRING[0]=strdup(current_working_dir);
+    else
+        PATH_CONFIG_STRING[0]=strdup(home_dir);
+
+    snprintf(path_config_string,PATH_MAX,"%s/.cardpeek.log",home_dir);
+    PATH_CONFIG_STRING[1]=strdup(path_config_string);
 
     for (i=2; i<NUM_PATH_CONFIG_OPTIONS; i++)
     {
-        sprintf(path_config_path,"%s/%s",home,PATH_CONFIG_OPTIONS[i]);
-        PATH_CONFIG_STRING[i]=strdup(path_config_path);
+        snprintf(path_config_string,PATH_MAX,"%s/%s",cardpeek_dir,PATH_CONFIG_OPTIONS[i]);
+        PATH_CONFIG_STRING[i]=strdup(path_config_string);
     }
     return 1;
 }

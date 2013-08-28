@@ -66,8 +66,8 @@ static gboolean dyntree_model_iter_parent (GtkTreeModel *tree_model,
 static GObjectClass *parent_class = NULL;
 
 static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
-                                                   GtkTreeIter *iter,
-				                   gboolean emit_signal);
+        GtkTreeIter *iter,
+        gboolean emit_signal);
 
 /* implementation */
 
@@ -113,8 +113,8 @@ GType dyntree_model_get_type (void)
 static void dyntree_model_class_init(DyntreeModelClass *klass)
 {
     GObjectClass *object_class;
-    parent_class = (GObjectClass*) g_type_class_peek_parent (klass);
-    object_class = (GObjectClass*) klass;
+    parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
+    object_class = (GObjectClass *) klass;
     object_class->finalize = dyntree_model_finalize;
 }
 
@@ -315,7 +315,7 @@ static void dyntree_model_get_value (GtkTreeModel *tree_model,
 
     /* ctm = DYNTREE_MODEL(tree_model); */
 
-    node = (DyntreeModelNode*) iter->user_data;
+    node = (DyntreeModelNode *) iter->user_data;
 
     g_return_if_fail ( node != NULL );
 
@@ -657,9 +657,9 @@ gboolean dyntree_model_iter_attribute_get_by_name(DyntreeModel *m,
     return FALSE;
 }
 
-static DyntreeModelNode* dyntree_model_node_new(DyntreeModel *ctm)
+static DyntreeModelNode *dyntree_model_node_new(DyntreeModel *ctm)
 {
-    DyntreeModelNode* node = g_new0(DyntreeModelNode,1);
+    DyntreeModelNode *node = g_new0(DyntreeModelNode,1);
 
     UNUSED(ctm);
 
@@ -690,8 +690,8 @@ static void dyntree_model_node_reindex_from_parent(DyntreeModel *ct, DyntreeMode
 }
 
 static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
-                                                   GtkTreeIter *iter,
-				                   gboolean emit_signal)
+        GtkTreeIter *iter,
+        gboolean emit_signal)
 {
     DyntreeModelNode *node;
     int i;
@@ -720,7 +720,7 @@ static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
     }
 
     if (emit_signal)
-	    path = dyntree_model_get_path(GTK_TREE_MODEL(ctm),iter);
+        path = dyntree_model_get_path(GTK_TREE_MODEL(ctm),iter);
 
     if (node->prev==NULL)
     {
@@ -747,8 +747,8 @@ static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
 
     if (emit_signal)
     {
-	    gtk_tree_model_row_deleted(GTK_TREE_MODEL(ctm), path);
-	    gtk_tree_path_free(path);
+        gtk_tree_model_row_deleted(GTK_TREE_MODEL(ctm), path);
+        gtk_tree_path_free(path);
     }
 
     return TRUE;
@@ -757,7 +757,7 @@ static gboolean internal_dyntree_model_iter_remove(DyntreeModel *ctm,
 gboolean dyntree_model_iter_remove(DyntreeModel *ctm,
                                    GtkTreeIter *iter)
 {
-	return internal_dyntree_model_iter_remove(ctm,iter,TRUE);	
+    return internal_dyntree_model_iter_remove(ctm,iter,TRUE);
 }
 
 
@@ -898,11 +898,11 @@ gboolean dyntree_model_iter_attributes_get(DyntreeModel *ctm,
 
 /* XML EXPORT */
 
-static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTreeIter *iter, int depth)
+static gboolean internal_node_to_xml(a_string_t *res, DyntreeModel *store, GtkTreeIter *iter, int depth)
 {
     int i,attr_index;
     GtkTreeIter child;
-    gchar* esc_value;
+    gchar *esc_value;
     DyntreeModelNode *node;
     const char *col_name;
 
@@ -931,17 +931,17 @@ static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTr
                     a_strcat(res,col_name);
                     switch (node->attributes[attr_index].value[0])
                     {
-                    case '8':
-                    case '4':
-                    case '2':
-                        a_strcat(res,"\" type=\"bytes\">");
-                        a_strcat(res,node->attributes[attr_index].value);
-                        break;
-                    default:
-                        a_strcat(res,"\">");
-                        esc_value = g_markup_escape_text(node->attributes[attr_index].value+2,-1);
-                        a_strcat(res,esc_value);
-                        g_free(esc_value);
+                        case '8':
+                        case '4':
+                        case '2':
+                            a_strcat(res,"\" type=\"bytes\">");
+                            a_strcat(res,node->attributes[attr_index].value);
+                            break;
+                        default:
+                            a_strcat(res,"\">");
+                            esc_value = g_markup_escape_text(node->attributes[attr_index].value+2,-1);
+                            a_strcat(res,esc_value);
+                            g_free(esc_value);
                     }
                     a_strcat(res,"</attr>\n");
                 }
@@ -961,7 +961,7 @@ static gboolean internal_node_to_xml(a_string_t* res, DyntreeModel *store, GtkTr
     return TRUE;
 }
 
-char* dyntree_model_iter_to_xml(DyntreeModel* ct, GtkTreeIter *root, gboolean full_xml)
+char *dyntree_model_iter_to_xml(DyntreeModel *ct, GtkTreeIter *root, gboolean full_xml)
 {
     a_string_t *res;
     GtkTreeIter root_copy;
@@ -999,7 +999,7 @@ char* dyntree_model_iter_to_xml(DyntreeModel* ct, GtkTreeIter *root, gboolean fu
     return a_strfinalize(res);
 }
 
-gboolean dyntree_model_iter_to_xml_file(DyntreeModel* ct, GtkTreeIter *root, const char *fname)
+gboolean dyntree_model_iter_to_xml_file(DyntreeModel *ct, GtkTreeIter *root, const char *fname)
 {
     int output;
     char *xml;
@@ -1080,14 +1080,14 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
         if (ctx->ctx_state==ND_ROOT)
         {
             if (ctx->ctx_is_root)
-	    {
+            {
                 dyntree_model_iter_append (ctx->ctx_tree, &child, NULL);
-		ctx->ctx_is_root = FALSE;
+                ctx->ctx_is_root = FALSE;
             }
             else
             {
                 dyntree_model_iter_append (ctx->ctx_tree, &child, &ctx->ctx_node);
-	    }
+            }
         }
         else if (ctx->ctx_state==ND_NODE)
         {
@@ -1213,26 +1213,27 @@ static void xml_end_element_cb  (GMarkupParseContext *context,
 
     switch (ctx->ctx_state)
     {
-    case ND_NODE:
-        if (dyntree_model_iter_parent(GTK_TREE_MODEL(ctx->ctx_tree),&parent,&(ctx->ctx_node))==TRUE)
-        {
+        case ND_NODE:
+            if (dyntree_model_iter_parent(GTK_TREE_MODEL(ctx->ctx_tree),&parent,&(ctx->ctx_node))==TRUE)
+            {
+                ctx->ctx_state=ND_NODE;
+                ctx->ctx_node = parent;
+            }
+            else
+            {
+                ctx->ctx_state=ND_ROOT;
+                ctx->ctx_is_root=TRUE;
+            }
+            break;
+        case ND_ATTR:
             ctx->ctx_state=ND_NODE;
-            ctx->ctx_node = parent;
-        }
-        else
-        {
+            break;
+        case ND_ROOT:
+            ctx->ctx_state=ND_NONE;
+            break;
+        case ND_VERSION:
             ctx->ctx_state=ND_ROOT;
-        }
-        break;
-    case ND_ATTR:
-        ctx->ctx_state=ND_NODE;
-        break;
-    case ND_ROOT:
-        ctx->ctx_state=ND_NONE;
-        break;
-    case ND_VERSION:
-	ctx->ctx_state=ND_ROOT;
-	break;
+            break;
     }
 }
 
@@ -1331,13 +1332,13 @@ gboolean dyntree_model_iter_from_xml(DyntreeModel *ct, GtkTreeIter *parent, gboo
 
     if (parent != NULL)
     {
-	ctx.ctx_is_root = FALSE;
+        ctx.ctx_is_root = FALSE;
         ctx.ctx_node = *parent;
     }
     else
     {
-	ctx.ctx_is_root = TRUE;
-	memset(&ctx.ctx_node,0,sizeof(ctx.ctx_node));
+        ctx.ctx_is_root = TRUE;
+        memset(&ctx.ctx_node,0,sizeof(ctx.ctx_node));
     }
 
     markup_ctx = g_markup_parse_context_new(&dyntree_parser,0,&ctx,NULL);

@@ -60,7 +60,8 @@ void gui_about(void)
 			      "authors", authors,
 			      "comments", "Cardpeek is a tool to read the contents of smart cards.",
 			      "copyright", "Copyright Alain Pannetrat <L1L1@gmx.com>",
-			      "website", "https://cardpeek.googlecode.com", 
+			      "website", "https://cardpeek.googlecode.com",
+                  "website-label", "https://cardpeek.googlecode.com",  
 			      NULL);
 }
 

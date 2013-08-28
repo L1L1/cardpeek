@@ -145,6 +145,10 @@ static int update_smartcard_list_txt(void)
         }
         else
         {
+#ifdef _WIN32
+	    unlink(smartcard_list_txt);
+#endif
+	
             if (rename(smartcard_list_download,smartcard_list_txt)==0)
             {
                 log_printf(LOG_INFO,"Updated smartcard_list.txt");
@@ -244,8 +248,12 @@ static int install_dot_file(void)
 
         a_strfree(astr);
 
+#ifndef _WIN32
         if (mkdir(cardpeek_dir,0770)!=0)
-        {
+#else
+        if (mkdir(cardpeek_dir)!=0)
+#endif
+	{
             astr = a_strnew(NULL);
             a_sprintf(astr,"'%s' could not be created: %s",cardpeek_dir,strerror(errno));
             log_printf(LOG_ERROR,a_strval(astr));

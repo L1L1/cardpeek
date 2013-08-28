@@ -20,8 +20,6 @@
 */
 
 #include <winscard.h>
-#include "gui.h"
-#include "gui_inprogress.h"
 
 #ifdef _WIN32
 /*

@@ -18,45 +18,9 @@ AC_CANONICAL_HOST
 
 # Our own checks
 
-AM_PATH_GLIB_2_0([2.32.0],,	AC_MSG_ERROR([Please install GLIB dev libraries.]))
-AM_PATH_GTK_2_0([2.12.0],, 	AC_MSG_ERROR([Please install GTK+2.0 dev libraries.]))
+PKG_CHECK_MODULES([GLIB],[glib-2.0 >= 2.32.0]) 
 
-AC_DEFUN([AM_PATH_PACKAGE],
-[
-dnl
-dnl AM_PATH_PACKAGE(packagename,make packagename,[what to do if found[, what to do if not found]])
-dnl
-  if test x$PKG_CONFIG = x ; then
-    AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-  fi
-
-  AC_MSG_CHECKING(for $1 libraries)
-
-  if test x$PKG_CONFIG = xno ; then
-     echo "*** pkg_config is missing ***"
-     AC_MSG_RESULT(no)
-  fi
-
-  if test x$PKG_CONFIG != xno ; then
-     if `$PKG_CONFIG --exists $1` ; then
-      $2_CFLAGS=`$PKG_CONFIG --cflags $1`
-      $2_LIBS=`$PKG_CONFIG --libs $1` 
-      has_package=yes	
-      AC_MSG_RESULT(yes)
-     else
-      has_package=no
-      AC_MSG_RESULT(no)
-     fi
-  fi
-
-   if test x$has_package = xyes ; then
-    ifelse([$3], , :, [$3])
-  else
-    ifelse([$4], , :, [$4])
-  fi
-  AC_SUBST([$2_CFLAGS])
-  AC_SUBST([$2_LIBS])
-])
+PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.5.4])
 
 case "${host}" in
   *-*-darwin*)
@@ -64,31 +28,29 @@ case "${host}" in
     PCSC_LIBS='-framework PCSC'
     ;;
   *)
-AM_PATH_PACKAGE([libpcsclite],[PCSC],,AC_MSG_ERROR([
-Could not find libpcsclite-dev. 
-This program requires the libpcsclite library. 
-Please install the libpcsclite library first.]))
+    PKG_CHECK_MODULES([PCSC],[libpcsclite])
     ;;
 esac
 
-AM_PATH_PACKAGE([lua-5.2],[LUA],,[
-  AM_PATH_PACKAGE([lua5.2],[LUA],,[
-    AM_PATH_PACKAGE(['lua >= 5.2'],[LUA],,[
-AC_MSG_ERROR([Could not find lua 5.2-dev. 
-This program requires the lua 5.2 development library. 
-Please install the lua 5.2 library first.])
+PKG_CHECK_MODULES([LUA],[lua-5.2],,[
+  PKG_CHECK_MODULES([LUA],[lua5.2],,[
+    PKG_CHECK_MODULES([LUA],[lua >= 5.2],,[
+      for lua_lib_name in lua.5.2 lua-5.2 lua5.2; do 
+        AC_CHECK_LIB([$lua_lib_name], [lua_close], [have_liblua=yes], [have_liblua=no])
+        if test $have_liblua = yes; then
+            AC_SUBST([LUA_CFLAGS], [""])
+            AC_SUBST([LUA_LIBS], ["-l$lua_lib_name"])
+            break
+        fi 
+      done
+      if test $have_liblua = no; then
+            AC_MSG_ERROR([Could not find lua 5.2-dev. This program requires the lua 5.2 development library. Please install the lua 5.2 library first.])
+      fi
 ])
 ])
 ])
 
-AM_PATH_PACKAGE([libcurl],[CURL],,AC_MSG_ERROR([
-Could not find libcurl.
-This program requires the libcurl library.
-Please install libcurl first.]))
-
-##AM_PATH_PACKAGE([openssl],[OPENSSL],,AC_MSG_ERROR([Could not find openssl-dev.
-##This program requires the openssl dev. library.
-##Please install it first.]))
+PKG_CHECK_MODULES([CURL],[libcurl])
 
 AC_CHECK_LIB([ssl],[SSL_free],,
 	     AC_MSG_ERROR([Could not find openssl-dev.

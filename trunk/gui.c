@@ -45,18 +45,18 @@ int gui_question(const char *message, ...)
     va_list al;
     const char *item;
     unsigned item_count=0;
-    const char** item_table;
+    const char **item_table;
     gint retval;
 
     va_start(al,message);
-    while (va_arg(al,const char*)) item_count++;
+    while (va_arg(al,const char *)) item_count++;
     va_end(al);
 
     item_table=g_malloc(sizeof(const char *)*item_count);
     item_count=0;
 
     va_start(al,message);
-    while ((item=va_arg(al,const char*)))
+    while ((item=va_arg(al,const char *)))
         item_table[item_count++]=item;
     va_end(al);
 
@@ -65,7 +65,7 @@ int gui_question(const char *message, ...)
     return retval;
 }
 
-int gui_question_l(const char *message, unsigned item_count, const char** items)
+int gui_question_l(const char *message, unsigned item_count, const char **items)
 {
     GtkWidget *dialog;
     GtkWidget *label;
@@ -77,7 +77,7 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
                                           GTK_WINDOW(MAIN_WINDOW),
                                           GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
                                           NULL,
-					  NULL);
+                                          NULL);
     for (result=0; result<(int)item_count; result++)
         gtk_dialog_add_button(GTK_DIALOG(dialog),items[result],result);
 
@@ -108,7 +108,7 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
     return result;
 }
 
-int gui_readline(const char *message, unsigned input_max, char* input)
+int gui_readline(const char *message, unsigned input_max, char *input)
 /* input_max does not include final '\0' */
 {
     GtkWidget *dialog;
@@ -133,9 +133,9 @@ int gui_readline(const char *message, unsigned input_max, char* input)
     dialog = gtk_dialog_new_with_buttons("Question",
                                          GTK_WINDOW(MAIN_WINDOW),
                                          GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
-                      			 GTK_STOCK_OK, 
-					 GTK_RESPONSE_ACCEPT,
-					 GTK_STOCK_CANCEL,
+                                         GTK_STOCK_OK,
+                                         GTK_RESPONSE_ACCEPT,
+                                         GTK_STOCK_CANCEL,
                                          GTK_RESPONSE_REJECT,
                                          NULL);
 
@@ -183,7 +183,7 @@ int gui_readline(const char *message, unsigned input_max, char* input)
     return 1;
 }
 
-char** gui_select_file(const char *title,
+char **gui_select_file(const char *title,
                        const char *path,
                        const char *filename)
 {
@@ -254,7 +254,7 @@ void gui_exit(void)
     gtk_main_quit();
 }
 
-char* gui_select_reader(unsigned list_size, const char** list)
+char *gui_select_reader(unsigned list_size, const char **list)
 {
     GtkWidget *dialog;
     GtkWidget *label;
@@ -309,19 +309,19 @@ char* gui_select_reader(unsigned list_size, const char** list)
 
     switch (result)
     {
-    case GTK_RESPONSE_ACCEPT:
-        retval = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-        log_printf(LOG_INFO,"Selected '%s'",retval);
-        if (strcmp(retval,"none")==0)
-        {
-            g_free(retval);
+        case GTK_RESPONSE_ACCEPT:
+            retval = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+            log_printf(LOG_INFO,"Selected '%s'",retval);
+            if (strcmp(retval,"none")==0)
+            {
+                g_free(retval);
+                retval = NULL;
+            }
+            break;
+        default:
             retval = NULL;
-        }
-        break;
-    default:
-        retval = NULL;
-        log_printf(LOG_INFO,"Select empty");
-        break;
+            log_printf(LOG_INFO,"Select empty");
+            break;
     }
     gtk_widget_destroy (dialog);
     return retval;
@@ -346,13 +346,13 @@ const char *icon_resources[] =
 
 static int gui_load_icons(void)
 {
-    GResource* cardpeek_resources;
-    GBytes* icon_bytes;
+    GResource *cardpeek_resources;
+    GBytes *icon_bytes;
     unsigned char *icon_bytes_start;
     gsize icon_bytes_size;
-    GtkIconSet* icon_set;
-    GdkPixbuf* pixbuf;
-    GtkIconFactory* icon_factory;
+    GtkIconSet *icon_set;
+    GdkPixbuf *pixbuf;
+    GtkIconFactory *icon_factory;
     unsigned u;
     int is_ok = 1;
 
@@ -379,7 +379,7 @@ static int gui_load_icons(void)
 
         pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
         icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-	g_object_unref(pixbuf);
+        g_object_unref(pixbuf);
         gtk_icon_factory_add(icon_factory,icon_resources[u*2+1],icon_set);
 
         if (strcmp(icon_resources[u*2+1],"cardpeek-cardpeek")==0)
@@ -397,8 +397,8 @@ static int gui_load_icons(void)
 
 static void notebook_on_destroy(GtkWidget *window, gpointer user_data)
 {
-    GtkWidget* page;
-    GtkWidget* label;
+    GtkWidget *page;
+    GtkWidget *label;
     const char *label_text;
     GtkNotebook *notebook = GTK_NOTEBOOK(user_data);
     UNUSED(window);
@@ -433,7 +433,7 @@ static void notebook_on_page_removed(GtkNotebook *notebook,
     }
 }
 
-static GtkNotebook* notebook_create_extra(GtkNotebook *source_notebook,
+static GtkNotebook *notebook_create_extra(GtkNotebook *source_notebook,
         GtkWidget   *child,
         gint         x,
         gint         y,
@@ -470,19 +470,19 @@ static GtkNotebook* notebook_create_extra(GtkNotebook *source_notebook,
     return GTK_NOTEBOOK (notebook);
 }
 
-static void internal_map_accel_group(GtkWidget* widget, gpointer userdata)
-{ 
+static void internal_map_accel_group(GtkWidget *widget, gpointer userdata)
+{
     GtkWidget *toplevel = gtk_widget_get_toplevel (widget);
     GtkAccelGroup *accel_group = (GtkAccelGroup *)userdata;
-    
+
     gtk_window_add_accel_group(GTK_WINDOW(toplevel), accel_group);
 }
 
-static void internal_unmap_accel_group(GtkWidget* widget, gpointer userdata)
-{ 
+static void internal_unmap_accel_group(GtkWidget *widget, gpointer userdata)
+{
     GtkWidget *toplevel = gtk_widget_get_toplevel (widget);
     GtkAccelGroup *accel_group = (GtkAccelGroup *)userdata;
-    
+
     gtk_window_remove_accel_group(GTK_WINDOW(toplevel), accel_group);
 }
 
@@ -498,7 +498,7 @@ int gui_create(void)
     GtkWidget *tabs;
     GtkWidget *label;
     GtkAccelGroup *accel_group;
- 
+
     /* gui_widget_table_init(); */
 
     /* Build icon sets */
@@ -510,7 +510,7 @@ int gui_create(void)
     MAIN_WINDOW = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(MAIN_WINDOW),600,400);
     gtk_container_set_border_width (GTK_CONTAINER (MAIN_WINDOW), 0);
-    g_signal_connect (MAIN_WINDOW, "destroy", G_CALLBACK(gtk_main_quit), NULL); 
+    g_signal_connect (MAIN_WINDOW, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     /* log frame */
 
@@ -529,7 +529,7 @@ int gui_create(void)
     /* tree view frame */
 
     accel_group = gtk_accel_group_new();
-    
+
     widget = gui_cardview_create_window(accel_group);
     g_signal_connect(G_OBJECT(widget),"map",G_CALLBACK(internal_map_accel_group),accel_group);
     g_signal_connect(G_OBJECT(widget),"unmap",G_CALLBACK(internal_unmap_accel_group),accel_group);

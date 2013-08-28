@@ -80,7 +80,7 @@ GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 
 	toolbar = gtk_toolbar_new();
 
-	gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL );
+	gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL );
 	gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
 
 	for (i=0; tbitems[i].icon!=NULL; i++)

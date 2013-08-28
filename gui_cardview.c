@@ -104,7 +104,12 @@ static void menu_cardview_open_cb(GtkWidget *w, gpointer user_data)
   UNUSED(w);
   UNUSED(user_data);
 
+  HERE();
+
   select_info = gui_select_file("Load xml card description",path_config_get_string(PATH_CONFIG_FOLDER_WORKING),NULL);
+
+  HERE();
+
   if (select_info[1])
   {
     path_config_set_string(PATH_CONFIG_FOLDER_WORKING,select_info[0]);
@@ -298,10 +303,13 @@ static void menu_cardview_analyzer_cb_pos_func(GtkMenu *menu,
   UNUSED(menu);
   
   *push_in = TRUE;
+  
+  /* FIXME:
   gdk_window_get_origin(button->window, x, y); 
   *x += button->allocation.x; 
   *y += button->allocation.y;
   *y += button->allocation.height;
+  */
 }
 
 static void menu_cardview_analyzer_cb(GtkWidget *w, gpointer user_data)
@@ -324,6 +332,7 @@ static void menu_cardview_analyzer_load_cb(GtkWidget *w, gpointer user_data)
   UNUSED(user_data);
 
   select_info = gui_select_file("Load card script",path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS),NULL);
+
   if (select_info[1])
   {
     path_config_set_string(PATH_CONFIG_FOLDER_WORKING,select_info[0]);
@@ -429,7 +438,7 @@ static GtkWidget* script_info_add(const char *path, const char *fname)
 	menuitem = gtk_image_menu_item_new_with_label(si->script_name);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU));	
 	if (si->script_description) gtk_widget_set_tooltip_text(menuitem,si->script_description);
-        g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_run_script_cb),si);
+        g_signal_connect(GTK_WIDGET(menuitem),"activate",G_CALLBACK(menu_run_script_cb),si);
 	gtk_widget_show(menuitem);
   }
   else
@@ -474,9 +483,9 @@ static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
 
   menuitem = gtk_image_menu_item_new_with_label("Load a script");
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_OPEN,GTK_ICON_SIZE_MENU));
-  g_signal_connect(GTK_OBJECT(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
+  g_signal_connect(GTK_WIDGET(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
 
-  gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE); 
+  gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_KEY_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE); 
  
   gtk_widget_show(menuitem);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
@@ -628,7 +637,7 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
  /* Create base window container */
   
-  base_container = gtk_vbox_new(FALSE,0);
+  base_container = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
   /* Create the toolbar */
 
@@ -699,7 +708,7 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
   gtk_tree_view_column_set_clickable(column,TRUE);
   g_signal_connect(column,"clicked",(GCallback)menu_cardview_column_activated,NULL);
 
-  colheader = gtk_hbox_new(FALSE,10);
+  colheader = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,10);
   gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Raw value"), FALSE, FALSE, 0);
   if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
   {
@@ -726,7 +735,7 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
   gtk_tree_view_column_set_clickable(column,TRUE);
   g_signal_connect(column,"clicked",(GCallback)menu_cardview_column_activated,NULL);
 
-  colheader = gtk_hbox_new(FALSE,10);
+  colheader = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,10);
   gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Interpreted value"), FALSE, FALSE, 0);
   if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
   {

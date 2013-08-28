@@ -64,7 +64,7 @@ static void gui_logview_function(int log_level, const char* str)
   if (LOG_WINDOW)
   {
     adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(LOG_WINDOW));
-    adj -> value = adj -> upper;
+    gtk_adjustment_set_value(adj,gtk_adjustment_get_upper(adj));
     gtk_adjustment_value_changed(adj);
   }
   if (STATUS_BAR)

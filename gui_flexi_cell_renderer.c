@@ -116,9 +116,8 @@ GType custom_cell_renderer_flexi_get_type (void)
 
 static void custom_cell_renderer_flexi_init (CustomCellRendererFlexi *cellrendererflexi)
 {
-  GTK_CELL_RENDERER(cellrendererflexi)->mode = GTK_CELL_RENDERER_MODE_INERT;
-  GTK_CELL_RENDERER(cellrendererflexi)->xpad = 2;
-  GTK_CELL_RENDERER(cellrendererflexi)->ypad = 2;
+  /* default: GTK_CELL_RENDERER(cellrendererflexi)->mode = GTK_CELL_RENDERER_MODE_INERT; */
+  gtk_cell_renderer_set_padding(GTK_CELL_RENDERER(cellrendererflexi), 2, 2);
   
   cellrendererflexi->raw_value = a_strnew(NULL);
   cellrendererflexi->alt_text  = a_strnew(NULL);
@@ -604,6 +603,9 @@ static void internal_text_get_size_layout(GtkCellRenderer *cell,
   PangoRectangle rect;
   gint calc_width;
   gint calc_height;
+  gint xpad;
+  gint ypad;
+  gfloat yalign;
 
   if (layout==NULL)
 	  layout = internal_text_create_layout(widget,cellflexi);
@@ -614,8 +616,10 @@ static void internal_text_get_size_layout(GtkCellRenderer *cell,
 
   pango_layout_get_pixel_extents(layout,NULL,&rect);
 
-  calc_width  = (gint) cell->xpad * 2 + rect.width;
-  calc_height = (gint) cell->ypad * 2 + rect.height;
+  gtk_cell_renderer_get_padding(cell,&xpad,&ypad);
+
+  calc_width  = xpad * 2 + rect.width;
+  calc_height = ypad * 2 + rect.height;
 
   if (width)
     *width = calc_width;
@@ -632,7 +636,8 @@ static void internal_text_get_size_layout(GtkCellRenderer *cell,
 
     if (y_offset)
     {
-      *y_offset = cell->yalign * (cell_area->height - calc_height);
+      gtk_cell_renderer_get_alignment(cell,NULL,&yalign);
+      *y_offset = yalign * (cell_area->height - calc_height);
       *y_offset = MAX (*y_offset, 0);
     }
   }
@@ -652,12 +657,16 @@ static void internal_image_get_size(GtkCellRenderer *cell,
   int image_height = gdk_pixbuf_get_height((GdkPixbuf*)cellflexi->rendered_value);
   gint calc_width;
   gint calc_height;
+  gint xpad;
+  gint ypad;
 
   UNUSED(widget);
   UNUSED(cell_area);
+  
+  gtk_cell_renderer_get_padding(cell,&xpad,&ypad);
 
-  calc_width  = (gint) cell->xpad * 2 + image_width;
-  calc_height = (gint) cell->ypad * 2 + image_height;
+  calc_width  = xpad * 2 + image_width;
+  calc_height = ypad * 2 + image_height;
 
   if (width)
     *width = calc_width;
@@ -717,9 +726,12 @@ static void internal_text_render(GtkCellRenderer *cell,
 {
 	CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
 	PangoLayout 		*layout;
-	GtkStateType          state;
-	gint                  width, height;
-	gint                  x_offset, y_offset;
+	GtkStateType          	state;
+	gint                  	width, height;
+	gint                  	x_offset, y_offset;
+	gint 			xpad;
+	gint 			ypad;
+	cairo_t 		*cr;
 
 	UNUSED(background_area);
 	UNUSED(flags);
@@ -733,15 +745,24 @@ static void internal_text_render(GtkCellRenderer *cell,
 			&x_offset, &y_offset,
 			&width, &height);
 
-	if (GTK_WIDGET_HAS_FOCUS (widget))
+	if (gtk_widget_has_focus(widget))
 		state = GTK_STATE_ACTIVE;
 	else
 		state = GTK_STATE_NORMAL;
 
-	width  -= cell->xpad*2;
-	height -= cell->ypad*2;
+	gtk_cell_renderer_get_padding(cell,&xpad,&ypad);	
+	width  -= xpad*2;
+	height -= ypad*2;
 
 	/* TODO: in gtk3 we need gtk_render_layout */
+	cr = gdk_cairo_create(window);
+
+	gtk_render_layout(gtk_widget_get_style_context(GTK_WIDGET(window)),
+			cr,
+			cell_area->x + x_offset + xpad,
+			cell_area->y + y_offset + ypad,
+			layout);
+	/*
 	gtk_paint_layout (widget->style,
 			window,
 			state,
@@ -749,9 +770,11 @@ static void internal_text_render(GtkCellRenderer *cell,
 			expose_area, 
 			widget, 
 			"cellrendererflexi",
-			cell_area->x + x_offset + cell->xpad,
+			cell_area->x + x_offset + xpad,
 			cell_area->y + y_offset + cell->ypad,
 			layout);
+		*/
+	cairo_destroy(cr);
 	g_object_unref(layout);
 }
 

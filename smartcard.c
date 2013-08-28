@@ -31,6 +31,7 @@
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "iso7816.h"
+
 #ifdef _WIN32
 #include "win32/win32compat.h"
 #else
@@ -84,7 +85,8 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
  * CARDREADER
  */
 
-
+#include "gui.h"
+#include "gui_inprogress.h"
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
 #include "drivers/replay_driver.c"

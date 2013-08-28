@@ -94,7 +94,7 @@ GtkWidget *gui_readerview_create_window(void)
 
   /* Create base window container */
 
-  base_container = gtk_vbox_new(FALSE,0);
+  base_container = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
   /* Create the toolbar */
 

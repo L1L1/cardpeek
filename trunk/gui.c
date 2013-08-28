@@ -76,7 +76,8 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
     dialog = gtk_dialog_new_with_buttons ("Question",
                                           GTK_WINDOW(MAIN_WINDOW),
                                           GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
-                                          NULL);
+                                          NULL,
+					  NULL);
     for (result=0; result<(int)item_count; result++)
         gtk_dialog_add_button(GTK_DIALOG(dialog),items[result],result);
 
@@ -87,7 +88,7 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
 
     gtk_label_set_line_wrap(GTK_LABEL(label),TRUE);
 
-    hbox = gtk_hbox_new(FALSE,0);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
 
     gtk_box_pack_start(GTK_BOX(hbox), img, FALSE, FALSE, 10);
 
@@ -95,7 +96,7 @@ int gui_question_l(const char *message, unsigned item_count, const char** items)
 
     gtk_widget_show_all(hbox);
 
-    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
+    gtk_container_add (GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
                        hbox);
 
     result = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -141,20 +142,23 @@ int gui_readline(const char *message, unsigned input_max, char* input)
     img = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,
                                    GTK_ICON_SIZE_DIALOG);
 
-    vbox = gtk_vbox_new(FALSE,0);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
     label = gtk_label_new(message);
 
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 10);
 
-    entry = gtk_entry_new_with_max_length(input_max);
+    entry = gtk_entry_new();
+
+    gtk_entry_set_max_length(GTK_ENTRY(entry), input_max);
+
     gtk_entry_set_width_chars(GTK_ENTRY(entry),input_max<=80?input_max:80);
 
     gtk_entry_set_text(GTK_ENTRY(entry),input);
 
     gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 10);
 
-    hbox = gtk_hbox_new(FALSE,0);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
 
     gtk_box_pack_start(GTK_BOX(hbox), img, FALSE, FALSE, 10);
 
@@ -162,7 +166,7 @@ int gui_readline(const char *message, unsigned input_max, char* input)
 
     gtk_widget_show_all(hbox);
 
-    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
+    gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
                        hbox);
 
     result = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -247,7 +251,7 @@ void gui_exit(void)
 {
     /* FIXME: UGLY EXIT */
     log_close_file();
-    gtk_exit(0);
+    gtk_main_quit();
 }
 
 char* gui_select_reader(unsigned list_size, const char** list)
@@ -273,24 +277,24 @@ char* gui_select_reader(unsigned list_size, const char** list)
     img = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,
                                    GTK_ICON_SIZE_DIALOG);
 
-    vbox = gtk_vbox_new(FALSE,0);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
     label = gtk_label_new("Select a card reader to use");
 
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 10);
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
 
     gtk_box_pack_start(GTK_BOX(vbox), combo, FALSE, FALSE, 10);
 
     for (i=0; i<list_size; i++)
     {
-        gtk_combo_box_append_text(GTK_COMBO_BOX(combo),list[i]);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),list[i]);
     }
-    gtk_combo_box_append_text(GTK_COMBO_BOX(combo),"none");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),"none");
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo),0);
 
-    hbox = gtk_hbox_new(FALSE,0);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
 
     gtk_box_pack_start(GTK_BOX(hbox), img, FALSE, FALSE, 10);
 
@@ -298,7 +302,7 @@ char* gui_select_reader(unsigned list_size, const char** list)
 
     gtk_widget_show_all(hbox);
 
-    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
+    gtk_container_add (GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
                        hbox);
 
     result = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -306,7 +310,7 @@ char* gui_select_reader(unsigned list_size, const char** list)
     switch (result)
     {
     case GTK_RESPONSE_ACCEPT:
-        retval = gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+        retval = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
         log_printf(LOG_INFO,"Selected '%s'",retval);
         if (strcmp(retval,"none")==0)
         {
@@ -564,7 +568,7 @@ int gui_create(void)
 
     /* vertical packing */
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     gtk_box_pack_start (GTK_BOX (vbox), tabs, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), entry, FALSE, TRUE, 0);

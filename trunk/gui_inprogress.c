@@ -66,7 +66,7 @@ GtkWidget* gui_inprogress_new(const char *title, const char *message)
 
    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
    
-   vbox = gtk_vbox_new(TRUE,16);
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,16);
    gtk_container_set_border_width(GTK_CONTAINER(vbox),16);   
  
    label = gtk_label_new (message);

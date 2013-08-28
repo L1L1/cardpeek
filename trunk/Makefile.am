@@ -10,7 +10,8 @@ doc_DATA=doc/cardpeek_ref.en.pdf
 
 cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@
 
-cardpeek_LDFLAGS=-O2
+cardpeek_LDFLAGS=-g
+#cardpeek_LDFLAGS=-O2
 
 dist_man_MANS=cardpeek.1
 
@@ -38,11 +39,11 @@ dist-hook:
 
 dot_cardpeek.tar.gz:    dot_cardpeek_dir	
 			@echo "  TAR      $<"
-			tar czf dot_cardpeek.tar.gz --directory $(srcdir)/dot_cardpeek_dir --exclude=.svn .
+			$(AM_V_at)tar czf dot_cardpeek.tar.gz --directory $(srcdir)/dot_cardpeek_dir --exclude=.svn .
 
 cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
 			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"
-			@$(GLIB_COMPILE_RESOURCES) --generate-source --sourcedir=. --sourcedir=$(srcdir) --target=cardpeek_resources.c $(srcdir)/cardpeek_resources.gresource.xml
+			$(AM_V_at)$(GLIB_COMPILE_RESOURCES) --generate-source --sourcedir=. --sourcedir=$(srcdir) --target=cardpeek_resources.c $(srcdir)/cardpeek_resources.gresource.xml
 			$(AM_V_CC)$(COMPILE) -c cardpeek_resources.c
 
 smartcard.$(OBJEXT):	smartcard.c smartcard.h $(DRIVERS)

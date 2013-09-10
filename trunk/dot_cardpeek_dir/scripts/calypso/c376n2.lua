@@ -430,7 +430,7 @@ end
 
 function RavKav_parseCounters(APP_REF)
 	log.print(log.DBG, "Parsing counters...")
-    local CNTRS_REF = nodes.find_first(APP_REF, {label="Counters"})
+    local CNTRS_REF = nodes.find_first(APP_REF, {id=CALYPSO_LID_COUNTERS})
     if CNTRS_REF then
         local numRecords = RavKav_getRecordInfo(CNTRS_REF)
         if 0 < numRecords then

@@ -1,3 +1,17 @@
+cardpeek-0.8: L1L1@gmx.com
+12 Spetember 2013
+- Added Belgian eID card support
+- Added RavKav calypso card support (A. Berkow)
+- Updated Moneo script with more detailed parsing.
+- Added ability to display pictures (e-passports && eID cards).
+- A new simplified and more efficient card view API with the 'nodes' library.
+- Improved compatibility: now compiles on ARM Raspberry PI and Intel Mac OS X.
+- Attempts to recognize cards from ATR with smartcard_list.txt database.
+- Uses libcurl for online automatic update of ATR database smartcard_list.txt. 
+- A few minor changes to the 'bytes' API.
+- Updgraded libraries to GTK 3.0 and LUA 5.2.
+- Many bugfixes and minor enhancements.
+
 cardpeek-0.7.2: L1L1@gmx.com
 17 March 2013
 - This is a bugfix release. No new features / scripts were added.

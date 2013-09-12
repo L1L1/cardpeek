@@ -736,7 +736,7 @@ static void internal_text_render(GtkCellRenderer *cell,
 {
     CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
     PangoLayout 		*layout;
-    GtkStateType          	state;
+    /* GtkStateType          	state; */
     gint                  	width, height;
     gint                  	x_offset, y_offset;
     gint 			xpad;
@@ -754,10 +754,12 @@ static void internal_text_render(GtkCellRenderer *cell,
                                    &x_offset, &y_offset,
                                    &width, &height);
 
+    /*
     if (gtk_widget_has_focus(widget))
         state = GTK_STATE_ACTIVE;
     else
         state = GTK_STATE_NORMAL;
+    */
 
     gtk_cell_renderer_get_padding(cell,&xpad,&ypad);
     width  -= xpad*2;

@@ -20,7 +20,7 @@ AC_CANONICAL_HOST
 
 PKG_CHECK_MODULES([GLIB],[glib-2.0 >= 2.32.0]) 
 
-PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.5.4])
+PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.4.2])
 
 case "${host}" in
   *-*-darwin*)

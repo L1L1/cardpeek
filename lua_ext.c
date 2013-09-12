@@ -308,7 +308,7 @@ const char *config_table_header =
     "-- cardpeek.\n"
     "-- \n";
 
-void internal_save_table(FILE *cf, int depth)
+static void internal_save_table(FILE *cf, int depth)
 {
     int i;
 

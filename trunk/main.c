@@ -49,6 +49,8 @@
 static int progress_update_smartcard_list_txt(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
     GtkWidget *progress = (GtkWidget *)clientp;
+    UNUSED(ultotal);
+    UNUSED(ulnow);
 
     if (dltotal==0)
         return !gui_inprogress_pulse(progress);

@@ -16,6 +16,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- @description Basic Mifare reader
+-- @targets 0.8 
+
 
 require('lib.strict')
 require('lib.apdu')
@@ -56,7 +59,7 @@ function MIFARE_text(node,data)
 			r = r .. string.format("\\%03o",data[i])
 		end	
 	end
-	node:setAlt(r)
+	node:set_attribute("alt",r)
 end
 
 function MIFARE_trailer_sector(trailer,data)
@@ -67,7 +70,7 @@ function MIFARE_trailer_sector(trailer,data)
 
 	--trailer = trailer:append("item","interpreted data")	
 
-	ac = bytes.sub(bytes.convert(1,ac_full),12,23)
+	ac = bytes.sub(bytes.convert(ac_full,1),12,23)
 
 	ac_split = tostring(bytes.sub(ac,0,3)) .. ", " ..
 		   tostring(bytes.sub(ac,4,7)) .. ", " ..
@@ -81,7 +84,7 @@ function MIFARE_trailer_sector(trailer,data)
 	trailer:append{ classname="item",
 			label="Access bits",
 			size=#ac_full,
-			val=ac_ful,
+			val=ac_full,
 			alt=ac_split }
 
 	trailer:append{ classname="item",
@@ -116,6 +119,15 @@ function MIFARE_first_sector(init,data)
 	
 end
 
+function get_last_child(node)
+	local last_child
+
+	for child in node:children() do
+		last_child = child
+	end
+	return last_child
+end
+
 function MIFARE_scan(root)
 	local sector,last_sector
 	local block
@@ -127,8 +139,6 @@ function MIFARE_scan(root)
 	if sw == 0x9000 then
 		root:append{ classname="block", label="UID", val=resp, alt=bytes.tonumber(resp) }
 	end
-
-	root:append("block","last sector")
 
 	for sector=0,63 do
 		sw, resp = mifare_authenticate(sector*4,0xA,0x60)
@@ -159,11 +169,11 @@ function MIFARE_scan(root)
 							 size=#resp,
 							 val=resp }
 					if block == 3 then
-						MIFARE_trailer_sector(SECTOR:children():last(),resp)
+						MIFARE_trailer_sector(get_last_child(SECTOR),resp)
 					elseif block+sector == 0 then
-						MIFARE_first_sector(SECTOR:children():last(),resp)
+						MIFARE_first_sector(get_last_child(SECTOR),resp)
 					else
-						MIFARE_text(SECTOR:children():last(),resp)
+						MIFARE_text(get_last_child(SECTOR),resp)
 					end
 				end
 			end
@@ -171,7 +181,7 @@ function MIFARE_scan(root)
 		end
 	end
 	if last_sector then
-		_n("last sector"):val(bytes.new(8,last_sector))
+		root:append{ classname="block", label="last sector", val=bytes.new(8,last_sector) }
 	end
 end
 

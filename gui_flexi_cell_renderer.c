@@ -1,16 +1,33 @@
+/**********************************************************************
+*
+* This file is part of Cardpeek, the smart card reader utility.
+*
+* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+*
+* Cardpeek is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Cardpeek is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
+*
+* This work is based partially on GtkCellRendererFlexi
+* in GAIM, written and (c) 2002 by Sean Egan
+* (Licensed under the GPL), which in turn is
+* based on Gtk's GtkCellRenderer[Text|Toggle|Pixbuf]
+* implementation by Jonathan Blandford 
+*/
+
 #include "gui_flexi_cell_renderer.h"
 #include "bytestring.h"
 #include <string.h>
 #include "misc.h"
-
-/* This is based mainly on GtkCellRendererFlexi
- *  in GAIM, written and (c) 2002 by Sean Egan
- *  (Licensed under the GPL), which in turn is
- *  based on Gtk's GtkCellRenderer[Text|Toggle|Pixbuf]
- *  implementation by Jonathan Blandford */
-
-/* This is taken mainly from the GtkTreeView Tutorial */
-/* IT IS NOT USED IN CARDPEEK AT THIS STAGE */
 
 
 static void     custom_cell_renderer_flexi_init       (CustomCellRendererFlexi      *cellflexi);
@@ -449,7 +466,7 @@ static gboolean internal_format(CustomCellRendererFlexi *cr, const a_string_t *a
     return TRUE;
 }
 
-static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src)
+static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src, const char *mime_type)
 {
     GdkPixbufLoader *loader;
     bytestring_t *bs = bytestring_new_from_string(src);
@@ -468,29 +485,18 @@ static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src
         return FALSE;
     }
 
-    loader = gdk_pixbuf_loader_new();
+    loader = gdk_pixbuf_loader_new_with_mime_type(mime_type,&err);
 
+    if (!loader)
+        goto internal_load_image_fail;
+    
     if (gdk_pixbuf_loader_write(loader,bs->data,bs->len,&err)==FALSE)
-    {
-        if (err!=NULL)
-        {
-            internal_render_error(cr,err->message);
-            g_error_free(err);
-            bytestring_free(bs);
-            return FALSE;
-        }
-    }
+        goto internal_load_image_fail;
+    
+    err=NULL;
 
     if (gdk_pixbuf_loader_close(loader,&err)==FALSE)
-    {
-        if (err!=NULL)
-        {
-            internal_render_error(cr,err->message);
-            g_error_free(err);
-            bytestring_free(bs);
-            return FALSE;
-        }
-    }
+        goto internal_load_image_fail;
 
     cr->rendered_type  = RENDER_PIXBUF;
     cr->rendered_value = (GdkPixbuf*) gdk_pixbuf_loader_get_pixbuf(loader);
@@ -501,6 +507,15 @@ static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src
 
     bytestring_free(bs);
     return TRUE;
+
+internal_load_image_fail:
+    if (err!=NULL)
+    {
+        internal_render_error(cr,err->message);
+        g_error_free(err);
+    }
+    if (bs) bytestring_free(bs);
+    return FALSE;
 }
 
 static int internal_prepare_rendering(CustomCellRendererFlexi *cr)
@@ -517,7 +532,7 @@ static int internal_prepare_rendering(CustomCellRendererFlexi *cr)
         {
             if (strstr(a_strval(cr->mime_type)+2,"image/")!=NULL)
             {
-                internal_load_image(cr,a_strval(cr->raw_value));
+                internal_load_image(cr,a_strval(cr->raw_value),a_strval(cr->mime_type));
             }
             else
             {

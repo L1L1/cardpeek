@@ -19,13 +19,14 @@
 *
 */
 
+#include <string.h>
 #include "gui.h"
 #include "gui_cardview.h"
 #include "gui_readerview.h"
 #include "gui_logview.h"
 #include "gui_scratchpad.h"
 #include "misc.h"
-#include "string.h"
+#include "a_string.h"
 
 #include "cardpeek_resources.gresource"
 
@@ -327,6 +328,34 @@ char *gui_select_reader(unsigned list_size, const char **list)
     return retval;
 }
 
+#ifdef DISPLAY_SUPPORTED_MIME_TYPES
+static void gui_get_supported_image_mime_types(void)
+{
+    GSList *formats = gdk_pixbuf_get_formats();
+    GdkPixbufFormat *format;
+    a_string_t *info;
+    char **mime_types;
+    int i;
+
+    info = a_strnew("");
+    while (formats)
+    {
+        format = (GdkPixbufFormat *)formats->data;
+        formats = formats->next;
+        mime_types =  gdk_pixbuf_format_get_mime_types(format);
+        for (i=0;mime_types[i]!=NULL;i++)
+        {
+            a_strcat(info," ");
+            a_strcat(info,mime_types[i]);
+        }
+        g_strfreev(mime_types);
+    }
+    log_printf(LOG_INFO,"Supported image mime-types:%s",a_strval(info));
+    g_slist_free(formats);
+    a_strfree(info);
+}
+#endif
+
 const char *icon_resources[] =
 {
     "/cardpeek/icons/analyzer.png", 	"cardpeek-analyzer",
@@ -581,6 +610,10 @@ int gui_create(void)
     gtk_container_add (GTK_CONTAINER (MAIN_WINDOW), vbox);
 
     gtk_widget_show_all (MAIN_WINDOW);
+
+#ifdef DISPLAY_SUPPORTED_MIME_TYPES
+    gui_get_supported_image_mime_types();
+#endif
 
     return 1;
 }

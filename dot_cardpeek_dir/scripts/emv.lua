@@ -34,10 +34,47 @@ require('lib.strict')
 -- GLOBAL EMV CARD COMMANDS extending general lib.apdu 
 --------------------------------------------------------------------------
 
+function build_empty_pdol_data_block(pdol)
+    local data = bytes.new(8);
+    local o_tag
+    local o_len
+
+    while pdol do
+        o_tag, pdol = asn1.split_tag(pdol)
+        o_len, pdol = asn1.split_tag(pdol)
+
+        if o_tag==0x9F66 and o_len==4 then
+            --  Terminal Transaction Qualifiers (VISA)
+            data = data .. "30 00 00 00"
+        elseif o_tag==0x9F1A and o_len==2 then
+            -- Terminal country code
+            data = data .. "0250"
+        elseif o_tag==0x5F2A and o_len==2 then
+            -- Transaction currency code
+            data = data .. "0978"
+        elseif o_tag==0x9A and o_len==3 then
+            -- Transaction date
+            data = data .. "01 01 01"
+        elseif o_tag==0x9F37 and o_len==4 then
+            -- Unpredictable number
+            data = data .. "DEADBEEF"
+        else
+            -- When in doubt Zeroize
+            while o_len > 0 do
+                data = data .. 0x00
+                o_len = o_len-1 
+            end
+        end
+    end
+    return data
+end
+
 function card.get_processing_options(pdol)
-	local command;
-        if pdol and #pdol>0 then
-	   command = bytes.new(8,"80 A8 00 00",#pdol+2,0x83,#pdol,pdol,"00")
+	local command
+    local pdol_data
+    if pdol and #pdol>0 then
+       pdol_data = build_empty_pdol_data_block(pdol)
+	   command = bytes.new(8,"80 A8 00 00",#pdol_data+2,0x83,#pdol_data,pdol_data,"00")
 	else
 	   command = bytes.new(8,"80 A8 00 00 02 83 00 00")
 	end
@@ -192,6 +229,7 @@ EMV_REFERENCE = {
    ['9F2F'] = {"ICC PIN Encipherment Public Key Remainder" },
    ['9F32'] = {"Issuer PK Exponent" }, 
    ['9F36'] = {"Application Transaction Counter (ATC)" }, 
+   ['9F37'] = {"Unpredictable number" }, 
    ['9F38'] = {"Processing Options Data Object List (PDOL)" }, 
    ['9F42'] = {"Application Currency Code" }, 
    ['9F44'] = {"Application Currency Exponent" }, 
@@ -240,18 +278,25 @@ PSE  = "#315041592E5359532E4444463031"
 AID_LIST = { 
   "#A0000000421010", -- French CB
   "#A0000000422010", -- French CB
+
   "#A0000000031010", -- Visa credit or debit
   "#A0000000032010", -- Visa electron
   "#A0000000032020", -- V pay
   "#A0000000032010", -- Visa electron
+  "#A0000000038010", -- Visa Plus
+
   "#A0000000041010", -- Mastercard credit or debit 
   "#A0000000042010", -- 
   "#A0000000043060", -- Mastercard Maestro
   "#A0000000046000", -- Mastercard Cirrus 
+
   "#A00000006900",   -- FR Moneo
-  "#A0000001850002", -- UK Post Office Card Account card
   "#A00000002501",   -- American Express
-  "#A0000001523010", -- Diners club
+  "#A0000001850002", -- UK Post Office Card Account card
+  "#A0000001523010", -- Diners club/Discover
+  "#A0000002771010", -- Interac
+  "#A0000003241010", -- Discover
+  "#A0000000651010", -- JCB
 }
 
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }

@@ -1,4 +1,12 @@
 cardpeek-0.8: L1L1@gmx.com
+24 November 2013
+- This is a bugfix release.
+- Corrected GPO bug in the EMV script (thanks to P. Gueulle, http://www.acbm.com/inedits/cartes-bancaires-sans-contact.html)
+- Corrected Mifare script regression after API change in 0.8 (thanks to N. Salguero)
+- Added features to GSM script and corrected a bug in SMS decoding (thanks to S. Brabec)
+- Minor bug correction in image rendering mechanism.
+
+cardpeek-0.8: L1L1@gmx.com
 12 Spetember 2013
 - Added Belgian eID card support
 - Added RavKav calypso card support (A. Berkow)

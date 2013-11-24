@@ -1,0 +1,6 @@
+#ifndef SCRIPT_VERSION_H
+#define SCRIPT_VERSION_H
+
+#define SCRIPT_VERSION 1385297053
+
+#endif

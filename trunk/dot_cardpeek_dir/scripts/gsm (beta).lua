@@ -148,14 +148,80 @@ function GSM_SMS_decode_default_alphabet(node,data)
 		
 		char = bit.AND(bit.SHL(data:get(pos),shifted),0x7F)+back_char
 		back_char = bit.SHR(data:get(pos),7-shifted)
-	
+
 		text = text..GSM_DEFAULT_ALPHABET[char+1]
 		if shifted==6 then
+			if pos==#data-1 then
+				if back_char==0x0D then
+					break
+				end
+				-- This should not be done, as it may
+				-- accidentally cut trailing '@', but
+				-- most phones fill 7 spare bits by
+				-- zeroes instead of 0x0D and also cut
+				-- trailing '@'
+				if back_char==0x00 then
+					break
+				end
+			end
 			text = text..GSM_DEFAULT_ALPHABET[back_char+1]
 			back_char = 0
 		end
 	end
 	return node:set_attribute("alt",text)
+end
+
+function GSM_SMS_decode_ucs2(node,data)
+	local text = ""
+	local ucs2
+	local utf8
+	local pos
+
+	for pos=0,(#data/2)-1 do
+		ucs2 = bit.SHL(data:get(pos*2),8) + data:get(pos*2+1)
+		if ucs2<0x80 then
+			utf8 = string.format('%c', ucs2)
+			end
+		if ucs2>=0x80 and ucs2<0x800 then
+			utf8 = string.format('%c%c', bit.OR(bit.SHR(ucs2,6),0xC0), bit.OR(bit.AND(ucs2,0x3F),0x80))
+			end
+		if ucs2>=0x800 and ucs2<0xFFFF then
+			if not(ucs2>=0xD800 and ucs2<=0xDFFF) then
+				  utf8 = string.format('%c%c%c', bit.OR(bit.SHR(ucs2,12),0xE0), bit.OR(bit.AND(bit.SHR(ucs2,6),0x3F),0x80), bit.OR(bit.AND(ucs2,0x3F),0x80))
+				  end
+			end
+		text = text..utf8
+	end
+	return node:set_attribute("alt",text)
+end
+
+function GSM_SMS_TPDCS(node,data)
+	local text
+	local encoding = 0x100
+	local compressed = 0x100
+
+	if bit.AND(data:get(0),0xC0) then
+		encoding = bit.AND(data:get(0),0x0C)
+		compressed = bit.AND(data:get(0),0x20)
+	end
+	if encoding~=0x100 then
+		if encoding==0x00 then
+			text = 'encoding=GSM_DEFAULT_ALPHABET'
+		elseif encoding==0x08 then
+			text = 'encoding=UNICODE'
+		elseif encoding==0x0C then
+			text = 'encoding=RESERVED'
+		else
+			text = string.format('encoding=UNKNOWN_%X', encoding)
+		end
+		if compressed~=0x100 then
+			if compressed ~= 0x00 then
+				text = text .. ',COMPRESSED'
+			end
+		end
+		return node:set_attribute("alt",text)
+	-- else TODO
+	end
 end
 
 function GSM_number(node,data)
@@ -211,8 +277,10 @@ end
 function GSM_SMS(node,data)
 	local subnode
 	local pos
-	local encoding
-	
+	local encoding = 0x100
+	local compressed = 0x100
+	local tpdcs
+
 	create_sub_node(node,data,"status",0,1)
 	pos = 1
 	if data:get(0)~=0 then
@@ -227,15 +295,21 @@ function GSM_SMS(node,data)
 		create_sub_node(node,data,"Sender number".." "..tostring(data:get(pos)),pos+2,math.floor((data:get(pos)+1)/2),GSM_number)
 		pos = pos+math.floor((data:get(pos)+1)/2) + 2
 		create_sub_node(node,data,"TP-PID",pos,1)
-		encoding = data:get(pos+1)
-		create_sub_node(node,data,"TP-DCS",pos+1,1)
+		if bit.AND(data:get(pos+1),0xC0) then
+			encoding = bit.AND(data:get(pos+1),0x0C)
+			compressed = bit.AND(data:get(pos+1),0x20)
+		-- else TODO
+		end
+		create_sub_node(node,data,"TP-DCS",pos+1,1,GSM_SMS_TPDCS)
 		create_sub_node(node,data,"TP-SCTS",pos+2,7,GSM_timestamp)
 		pos = pos + 9
 		create_sub_node(node,data,"Length of SMS",pos,1,GSM_byte)
-		if encoding==0 then
-			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+6)/8),GSM_SMS_decode_default_alphabet)
+		if encoding==0 and compressed==0 then
+			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+7)/8),GSM_SMS_decode_default_alphabet)
+		elseif encoding==8 and compressed==0 then
+			create_sub_node(node,data,"Text of SMS",pos+1,data:get(pos),GSM_SMS_decode_ucs2)
 		else
-			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+6)/8))
+			create_sub_node(node,data,"Text of SMS",pos+1,data:get(pos))
 		end
 	end
 end

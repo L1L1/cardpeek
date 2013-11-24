@@ -16,6 +16,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
+-- @description Get card ATR (Answer To Reset)
+-- @targets 0.8 
 
 require('lib.apdu')
 

@@ -442,8 +442,16 @@ function ui_parse_biometry_fac(node,data)
 		image_len = block_length-(index-block_start)
 		SUBSUBBLOCK = SUBBLOCK:append({ classname="item", label="Image Data", size=image_len })
 		nodes.set_attribute(SUBSUBBLOCK,"val",bytes.sub(data,index,index+image_len-1))
-		nodes.set_attribute(SUBSUBBLOCK,"mime-type","image/jpeg")
-		index = index + image_len
+        
+        if image_len>2 and bytes.sub(data,index,index+1) == bytes.new(8,"FF D8") then
+		    nodes.set_attribute(SUBSUBBLOCK,"mime-type","image/jpeg")
+	    elseif image_len>6 and bytes.sub(data,index,index+5) == bytes.new(8,"00 00 00 0C 6A 50") then
+		    nodes.set_attribute(SUBSUBBLOCK,"mime-type","image/jp2")
+        else
+            log.print(log.WARNING,"Could not identify facial image format.")
+        end
+
+        index = index + image_len
 	end
 	return true
 

@@ -346,10 +346,12 @@ static const bytestring_t* pcsc_last_atr(cardreader_t* cr)
     return cr->atr;
 }
 
+#define NUM_INFO_FIELDS 3
+
 static char **pcsc_get_info(cardreader_t* cr)
 {
     pcsc_data_t* pcsc = cr->extra_data;
-    DWORD state;
+    DWORD state = 0;
     DWORD protocol;
     BYTE pbAtr[MAX_ATR_SIZE];
     DWORD atrlen=MAX_ATR_SIZE;
@@ -367,13 +369,18 @@ static char **pcsc_get_info(cardreader_t* cr)
     if (pcsc->status!=SCARD_S_SUCCESS)
     {
         cr->connected = 0;
-        /*log_printf(LOG_ERROR,"Failed to query card status: %s (error 0x%08x).",
-        	    pcsc_stringify_error(pcsc->status),
-        	    pcsc->status );*/
-        return NULL;
+        info = g_malloc(3 * sizeof(char *));
+
+        info[0]=g_strdup("pcsc_status");
+        sprintf(num_buf,"%u",(unsigned)(pcsc->status));
+        info[1]=g_strdup(num_buf);
+
+        info[2]=NULL;
+
+        return info;
     }
 
-    info = g_malloc(5*sizeof(char *));
+    info = g_malloc((NUM_INFO_FIELDS*2+1)*sizeof(char *));
 
     info[0]=g_strdup("state");
     sprintf(num_buf,"%u",(unsigned)(state));
@@ -383,7 +390,11 @@ static char **pcsc_get_info(cardreader_t* cr)
     info[2]=g_strdup("atr");
     info[3]=bytestring_to_format("%D",cr->atr);
 
-    info[4]=NULL;
+    info[4]=g_strdup("pcsc_status");
+    sprintf(num_buf,"%u",(unsigned)(pcsc->status));
+    info[5]=g_strdup(num_buf); 
+
+    info[NUM_INFO_FIELDS*2]=NULL;
 
     return info;
 }

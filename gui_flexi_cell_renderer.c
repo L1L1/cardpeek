@@ -489,7 +489,7 @@ static gboolean internal_load_image(CustomCellRendererFlexi *cr, const char *src
 
     if (!loader)
         goto internal_load_image_fail;
-    
+
     if (gdk_pixbuf_loader_write(loader,bs->data,bs->len,&err)==FALSE)
         goto internal_load_image_fail;
     
@@ -532,7 +532,7 @@ static int internal_prepare_rendering(CustomCellRendererFlexi *cr)
         {
             if (strstr(a_strval(cr->mime_type)+2,"image/")!=NULL)
             {
-                internal_load_image(cr,a_strval(cr->raw_value),a_strval(cr->mime_type));
+                internal_load_image(cr,a_strval(cr->raw_value),a_strval(cr->mime_type)+2);
             }
             else
             {

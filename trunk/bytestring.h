@@ -152,6 +152,7 @@ void bytestring_release(bytestring_t *bs);
 
 void bytestring_free(bytestring_t *bs);
 
+/* bytestring_release frees data in bs, bytestring_free also frees bs itself. */
 
 #endif
 

@@ -66,10 +66,10 @@ function navigo_process_events(cardenv,node_label)
 	local station_id
 	local location_string
 
-	event_node = cardenv:find_first({label=node_label})
+	event_node = cardenv:find_first({label=node_label, parsed="true"})
 
 	if event_node==nil then 
-	   log.print(log.WARNING,"No event found in card")
+	   log.print(log.WARNING,"No " .. node_label .. " found in card")
 	   return 0 
 	end
 
@@ -123,7 +123,7 @@ function navigo_process_events(cardenv,node_label)
 	end
 end
 
-navigo_process_events(CARD,"Event logs, parsed")
-navigo_process_events(CARD,"Special events, parsed")
+navigo_process_events(CARD,"Event logs")
+navigo_process_events(CARD,"Special events")
 
 

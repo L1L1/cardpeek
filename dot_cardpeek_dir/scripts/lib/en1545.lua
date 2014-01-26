@@ -20,13 +20,12 @@
 require('lib.strict')
 require('lib.country_codes')
 
-EPOCH = 852073200
+EPOCH = os.time({hour=0, min=0, year=1997, month=1, sec=0, day=1})
+--EPOCH = 852073200
 date_days = 0
 function en1545_DATE(source)
-        local part =  bytes.sub(source, 0, 13) -- 14 bits
-        part = bytes.pad_left(part,32,0)
-        date_days = EPOCH+bytes.tonumber(part)*24*3600
-        return os.date("%x",date_days)
+        date_days = EPOCH+bytes.tonumber(source)*24*3600
+        return os.date("%a %x",date_days)
 end
 
 function en1545_TIME(source)
@@ -36,6 +35,20 @@ function en1545_TIME(source)
         date_minutes = date_days + bytes.tonumber(part)*60
         date_days = 0
         return os.date("%X",date_minutes)
+end
+
+function en1545_DATE_TIME(source)
+    local dtSeconds = EPOCH + bytes.tonumber(source)
+    return os.date("%c", dtSeconds)
+end
+
+function en1545_BCD_DATE(source)
+	local dob = tostring(bytes.convert(source,8))
+	local dobYear   = string.sub(dob, 1, 4)
+	local dobMonth  = string.sub(dob, 5, 6)
+	local dobDay    = string.sub(dob, 7, 8)
+	local dateOfBirth = dobDay.."/"..dobMonth.."/"..dobYear
+    return dateOfBirth
 end
 
 ALPHA = { "-","A","B","C","D","E","F","G",
@@ -72,9 +85,11 @@ end
 function en1545_NUMBER(source)
         return bytes.tonumber(source)
 end
+
 function en1545_AMOUNT(source)
-        return string.format("%.2f euros",bytes.tonumber(source)/100)
+        return string.format("%.2f€",bytes.tonumber(source)/100)
 end
+
 function en1545_ZONES(source)
 	local zones = bytes.tonumber(source)
 	local n = 8
@@ -118,11 +133,7 @@ en1545_REPEAT = 2
 
 function en1545_parse_item(ctx, format, data, position, reference_index)
         local parsed = 0
-        local index
-        local item_node
-        local bitmap_node
-        local bitmap_size
-        local item
+        local index, item_node, bitmap_node, bitmap_size, item, alt
 
         if format == nil then
            return 0
@@ -132,9 +143,9 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 
         item = bytes.sub(data,position,position+parsed-1)
 
-	item_node = ctx:append{ classname="item", 
+        item_node = ctx:append{ classname="item", 
 				label=format[3], 
-				id=reference_index }
+				--[[ id=reference_index --]] }
 
         if format[1] == en1545_BITMAP then -- entry type is bitmap 
 
@@ -161,9 +172,15 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
            end
 
         else -- entry type is item
-
-           item_node:set_attribute("val",item)
-           item_node:set_attribute("alt",format[1](item))
+           
+           alt = format[1](item, item_node)
+           if alt==nil then
+              item_node:remove()
+           else
+              item_node:set_attribute("val",item)
+              item_node:set_attribute("size",#item)
+              item_node:set_attribute("alt",alt)
+           end
 
         end
         return parsed
@@ -207,11 +224,11 @@ function en1545_map(cardenv, data_type, ...)
                                         parsed = parsed + en1545_parse(record_node,template,block)
                                 end
                         end
-
-                        en1545_unparsed(record_node,bytes.sub(bits,parsed))
+                        
+                        en1545_unparsed(record_node,bytes.sub(bits,parsed)) 
                 end
 
-		file:set_attribute("label",data_type..", parsed")
+		file:set_attribute("parsed","true")
 	end
 end
 

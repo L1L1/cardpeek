@@ -8,8 +8,8 @@
 -- 
 cardpeek = {
   ['smartcard_list'] = {
+    ['next_update'] = 1393323401,
     ['auto_update'] = true,
-    ['next_update'] = 1386785669,
     ['url'] = "http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt",
   },
 }

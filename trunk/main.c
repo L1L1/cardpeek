@@ -42,33 +42,14 @@
 #include <signal.h>
 #include <getopt.h>
 #include "cardpeek_resources.gresource"
-
-#include "gui_inprogress.h"
-#include <curl/curl.h>
-
-static int progress_update_smartcard_list_txt(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow)
-{
-    GtkWidget *progress = (GtkWidget *)clientp;
-    UNUSED(ultotal);
-    UNUSED(ulnow);
-
-    if (dltotal==0)
-        return !gui_inprogress_pulse(progress);
-    return !gui_inprogress_set_fraction(progress,dlnow/dltotal);
-}
+#include "http_download.h"
 
 static int update_smartcard_list_txt(void)
 {
-    CURL *curl;
-    CURLcode res;
     const char* smartcard_list_txt = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_TXT);
-    const char* smartcard_list_download = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_DOWNLOAD);
-    FILE* smartcard_list;
     char *url;
-    char user_agent[100];
     time_t now = time(NULL);
     unsigned next_update = (unsigned)luax_variable_get_integer("cardpeek.smartcard_list.next_update");
-    GtkWidget *progress;
     int retval = 0;
     time_t next_update_distance;
 
@@ -99,16 +80,16 @@ static int update_smartcard_list_txt(void)
     switch (gui_question("The local copy of the ATR database may be outdated.\nDo you whish to do an online update?",
                          "Yes","No, ask me again later","No, always use the local copy",NULL))
     {
-    case 0:
-        break;
-    case 1:
-        luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+(24*3600)));
-        return 0;
-    case 2:
-        luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
-        return 0;
-    default:
-        return 0;
+        case 0:
+            break;
+        case 1:
+            luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+(24*3600)));
+            return 0;
+        case 2:
+            luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
+            return 0;
+        default:
+            return 0;
     }
 
     log_printf(LOG_INFO,"Attempting to update smartcard_list.txt");
@@ -118,59 +99,11 @@ static int update_smartcard_list_txt(void)
     if (url==NULL)
         url = g_strdup("http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt");
 
-    progress = gui_inprogress_new("Downloading file","Please wait...");
-
-    curl = curl_easy_init();
-
-    if (curl)
+    if ((retval=http_download(url,smartcard_list_txt))!=0)
     {
-        g_sprintf(user_agent,"cardpeek %s",VERSION);
-
-        smartcard_list = fopen(smartcard_list_download,"w");
-
-        curl_easy_setopt(curl,CURLOPT_URL,url);
-        curl_easy_setopt(curl,CURLOPT_WRITEDATA, smartcard_list);
-        curl_easy_setopt(curl,CURLOPT_USERAGENT, user_agent);
-        curl_easy_setopt(curl,CURLOPT_FAILONERROR, 1L);
-        curl_easy_setopt(curl,CURLOPT_NOPROGRESS, 0L);
-        curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION, progress_update_smartcard_list_txt);
-        curl_easy_setopt(curl,CURLOPT_PROGRESSDATA, progress);
-
-        res = curl_easy_perform(curl);
-
-        fclose(smartcard_list);
-
-        if (res!=CURLE_OK)
-        {
-            log_printf(LOG_ERROR,"Failed to update smartcard_list.txt: %s", curl_easy_strerror(res));
-            unlink(smartcard_list_download);
-        }
-        else
-        {
-#ifdef _WIN32
-	    unlink(smartcard_list_txt);
-#endif
-	
-            if (rename(smartcard_list_download,smartcard_list_txt)==0)
-            {
-                log_printf(LOG_INFO,"Updated smartcard_list.txt");
-            }
-            else
-            {
-                /* this should not happen... but you never know */
-                log_printf(LOG_ERROR,"Failed to copy smartcard_list.dowload as smartcard_list.txt: %s", strerror(errno));
-                unlink(smartcard_list_download);
-            }
-            /* update again in a month */
-            luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+30*(24*3600)));
-        }
-
-        curl_easy_cleanup(curl);
-
-        retval = (res==CURLE_OK);
-    }
-
-    gui_inprogress_free(progress);
+        /* update again in a month */
+        luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+30*(24*3600))); 
+    } 
 
     luax_config_table_save();
     g_free(url);
@@ -343,6 +276,25 @@ static gboolean run_update_checks(gpointer data)
 }
 */
 
+#include <execinfo.h>
+static void do_backtrace()
+{
+    char **btrace;
+    void *buffer[32];
+    int i,depth;
+    
+    depth=backtrace(buffer,32);
+
+    btrace = backtrace_symbols(buffer,depth);
+
+    for (i=0;i<depth;i++)
+    {
+        log_printf(LOG_DEBUG,"backtrace: %s",btrace[i]);    
+    }
+
+    free(btrace);
+}
+
 static const char *message =
     "***************************************************************\n"
     " Oups...                                                       \n"
@@ -370,6 +322,10 @@ static void save_what_can_be_saved(int sig_num)
     write(2,signature,strlen(signature));
     sprintf(buf,"Received signal %i\n",sig_num);
     write(2,buf,strlen(buf));
+   
+    log_printf(LOG_ERROR,"Received signal %i",sig_num); 
+    do_backtrace();
+
     log_close_file();
     exit(-2);
 }

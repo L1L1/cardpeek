@@ -48,7 +48,7 @@ if [ -d "$DOT_CARDPEEK_SRC" ]; then
                 MODIFIED='yes'
             fi 
         fi
-     elif (diff -q "$i" "$DOT_CARDPEEK_DST/$i" | grep differ) &> /dev/null; then
+     elif test ! -e "$DOT_CARDPEEK_DST/$i" || (diff -q "$i" "$DOT_CARDPEEK_DST/$i" | grep differ) &> /dev/null; then
         if [ "$i" -nt "$DOT_CARDPEEK_DST/$i" ]; then
             echo ">> $DOT_CARDPEEK_SRC/$i will be copied to $DOT_CARDPEEK_DST/$i"
             if [ $TODO = "update" ]; then

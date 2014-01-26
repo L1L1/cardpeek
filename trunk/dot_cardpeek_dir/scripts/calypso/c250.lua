@@ -31,6 +31,7 @@
 
 require('lib.strict')
 require('lib.en1545')
+require('lib.calypso_card_num')
 
 ----------------------------
 
@@ -210,18 +211,4 @@ en1545_map(CARD,"Contract list",intercode_BestContracts)
 	--        as defined in intercode
 en1545_map(CARD,"Contracts",intercode_Contract)
 
-local atr
-local hex_card_num
-local card_num
-
-atr = card.last_atr();
-hex_card_num = bytes.sub(atr,-7,-4)
-card_num     = (hex_card_num:get(0)*256*65536)+(hex_card_num:get(1)*65536)+(hex_card_num:get(2)*256)+hex_card_num:get(3)
-
-CARD:find_first({ label="cold ATR" } )
-    :append{ classname = "item", 
-             label="Card number", 
-             size=4,
-             val = hex_card_num,
-             alt = card_num }
-
+calypso_card_num()

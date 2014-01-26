@@ -243,7 +243,6 @@ end
 -- RETURNS : sw, data
 -----------------------------------------------------------
 
-
 function card.get_data(id,length_expected)
 	local command
 
@@ -251,6 +250,26 @@ function card.get_data(id,length_expected)
            length_expected=0
         end
 	command = bytes.new(8,card.CLA,0xCA,bit.SHR(id,8),bit.AND(id,0xFF),length_expected)
+	return card.send(command)
+end
+
+-----------------------------------------------------------
+-- card.verify : verify apdu
+--
+-- IN pin : ASCII string with secret pin
+-- IN p1 : predicate 1, 0x00 according to ISO/IEC 7816-4,
+--			here as input because it assumes other values
+--			in Calypso card's usage.
+-- RETURNS : sw, data
+-----------------------------------------------------------
+
+function card.verify(pin, p1)
+	local command, length
+
+	p1 = p1 or 0x00
+	pin = bytes.new_from_chars(pin)
+	length = #pin
+	command = bytes.new(8,card.CLA,0x20,p1,0x00,length,pin)
 	return card.send(command)
 end
 

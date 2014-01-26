@@ -209,22 +209,6 @@ function RavKav_calculateMonthEnd(dateSeconds, addMonths)
     return os.time(dt)
 end
 
-function RavKav_BCD_DATE(source)
-	local dob = tostring(bytes.convert(source,8))
-	local dobYear   = string.sub(dob, 1, 4)
-	local dobMonth  = string.sub(dob, 5, 6)
-	local dobDay    = string.sub(dob, 7, 8)
-	local dateOfBirth = dobDay.."/"..dobMonth.."/"..dobYear
-    return dateOfBirth
-end
-
-function RavKav_DATE_TIME(source)
-    local dtSecondsPart =  bytes.sub(source, 0, 29) --30 bits
-    bytes.pad_left(dtSecondsPart, 32, 0)
-    local dtSeconds = EPOCH + bytes.tonumber(dtSecondsPart)
-    return os.date("%c", dtSeconds)
-end
-
 function RavKav_INVERTED_DATE(source)
     return os.date("%x", RavKav_rkInvertedDaysToSeconds(source))
 end
@@ -381,7 +365,7 @@ function RavKav_parseEnvironment(ENV_REF, nRec)
     bitOffset = RavKav_parseBits(data, bitOffset, 14, ENV_REC_REF, "Date of issue",         en1545_DATE)
     bitOffset = RavKav_parseBits(data, bitOffset, 14, ENV_REC_REF, "End date",              en1545_DATE)
     bitOffset = RavKav_parseBits(data, bitOffset,  3, ENV_REC_REF, "Pay method",            en1545_NUMBER)
-    bitOffset = RavKav_parseBits(data, bitOffset, 32, ENV_REC_REF, "Date of birth",         RavKav_BCD_DATE)
+    bitOffset = RavKav_parseBits(data, bitOffset, 32, ENV_REC_REF, "Date of birth",         en1545_BCD_DATE)
     bitOffset = RavKav_parseBits(data, bitOffset, 14, ENV_REC_REF, "Company (not set)",     en1545_NUMBER)
     bitOffset = RavKav_parseBits(data, bitOffset, 30, ENV_REC_REF, "Company ID (not set)",  en1545_NUMBER)
     bitOffset = RavKav_parseBits(data, bitOffset, 30, ENV_REC_REF, "ID number",             en1545_NUMBER)
@@ -466,9 +450,9 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     bitOffset, contractId   = RavKav_parseBits(data, bitOffset,  4, EVENT_REC_REF, "Contract ID",               en1545_NUMBER)
     bitOffset               = RavKav_parseBits(data, bitOffset,  4, EVENT_REC_REF, "Area ID",                   en1545_NUMBER)      --1 == urban, 2 == intercity
     bitOffset, eventType    = RavKav_parseBits(data, bitOffset,  4, EVENT_REC_REF, "Event type",                en1545_NUMBER)
-    bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "Event time",                RavKav_DATE_TIME)
+    bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "Event time",                en1545_DATE_TIME)
     bitOffset               = RavKav_parseBits(data, bitOffset,  1, EVENT_REC_REF, "Journey interchanges flag", en1545_NUMBER)      --includes switching/continuing beyond
-    bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "First event time",          RavKav_DATE_TIME)   --identical to 'Event time'
+    bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "First event time",          en1545_DATE_TIME)   --identical to 'Event time'
 
     local PRIORITIES_REF = nodes.append(EVENT_REC_REF, {classname="item", label="Best contract priorities"})
     local nContract

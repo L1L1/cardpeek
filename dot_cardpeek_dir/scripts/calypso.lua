@@ -129,7 +129,7 @@ function calypso_guess_network(cardenv)
 				local country_num = tonumber(country_bin:convert(4):format("%D"))
 			    local network_num = tonumber(network_bin:convert(4):format("%D"))
 
-				if country_num==250 or country_num==56 then
+				if country_num==250 or country_num==56 or country_num==131 then
 					return country_num, network_num
 				end
 				

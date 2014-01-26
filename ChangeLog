@@ -1,4 +1,4 @@
-cardpeek-0.8: L1L1@gmx.com
+cardpeek-0.8.1: L1L1@gmx.com
 24 November 2013
 - This is a bugfix release.
 - Corrected GPO bug in the EMV script (thanks to P. Gueulle, http://www.acbm.com/inedits/cartes-bancaires-sans-contact.html)

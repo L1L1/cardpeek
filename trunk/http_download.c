@@ -49,7 +49,7 @@ int http_download(const char *src_url, const char *dst_filename)
 
     curl_easy_setopt(curl,CURLOPT_URL,src_url);
     curl_easy_setopt(curl,CURLOPT_WRITEDATA, temp_fd);
-    curl_easy_setopt(curl,CURLOPT_USERAGENT, user_agent);
+    curl_easy_setopt(curl,CURLOPT_USERAGENT, a_strval(user_agent));
     curl_easy_setopt(curl,CURLOPT_FAILONERROR, 1L);
     curl_easy_setopt(curl,CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION, progress_download);

@@ -130,6 +130,48 @@ const char* a_strpushback(a_string_t* cs, char c)
   return a_strncat(cs,1,&c);
 }
 
+const char* a_strcpy_all(a_string_t* cs, unsigned n, const void* str)
+{
+    cs->_size=0;
+    return a_strcat_all(cs,n,str);
+}
+
+const char* a_strcat_all(a_string_t* cs, unsigned n, const void* str)
+{
+    unsigned needed_size;
+
+    if (cs->_alloc==0) /* should never happen */
+        return NULL;
+
+    if (str==NULL)
+        return cs->_data;
+
+    if (cs->_size==0) /* cs->_alloc != 0 */
+    {
+        cs->_size=1;
+        cs->_data[0]=0;
+    }
+
+    needed_size = n + cs->_size;
+
+    if (needed_size>cs->_alloc)
+    {
+        while (needed_size>cs->_alloc) cs->_alloc<<=1;
+        cs->_data=(char *)realloc(cs->_data,cs->_alloc);
+    }
+
+    memcpy(cs->_data+cs->_size-1,str,n);
+    cs->_data[n + cs->_size]=0;
+    cs->_size=needed_size;
+
+    return cs->_data;
+}
+
+const char* a_strpushback_all(a_string_t* cs, unsigned char c)
+{
+    return a_strcat_all(cs,1,&c);
+}
+
 const char* a_strval(const a_string_t* cs)
 {
   return cs->_data;

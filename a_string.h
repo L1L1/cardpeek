@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,12 @@ a_string_t* a_strnew(const char* str);
 void a_strfree(a_string_t* cs);
 char* a_strfinalize(a_string_t* cs);
 
+/* Functions for copying and appending zero terminated strings: 
+
+   The a_strn*() function copy at most n bytes form the str, halting
+   before n if an ending 0 is found. 
+ */ 
+
 const char* a_strncpy(a_string_t* cs, unsigned n, const char* str);
 const char* a_strcpy(a_string_t* cs, const char* str);
 const char* a_strncat(a_string_t* cs, unsigned n, const char* str);
@@ -40,6 +46,25 @@ const char* a_strcat(a_string_t* cs, const char* str);
 
 const char* a_strpushback(a_string_t* cs, char c);
 
+/* Functions for non zero terminated strings: 
+
+   They operate like the a_strn*() functions but copy or append exactly 
+   n bytes of data to the string including any 0s found. 
+ 
+ */ 
+   
+const char* a_strcpy_all(a_string_t* cs, unsigned n, const void* str);
+const char* a_strcat_all(a_string_t* cs, unsigned n, const void* str);
+const char* a_pushback_all(a_string_t* cs, unsigned char c);
+
+/* 
+   a_strval() is guaranteed to return a null terminated string. 
+
+   a_strlen() returns the total length of the string *excluding* 
+   the additonal 0 that is added to guarantee that the string is null 
+   terminated.
+
+ */
 const char* a_strval(const a_string_t* cs);
 unsigned a_strlen(const a_string_t* cs);
 

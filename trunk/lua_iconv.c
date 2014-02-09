@@ -21,7 +21,7 @@
 #include <lauxlib.h>
 #include "lua_iconv.h"
 #include <iconv.h>
-#include <a_string.h>
+#include "a_string.h"
 #include <string.h>
 #include <errno.h>
 #include "misc.h"

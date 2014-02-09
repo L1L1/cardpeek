@@ -1,6 +1,10 @@
 cardpeek-0.8.2: Alain Pannetrat <L1L1@gmx.com>
-XX February 2013
-- Added 
+09 February 2013
+- Added contributed VIVA Lisbon Transport Calypso card support
+- Added driver tachograph card support
+- Added iconv support
+- Increased the number of files scanned by Calypso script.
+- Minor bugfixes and enhancements 
 
 cardpeek-0.8.1: L1L1@gmx.com
 24 November 2013

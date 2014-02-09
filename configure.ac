@@ -62,6 +62,11 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 			  This program requires the openssl dev. library.
 			  Please install it first.]))
 
+AC_CHECK_LIB([iconv],[iconv_open],,
+         AC_MSG_ERROR([Could not find the iconv library.
+              This program requires the iconv dev library.
+              Please install it first.]))  
+
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES,[glib-compile-resources],no)
 
 if test x$GLIB_COMPILE_RESOURCES = xno ; then

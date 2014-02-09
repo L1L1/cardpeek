@@ -277,7 +277,7 @@ function Tacho_TEXT_8859(data,node)
         local conversion = iconv.open(format,"UTF-8")
         local converted = conversion:iconv(data:sub(1):format("%C"))
         if converted then
-            print("ICONV yeah")
+            print("ICONV used")
             node:set_attribute("alt",converted)
             return
         end
@@ -290,12 +290,13 @@ function Tacho_TEXT_8859(data,node)
     end
 end 
 
-function Tacho_NUMERIC(data,node)
-     node:set_attribute("alt",data:tonumber())
+function Tacho_DATEF(data,node)
+    local digits= data:convert(4)
+    node:set_attribute("alt",digits:sub(6,7):format("%D").."/"..digits:sub(4,5):format("%D").."/"..digits:sub(0,3):format("%D"))
 end
 
 function Tacho_NUMERIC(data,node)
-     node:set_attribute("alt",data:tonumber())
+    node:set_attribute("alt",data:tonumber())
 end
 
 function Tacho_REGION_NUMERIC(data,node)
@@ -506,7 +507,7 @@ local TACHO_MAP =
                 { "hoderSurname", "item", 36, Tacho_TEXT_8859 },
                 { "hoderFirstNames", "item", 36, Tacho_TEXT_8859 } }
             },
-            { "cardHolderBirthDate", "item", 4, Tacho_DATE },
+            { "cardHolderBirthDate", "item", 4, Tacho_DATEF },
             { "cardHolderPreferredLanguage", "item", 2, Tacho_TEXT } }
     } },
     ["EF_Card_Download"] = 

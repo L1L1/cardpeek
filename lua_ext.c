@@ -43,7 +43,7 @@
 #include "lua_crypto.h"
 #include "lua_ui.h"
 #include "lua_nodes.h"
-
+#include "lua_iconv.h"
 
 /****************************************/
 /* FIXME: this whole file needs cleanup */
@@ -227,6 +227,7 @@ int luax_init(void)
     luaopen_ui(LUA_STATE);
     luaopen_crypto(LUA_STATE);
     luaopen_nodes(LUA_STATE);
+    luaopen_iconv(LUA_STATE);
 
     lua_newtable(LUA_STATE);
     lua_setglobal(LUA_STATE,"cardpeek");

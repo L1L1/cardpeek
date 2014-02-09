@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -276,6 +276,7 @@ static gboolean run_update_checks(gpointer data)
 }
 */
 
+#ifndef _WIN32
 #include <execinfo.h>
 static void do_backtrace()
 {
@@ -294,6 +295,7 @@ static void do_backtrace()
 
     free(btrace);
 }
+#endif
 
 static const char *message =
     "***************************************************************\n"
@@ -324,8 +326,9 @@ static void save_what_can_be_saved(int sig_num)
     write(2,buf,strlen(buf));
    
     log_printf(LOG_ERROR,"Received signal %i",sig_num); 
+#ifndef _WIN32
     do_backtrace();
-
+#endif
     log_close_file();
     exit(-2);
 }

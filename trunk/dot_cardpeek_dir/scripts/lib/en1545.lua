@@ -197,10 +197,11 @@ function en1545_parse(ctx, format, data)
 end
 
 function en1545_unparsed(ctx, data)
-        if bytes.tonumber(data)>0 then
-		ctx:append{ classname="item", 
-			    label="(remaining unparsed data)", 
-			    val=data }
+        if data and bytes.tonumber(data)>0 then
+		    ctx:append{ classname="item", 
+			            label="(remaining unparsed data)", 
+			            val=data,
+                        alt="(binary data)" }
         end
 end
 

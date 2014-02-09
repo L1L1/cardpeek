@@ -389,7 +389,7 @@ static int subr_bytes_sub(lua_State *L)
 
   ret = bytestring_new(bs->width);
 
-  if (bytestring_substr(ret,start,end-start+1,bs)!=BYTESTRING_OK)
+  if (start>end || bytestring_substr(ret,start,end-start+1,bs)!=BYTESTRING_OK)
   {
     bytestring_free(ret);
     lua_pushnil(L);

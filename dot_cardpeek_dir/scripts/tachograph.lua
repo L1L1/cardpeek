@@ -272,6 +272,8 @@ function Tacho_TEXT(data,node)
 end 
 
 function Tacho_TEXT_8859(data,node)
+    global('iconv')
+    
     if iconv and data[0]>0 then
         local format = "ISO-8859-"..data[0]
         local conversion = iconv.open(format,"UTF-8")

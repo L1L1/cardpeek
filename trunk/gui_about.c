@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -60,8 +60,8 @@ void gui_about(void)
 			      "authors", authors,
 			      "comments", "Cardpeek is a tool to read the contents of smart cards.",
 			      "copyright", "Copyright Alain Pannetrat <L1L1@gmx.com>",
-			      "website", "https://cardpeek.googlecode.com",
-                  "website-label", "https://cardpeek.googlecode.com",  
+			      "website", "http://pannetrat.com/Cardpeek/",
+                  	      "website-label", "http://pannetrat.com/Cardpeek/",  
 			      NULL);
 }
 

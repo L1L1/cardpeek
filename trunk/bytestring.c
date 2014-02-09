@@ -646,7 +646,7 @@ int bytestring_substr(bytestring_t* dst,
     bytestring_clear(dst);
     return BYTESTRING_ERROR;
   }
-  if (len==BYTESTRING_NPOS || pos+len>src->len)
+  if (len==BYTESTRING_NPOS || len>src->len || pos+len>src->len)
     len = src->len-pos;
   return bytestring_assign_data(dst,len,src->data+pos);
 }

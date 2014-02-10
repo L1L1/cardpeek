@@ -238,7 +238,7 @@ if sw==0x9000 then
 			id = "1",
 			size = #resp, 
 			val = resp,
-			alt = converter.iconv(resp:sub(0, 20):format("%P"))}
+			alt = converter:iconv(resp:sub(0, 20):format("%P"))}
 	end
 end
 

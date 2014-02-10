@@ -279,7 +279,6 @@ function Tacho_TEXT_8859(data,node)
         local conversion = iconv.open(format,"UTF-8")
         local converted = conversion:iconv(data:sub(1):format("%C"))
         if converted then
-            print("ICONV used")
             node:set_attribute("alt",converted)
             return
         end

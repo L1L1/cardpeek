@@ -225,6 +225,7 @@ end
 calypso_card_num()
 
 -- Get card holder name.
+local converter = iconv.open("ISO-8859-1","UTF-8")
 local resp, sw
 sw,resp = card.verify("0000", 0x80)
 if sw==0x9000 then
@@ -237,10 +238,7 @@ if sw==0x9000 then
 			id = "1",
 			size = #resp, 
 			val = resp,
-			--[[	Character encoding is ISO-8859-1, here converting to ASCII.
-					Can use Lua iconv to convert from ISO-8859-1 to UTF-8.
-					Not implemented because it would add a dependency on Lua iconv. --]]
-			alt = resp:sub(0, 20):format("%P")}
+			alt = converter.iconv(resp:sub(0, 20):format("%P"))}
 	end
 end
 

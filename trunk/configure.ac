@@ -36,21 +36,26 @@ PKG_CHECK_MODULES([LUA],[lua-5.2],,[
   PKG_CHECK_MODULES([LUA],[lua5.2],,[
     PKG_CHECK_MODULES([LUA],[lua >= 5.2],,[
       for lua_lib_name in lua.5.2 lua-5.2 lua5.2; do 
-        AC_CHECK_LIB([$lua_lib_name], [lua_close], [have_liblua=yes], [have_liblua=no])
-        if test $have_liblua = yes; then
+        AC_CHECK_LIB([$lua_lib_name], [lua_close], [HAVE_LIBLUA=yes], [HAVE_LIBLUA=no])
+        if test $HAVE_LIBLUA = yes; then
             AC_SUBST([LUA_CFLAGS], [""])
             AC_SUBST([LUA_LIBS], ["-l$lua_lib_name"])
             break
         fi 
       done
-      if test $have_liblua = no; then
+      if test $HAVE_LIBLUA != yes; then
             AC_MSG_ERROR([Could not find lua 5.2-dev. This program requires the lua 5.2 development library. Please install the lua 5.2 library first.])
       fi
 ])
 ])
 ])
 
-PKG_CHECK_MODULES([CURL],[libcurl])
+PKG_CHECK_MODULES([CURL],[libcurl],,[
+    AC_CHECK_LIB([curl],[curl_easy_init],[
+        AC_SUBST([CURL_CFLAGS],[""])
+        AC_SUBST([CURL_LIBS],[-lcurl])
+    ])
+])
 
 AC_CHECK_LIB([ssl],[SSL_free],,
 	     AC_MSG_ERROR([Could not find openssl-dev.
@@ -65,8 +70,8 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 dnl ---------------------------------------------------------
 dnl Check if ICONV is in -liconv
 dnl otherwise check if directly part of standard library
-AC_CHECK_LIB([iconv],[iconv_open],[have_libiconv=yes],[have_libiconv=no])
-if test "$have_libiconv" = no; then
+AC_CHECK_LIB([iconv],[iconv_open])
+if test "$HAVE_LIBICONV" != yes; then
     AC_MSG_CHECKING([if iconv is part of standard library])
     AC_TRY_LINK(
     [
@@ -76,10 +81,10 @@ if test "$have_libiconv" = no; then
     [ 
         iconv_t cd = iconv_open("",""); 
     ],
-    [have_libiconv=yes],[have_libiconv=no])
-    AC_MSG_RESULT([$have_libiconv])
+    [HAVE_LIBICONV=yes],[HAVE_LIBICONV=no])
+    AC_MSG_RESULT([$HAVE_LIBICONV])
 fi
-if test "$have_libiconv" = no; then
+if test "$HAVE_LIBICONV" != yes; then
     AC_MSG_ERROR([Could not find the iconv library.
                   This program requires the iconv dev library.
                   Please install it first.])

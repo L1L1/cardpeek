@@ -379,7 +379,7 @@ gboolean luax_config_table_save(void)
 
     if (cf==NULL)
     {
-        log_printf(LOG_ERROR,"Could not create file '%s' to save configurationd data.");
+        log_printf(LOG_ERROR,"Could not create file '%s' to save configuration data.",path_config_get_string(PATH_CONFIG_FILE_CONFIG_LUA));
         return FALSE;
     }
     fprintf(cf,"%s",config_table_header);

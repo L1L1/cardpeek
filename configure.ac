@@ -61,11 +61,30 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 	     AC_MSG_ERROR([Could not find openssl-dev.
 			  This program requires the openssl dev. library.
 			  Please install it first.]))
-
-AC_CHECK_LIB([iconv],[iconv_open],,
-         AC_MSG_ERROR([Could not find the iconv library.
-              This program requires the iconv dev library.
-              Please install it first.]))  
+    
+dnl ---------------------------------------------------------
+dnl Check if ICONV is in -liconv
+dnl otherwise check if directly part of standard library
+AC_CHECK_LIB([iconv],[iconv_open],[have_libiconv=yes],[have_libiconv=no])
+if test "$have_libiconv" = no; then
+    AC_MSG_CHECKING([if iconv is part of standard library])
+    AC_TRY_LINK(
+    [
+#include <stdlib.h>
+#include <iconv.h>
+    ],
+    [ 
+        iconv_t cd = iconv_open("",""); 
+    ],
+    [have_libiconv=yes],[have_libiconv=no])
+    AC_MSG_RESULT([$have_libiconv])
+fi
+if test "$have_libiconv" = no; then
+    AC_MSG_ERROR([Could not find the iconv library.
+                  This program requires the iconv dev library.
+                  Please install it first.])
+fi 
+dnl ---------------------------------------------------------
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES,[glib-compile-resources],no)
 

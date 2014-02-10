@@ -4,6 +4,7 @@ Cardpeek is (c) 2009-2014 Alain Pannetrat
 Kind contributors:
 - Anthony Berkow: Calypso script for the RavKav card in Israel.
 - Stanislav Brabec: Intial patch for LUA 5.2 upgrade and GSM script improvements.
+- Stephane Dorte: Helped by providing some tachograph card CLF dumps and logs.
 - Patrick Gueulle: Suggested an extended list of file IDs for Calypso.
 - Ludovic Lange: Initial patch for Mac OS X version.
 - Adam Laurie: CVM parsing in EMV.

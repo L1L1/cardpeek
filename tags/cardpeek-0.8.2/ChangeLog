@@ -1,0 +1,102 @@
+cardpeek-0.8.2: Alain Pannetrat <L1L1@gmx.com>
+09 February 2013
+- Added contributed VIVA Lisbon Transport Calypso card support
+- Added driver tachograph card support
+- Added iconv support
+- Increased the number of files scanned by Calypso script.
+- Minor bugfixes and enhancements 
+
+cardpeek-0.8.1: L1L1@gmx.com
+24 November 2013
+- This is a bugfix release.
+- Corrected GPO bug in the EMV script (thanks to P. Gueulle, http://www.acbm.com/inedits/cartes-bancaires-sans-contact.html)
+- Corrected Mifare script regression after API change in 0.8 (thanks to N. Salguero)
+- Added features to GSM script and corrected a bug in SMS decoding (thanks to S. Brabec)
+- Minor bug correction in image rendering mechanism.
+
+cardpeek-0.8: L1L1@gmx.com
+12 Spetember 2013
+- Added Belgian eID card support
+- Added RavKav calypso card support (A. Berkow)
+- Updated Moneo script with more detailed parsing.
+- Added ability to display pictures (e-passports && eID cards).
+- A new simplified and more efficient card view API with the 'nodes' library.
+- Improved compatibility: now compiles on ARM Raspberry PI and Intel Mac OS X.
+- Attempts to recognize cards from ATR with smartcard_list.txt database.
+- Uses libcurl for online automatic update of ATR database smartcard_list.txt. 
+- A few minor changes to the 'bytes' API.
+- Updgraded libraries to GTK 3.0 and LUA 5.2.
+- Many bugfixes and minor enhancements.
+
+cardpeek-0.7.2: L1L1@gmx.com
+17 March 2013
+- This is a bugfix release. No new features / scripts were added.
+- Fixed many compiler, and C coding standards compliance issues (many thanks to Ludovic Rousseau).
+- Produce a windows version that seems to work both for 32 and 64 bit platforms 
+- Added proper compile flag detection for GLIB.
+- Added source of PDF documentation in doc/ directory.
+- Some other minor correction
+
+cardpeek-0.7.1: L1L1@gmx.com
+7 May 2012
+- Corrected a bug in the GSM script (spotted by Tyson Key), which made it halt on some USIM cards.
+- Corrected a bug in the EMV script (spotted by geoffrey.bulan): the script didn't parse AFLs corectly on some EMV cards, resulting in a runtime error.
+- Corrected a bug in filename parsing for windows, which occured when filenames contained UTF8 characters.
+- Corrected a bug in metro/RER station name analysis for the Paris Navigo script.
+
+cardpeek-0.7: L1L1@gmx.com
+4 September 2011
+- Added support for the Windows XP OS.
+- Extended MOBIB transport card support with better event log parsing including metro and bus stations names.
+- Added preliminary GSM SIM card support.
+- Added prelininary Mifare card support (tested with the Thalys card).
+- Corrected a major bug in the e-passport script.
+- Changed the XML data format used to save card data.
+- Rewrote the card data model for additional flexibility.
+- Added a new flexible card view manipulation library called "treeflex".
+- Minor GUI tweaks.
+- Many bug corrections.
+
+cardpeek-0.6: L1L1@gmx.com
+27 March 2011
+- Rewrote the Calypso scripts for extended modularity.
+- Added desktop and application icon.
+- Corrected bugs.
+- Added EMV CVM parsing proposed by Adam Laurie (many thanks to him). 
+
+cardpeek-0.5: L1L1@gmx.com
+22 March 2010
+- Complete rework of the GUI, for better clarity and ease of use.
+- Added basic crypto support based on OPENSSL (for BAC e-passport ops).
+- Added preliminary support for e-passport analysis in BAC security mode.
+- Extended the documentation.
+- Moved to "autotools" for compilation purposes.
+- Confirmed support for Debian i386, Debian amd64, and FreeBSD 8.0
+
+cardpeek-0.4: L1L1@gmx.com
+03 February 2010
+- Added preliminary Vitale 2 health card analysis.
+- Extended the documentation.
+- Added LUA functions to run standard ISO 7816 commands.
+- Corrected some small bugs.
+- Added the possibility to compile the source under FreeBSD.
+- Added better upgrade capacity when installing a newer version over an older one.
+
+cardpeek-0.3: L1L1@gmx.com
+17 January 2010
+- Extended the documentation.
+- Defined a generic calypso script.
+- Added a specific navigo scripts with extended event analysis (thanks to ideas from Pascal Terjan).
+- Added better generic EMV log analysis.
+- Added experimental AGC Multi Iso contactless support.
+- Added APDU capture and card emulator driver code.
+
+cardpeek-0.2: L1L1@gmx.com
+3 January 2010
+- Complete rewrite of most of the code.
+- Imported ideas and bugfixes from Pascal Terjan (many thanks to him)
+
+cardpeek-0.1: L1L1@gmx.com
+20 July 2009
+- Initial version
+

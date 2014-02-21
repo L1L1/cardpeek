@@ -54,7 +54,7 @@ function build_empty_pdol_data_block(pdol)
             data = data .. "0978"
         elseif o_tag==0x9A and o_len==3 then
             -- Transaction date
-            data = data .. "01 01 01"
+            data = data .. os.date("%y %m %d")
         elseif o_tag==0x9F37 and o_len==4 then
             -- Unpredictable number
             data = data .. "DEADBEEF"

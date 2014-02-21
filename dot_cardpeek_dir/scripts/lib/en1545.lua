@@ -143,6 +143,10 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 
         item = bytes.sub(data,position,position+parsed-1)
 
+        if item == nil then
+            return 0
+        end
+
         item_node = ctx:append{ classname="item", 
 				label=format[3], 
 				--[[ id=reference_index --]] }
@@ -173,7 +177,7 @@ function en1545_parse_item(ctx, format, data, position, reference_index)
 
         else -- entry type is item
            
-           alt = format[1](item, item_node)
+           alt = format[1](item)
            if alt==nil then
               item_node:remove()
            else

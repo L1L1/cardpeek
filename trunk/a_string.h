@@ -53,9 +53,9 @@ const char* a_strpushback(a_string_t* cs, char c);
  
  */ 
    
-const char* a_strcpy_all(a_string_t* cs, unsigned n, const void* str);
-const char* a_strcat_all(a_string_t* cs, unsigned n, const void* str);
-const char* a_pushback_all(a_string_t* cs, unsigned char c);
+const char* a_memcpy(a_string_t* cs, unsigned n, const void* str);
+const char* a_memcat(a_string_t* cs, unsigned n, const void* str);
+const char* a_mempushback(a_string_t* cs, unsigned char c);
 
 /* 
    a_strval() is guaranteed to return a null terminated string. 

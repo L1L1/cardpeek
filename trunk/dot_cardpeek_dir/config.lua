@@ -7,10 +7,11 @@
 -- cardpeek.
 -- 
 cardpeek = {
-  ['smartcard_list'] = {
+  ['updates'] = {
+    ['next_update'] = 1399131135,
     ['auto_update'] = true,
-    ['next_update'] = 1393323401,
-    ['url'] = "http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt",
+    ['url'] = "http://downloads.pannetrat.com/updates/cardpeek.update",
+    ['first_update'] = 1393856387,
   },
 }
 

@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 *
 */
 
+#include <stdlib.h>
 #include "gui.h"
 #include "gui_readerview.h"
 #include "gui_toolbar.h"
@@ -185,42 +186,46 @@ void gui_readerview_print(unsigned event,
                           const bytestring_t *response,
                           void *extra_data)
 {
-  const char* text;
-  char buf[200];
-  GtkTextIter iter;
-  UNUSED(extra_data);
-
-  if (event==CARDREADER_EVENT_RESET || event==CARDREADER_EVENT_CONNECT)
-  {
-    gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-    gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,"RSET ",-1,"red_text",NULL);
-    text = hex_pretty_print(5,command,0);
-    gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-    gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"red_text",NULL);
-  }
-  else if (event==CARDREADER_EVENT_TRANSMIT)
-  {
-    gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-    gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,"SEND ",-1,"green_text",NULL);
-    text = hex_pretty_print(5,command,0);
-    gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-    gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"green_text",NULL);
+    const char* text;
+    char buf[200];
+    GtkTextIter iter;
+    char *string_sw = NULL;
+    UNUSED(extra_data);
 
 
-    sprintf(buf,"RECV %04X                                                # %s\n     ",sw,iso7816_stringify_sw(sw));
-    gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-    gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,buf,-1,"blue_text",NULL);
-    text = hex_pretty_print(5,response,1);
-    if (text) {
-      gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
-      gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"blue_text",NULL);
+    if (event==CARDREADER_EVENT_RESET || event==CARDREADER_EVENT_CONNECT)
+    {
+        gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+        gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,"RSET ",-1,"red_text",NULL);
+        text = hex_pretty_print(5,command,0);
+        gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+        gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"red_text",NULL);
     }
-  } 
-  else if (event==CARDREADER_EVENT_CLEAR_LOG)
-  {
-    gtk_text_buffer_set_text(READER_BUFFER,"",0);
-  }
-  gui_update(1);
+    else if (event==CARDREADER_EVENT_TRANSMIT)
+    {
+        gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+        gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,"SEND ",-1,"green_text",NULL);
+        text = hex_pretty_print(5,command,0);
+        gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+        gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"green_text",NULL);
+
+        luax_variable_call("card.stringify_sw","u>s",sw,&string_sw);
+        snprintf(buf,200,"RECV %04X                                                # %s\n     ",sw,string_sw);
+        if (string_sw) free(string_sw);
+
+        gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+        gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,buf,-1,"blue_text",NULL);
+        text = hex_pretty_print(5,response,1);
+        if (text) {
+            gtk_text_buffer_get_iter_at_offset (READER_BUFFER,&iter,-1);
+            gtk_text_buffer_insert_with_tags_by_name(READER_BUFFER,&iter,text,-1,"blue_text",NULL);
+        }
+    } 
+    else if (event==CARDREADER_EVENT_CLEAR_LOG)
+    {
+        gtk_text_buffer_set_text(READER_BUFFER,"",0);
+    }
+    gui_update(1);
 }
 
 void gui_readerview_cleanup(void)

@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "iso7816.h"
 #include "misc.h"
 #include "lua_ext.h"
+#include <stdarg.h>
 
 /****************************************/
 
@@ -102,6 +103,7 @@ static int run_file(lua_State* L, const char *filename)
         log_printf(LOG_ERROR,"Could not load %s (%s)",filename,strerror(errno));
         return 0;
     }
+    luax_card_reset_values(L);
     line_num = 0;
     lua_pushcfunction(L,print_debug_message);
     if (lua_load(L,read_chunk,input,filename,NULL)!=0)
@@ -119,28 +121,6 @@ static int run_file(lua_State* L, const char *filename)
     return 1;
 }
 
-/*
-void run_card_shell(lua_State* L)
-{
-  int error;
-  char inputline[1024];
-
-  printf("cardpeek> ");
-  while (fgets(inputline, sizeof(inputline), stdin) != NULL) {
-    if (strncmp(inputline,"quit()",6)==0)
-      break;
-    error = luaL_loadbuffer(L, inputline, strlen(inputline), "cardpeek") ||
-            lua_pcall(L, 0, 0, 0);
-    if (error) {
-      fprintf(stderr, "%s\n", lua_tostring(L, -1));
-      lua_pop(L, 1);
-    }
-    printf("cardpeek> ");
-  }
-  fprintf(stderr,"bye.\n");
-}
-*/
-
 /******************************************************************/
 
 static lua_State* x_lua_begin(void)
@@ -157,31 +137,6 @@ static int x_lua_end(lua_State* L)
     log_printf(LOG_DEBUG,"Lua has stopped.");
     return 1;
 }
-
-/*
-void x_lua_shell(lua_State* L, const char* prompt)
-{
-  int error;
-  char *inputline;
-
-  printf("-- Lua shell, type '!' alone to quit.\n");
-  while ((inputline=readline(prompt))!=NULL)
-  {
-    if (strncmp(inputline,"!",1)==0)
-      break;
-    error = luaL_loadbuffer(L, inputline, strlen(inputline), prompt) ||
-            lua_pcall(L, 0, 0, 0);
-    if (error) {
-      fprintf(stderr, "%s\n", lua_tostring(L, -1));
-      lua_pop(L, 1);
-    }
-    add_history(inputline);
-    free(inputline);
-  }
-  fprintf(stderr,"-- bye.\n");
-}
-*/
-
 
 /******************************************************************/
 
@@ -314,61 +269,61 @@ static void internal_save_table(FILE *cf, int depth)
     int i;
 
     g_assert(lua_istable(LUA_STATE,-1));
-    
+
     lua_pushnil(LUA_STATE);
     while (lua_next(LUA_STATE,-2))
     {
         if (lua_type(LUA_STATE,-2)==LUA_TSTRING || lua_type(LUA_STATE,-2)==LUA_TNUMBER) 
-	{
+        {
 
-	    for (i=0;i<depth;i++) fprintf(cf,"  ");
+            for (i=0;i<depth;i++) fprintf(cf,"  ");
 
-	    if (lua_type(LUA_STATE,-2)==LUA_TSTRING)
-	    {
+            if (lua_type(LUA_STATE,-2)==LUA_TSTRING)
+            {
                 char *key = luax_escape_string(lua_tostring(LUA_STATE,-2));
-		fprintf(cf,"['%s'] = ",key);
-		g_free(key);
-	    }
-	    else
- 	    {
-	        fprintf(cf,"[%i] = ",(int)lua_tointeger(LUA_STATE,-2));
-	    }
+                fprintf(cf,"['%s'] = ",key);
+                g_free(key);
+            }
+            else
+            {
+                fprintf(cf,"[%i] = ",(int)lua_tointeger(LUA_STATE,-2));
+            }
 
-	    switch (lua_type(LUA_STATE,-1))
-	    {
-	    case LUA_TNUMBER:
-                fprintf(cf,"%i,\n",(int)lua_tointeger(LUA_STATE,-1));
-                break;
-            case LUA_TBOOLEAN:
-                if (lua_toboolean(LUA_STATE,-1))
-                    fprintf(cf,"true,\n");
-                else
-                    fprintf(cf,"false,\n");
-                break;
-            case LUA_TSTRING:
-		{
-                    char *val = luax_escape_string(lua_tostring(LUA_STATE,-1));
-                    fprintf(cf,"\"%s\",\n",val);
-                    g_free(val);
-                }
-                break;
-            case LUA_TTABLE:
-		fprintf(cf,"{\n");
-		internal_save_table(cf,depth+1);	
-		for (i=0;i<depth;i++) fprintf(cf,"  ");
-		fprintf(cf,"},\n");
-		break;	
-       /*   case LUA_TFUNCTION:
-            case LUA_TUSERDATA:
-            case LUA_TTHREAD:
-            case LUA_TLIGHTUSERDATA:
-            case LUA_TNIL: */
-            default:
-                fprintf(cf,"nil, -- %s is not a serializable format.\n",
-			lua_typename(LUA_STATE,lua_type(LUA_STATE,-1)));
-		break;
-	    }
-	} 
+            switch (lua_type(LUA_STATE,-1))
+            {
+                case LUA_TNUMBER:
+                    fprintf(cf,"%i,\n",(int)lua_tointeger(LUA_STATE,-1));
+                    break;
+                case LUA_TBOOLEAN:
+                    if (lua_toboolean(LUA_STATE,-1))
+                        fprintf(cf,"true,\n");
+                    else
+                        fprintf(cf,"false,\n");
+                    break;
+                case LUA_TSTRING:
+                    {
+                        char *val = luax_escape_string(lua_tostring(LUA_STATE,-1));
+                        fprintf(cf,"\"%s\",\n",val);
+                        g_free(val);
+                    }
+                    break;
+                case LUA_TTABLE:
+                    fprintf(cf,"{\n");
+                    internal_save_table(cf,depth+1);	
+                    for (i=0;i<depth;i++) fprintf(cf,"  ");
+                    fprintf(cf,"},\n");
+                    break;	
+                    /*   case LUA_TFUNCTION:
+                         case LUA_TUSERDATA:
+                         case LUA_TTHREAD:
+                         case LUA_TLIGHTUSERDATA:
+                         case LUA_TNIL: */
+                default:
+                    fprintf(cf,"nil, -- %s is not a serializable format.\n",
+                            lua_typename(LUA_STATE,lua_type(LUA_STATE,-1)));
+                    break;
+            }
+        } 
         lua_pop(LUA_STATE,1);
     }
 }
@@ -425,7 +380,7 @@ static void internal_get_variable(lua_State *L, const char *vname)
             }
 
             lua_getfield(L,-1,vparts[i]);
-	    lua_remove(L,-2);
+            lua_remove(L,-2);
         }
     }
     g_strfreev(vparts);
@@ -476,7 +431,7 @@ static gboolean internal_set_variable(lua_State *L, const char *vname)
                 lua_getfield(L,-1,vparts[i]);
                 if (lua_isnil(L,-1))
                 {
-		    lua_pop(LUA_STATE,1);
+                    lua_pop(LUA_STATE,1);
                     lua_newtable(L);
                     lua_setfield(L,-2,vparts[i]);
                     lua_getfield(L,-1,vparts[i]);
@@ -543,6 +498,72 @@ gboolean luax_variable_set_boolean(const char *vname, gboolean value)
     lua_pushboolean(LUA_STATE,value);
 
     return internal_set_variable(LUA_STATE,vname); 
+}
+
+gboolean luax_variable_call(const char *vname, const char *format, ...)
+{
+    va_list args;
+    int param_count = 0;
+    int result_count; 
+    int result_done = 0;
+
+    internal_get_variable(LUA_STATE,vname);
+
+    if (lua_isnil(LUA_STATE,-1))
+    {
+        lua_pop(LUA_STATE,1);
+        return FALSE;
+    }
+
+    va_start(args,format);
+    while (*format!=0 && *format!='>')
+    {
+        switch (*format)
+        {
+            case 'i': lua_pushinteger(LUA_STATE,va_arg(args,int)); 
+                      param_count++;
+                      break;
+            case 'u': lua_pushinteger(LUA_STATE,va_arg(args,int)); 
+                      param_count++;
+                      break;
+            case 's': lua_pushstring(LUA_STATE,va_arg(args,char *)); 
+                      param_count++;
+                      break;
+            default:
+                      va_end(args);
+                      lua_pop(LUA_STATE,param_count);
+                      log_printf(LOG_ERROR,"Invalid input format specifier '%c' for luax_varibale_call()",*format);
+                      return FALSE;
+        }
+        format++;
+    }
+    if (*format=='>') format++;
+    result_count=strlen(format);
+    lua_call(LUA_STATE,param_count,result_count);
+    while (*format!=0)
+    {
+        switch (*format) 
+        {
+            case 'i': *(va_arg(args,int*)) = luaL_checkinteger(LUA_STATE,-result_count+result_done); 
+                      result_done++;
+                      break;
+            case 'u': *(va_arg(args,unsigned*)) = (unsigned)luaL_checkinteger(LUA_STATE,-result_count+result_done); 
+                      result_done++;
+                      break;
+            case 's': *(va_arg(args,char**)) = strdup(luaL_checkstring(LUA_STATE,-result_count+result_done)); 
+                      result_done++;
+                      break;
+            default:
+                      va_end(args);
+                      lua_pop(LUA_STATE,result_count);
+                      log_printf(LOG_ERROR,"Invalid output format specifier '%c' for luax_varibale_call()",*format);
+                      return FALSE;
+        }
+        format++;
+    }
+    lua_pop(LUA_STATE,result_count);
+    va_end(args);
+    return TRUE;
 }
 
 gboolean luax_variable_is_defined(const char *vname)

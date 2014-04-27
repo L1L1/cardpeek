@@ -158,7 +158,8 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 	      			   const bytestring_t* command, 
 				   bytestring_t *result)
 {
-  unsigned char SW1;
+  /*
+    unsigned char SW1;
   unsigned char SW2;
   bytestring_t* command_dup;
   bytestring_t* get_response;
@@ -180,14 +181,15 @@ unsigned short cardreader_transmit(cardreader_t *reader,
     strcpy(tmp+32,"(...)");
   log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
   free(tmp);
-
+    */
 
   reader->sw = reader->transmit(reader,command,result);
   
   cardreplay_add_command(reader->cardlog,command,reader->sw,result);
   if (reader->cb_func)
     reader->cb_func(CARDREADER_EVENT_TRANSMIT,command,reader->sw,result,reader->cb_data);
-  SW1 = (reader->sw>>8)&0xFF;
+  /*
+    SW1 = (reader->sw>>8)&0xFF;
   SW2 = reader->sw&0xFF;
 
   tmp = bytestring_to_format("%D",result);
@@ -198,17 +200,17 @@ unsigned short cardreader_transmit(cardreader_t *reader,
 
 
 
-  if (SW1==0x6C) /* Re-issue with right length */
+  if (SW1==0x6C) 
   {
     command_dup = bytestring_duplicate(command);
-    if (ad.le_len==3) /* in case of extended le */
-      bytestring_resize(command_dup,bytestring_get_size(command_dup)-2);
+    if (ad.le_len==3) 
+    bytestring_resize(command_dup,bytestring_get_size(command_dup)-2);
     bytestring_set_element(command_dup,-1,SW2);
     reader->sw = cardreader_transmit(reader,command_dup,result);
     bytestring_free(command_dup);
   }
 
-  while (SW1==0x61) /* use Get Response */
+  while (SW1==0x61) 
   {
     get_response = bytestring_new_from_string("8:00C0000000");
     tmp_response = bytestring_new(8);
@@ -226,7 +228,7 @@ unsigned short cardreader_transmit(cardreader_t *reader,
     SW1 = (reader->sw>>8)&0xFF;
     SW2 = reader->sw&0xFF;
   }
-
+    */
   if (reader->command_interval)
     usleep(reader->command_interval);
 

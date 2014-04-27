@@ -140,6 +140,7 @@ static void custom_cell_renderer_flexi_init (CustomCellRendererFlexi *cellrender
     cellrendererflexi->rendered_type = RENDER_NONE;
     cellrendererflexi->rendered_value = NULL;
     cellrendererflexi->default_width = -1;
+    cellrendererflexi->default_line_height = -1;
 }
 
 
@@ -327,28 +328,6 @@ GtkCellRenderer *custom_cell_renderer_flexi_new (gboolean is_raw)
 
     cellflexi -> is_raw = is_raw;
 
-    /*
-      if (!is_raw)
-      {
-    	GSList *formats = gdk_pixbuf_get_formats();
-    	GSList* item;
-    	char **mime_types;
-    	int i;
-    	if (formats)
-    	{
-    		for (item=formats;item!=NULL;item=g_slist_next(item))
-    		{
-    			mime_types = gdk_pixbuf_format_get_mime_types(item->data);
-    			for (i=0;mime_types[i]!=NULL;i++)
-    				g_printf("Format(%s): %s\n",
-    					 gdk_pixbuf_format_get_name(item->data),
-    					 mime_types[i]);
-    			g_strfreev(mime_types);
-    		}
-    		g_slist_free(formats);
-    	}
-      }
-    */
     return GTK_CELL_RENDERER(cellflexi);
 }
 
@@ -562,8 +541,38 @@ static int internal_prepare_rendering(CustomCellRendererFlexi *cr)
  *                                          of parent.
  *
  ***************************************************************************/
+/*
+static internal_calculate_text_extents(GtkWidget *widget, CustomCellRendererFlexi *cellflexi, PangoRectangle *rect)
+{
+    PangoFontDescription* font_desc = NULL;
+    PangoLayout* layout = NULL;
 
+    if (cellflexi->default_width<0)
+    {
+        layout = gtk_widget_create_pango_layout(widget,"0123456789ABCDEF");
 
+        font_desc = pango_font_description_from_string("Monospace");
+        if (font_desc)
+            pango_layout_set_font_description(layout, font_desc);
+
+        pango_layout_get_pixel_extents(layout,NULL,&rect);
+
+        cellflexi->default_width = rect.width*4;
+        cellflexi->default_line_height = rect.height;
+
+        if (cellflexi->default_width <= 0)
+        {
+            cellflexi->default_width = 400;
+            cellflexi->default_line_height = 12;
+        }
+
+        if (font_desc)
+            pango_font_description_free(font_desc);
+
+        g_object_unref(layout);
+    }
+}
+*/
 static PangoLayout* internal_text_create_layout(GtkWidget *widget, CustomCellRendererFlexi *cellflexi)
 {
     PangoContext* p_context = gtk_widget_get_pango_context(widget);
@@ -751,7 +760,6 @@ static void internal_text_render(GtkCellRenderer *cell,
 {
     CustomCellRendererFlexi *cellflexi = CUSTOM_CELL_RENDERER_FLEXI (cell);
     PangoLayout 		*layout;
-    /* GtkStateType          	state; */
     gint                  	width, height;
     gint                  	x_offset, y_offset;
     gint 			xpad;
@@ -768,13 +776,6 @@ static void internal_text_render(GtkCellRenderer *cell,
                                    cell_area,
                                    &x_offset, &y_offset,
                                    &width, &height);
-
-    /*
-    if (gtk_widget_has_focus(widget))
-        state = GTK_STATE_ACTIVE;
-    else
-        state = GTK_STATE_NORMAL;
-    */
 
     gtk_cell_renderer_get_padding(cell,&xpad,&ypad);
     width  -= xpad*2;

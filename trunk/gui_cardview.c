@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -94,7 +94,6 @@ static void menu_cardview_clear_cb(GtkWidget *w, gpointer user_data)
     UNUSED(user_data);
 
     dyntree_model_iter_remove(CARDTREE,NULL);
-    luax_run_command("card.CLA=0");
     log_printf(LOG_INFO,"Cleared card data tree");
 }
 
@@ -326,7 +325,7 @@ static void menu_cardview_analyzer_load_cb(GtkWidget *w, gpointer user_data)
 /* CONSTRUTION OF MAIN UI ********************************/
 /*********************************************************/
 
-static int select_lua(DIRENT_T *de)
+static int select_lua(const struct dirent *de)
 {
     char *ext=rindex(de->d_name,'.');
     if (ext && strcmp(ext,".lua")==0)

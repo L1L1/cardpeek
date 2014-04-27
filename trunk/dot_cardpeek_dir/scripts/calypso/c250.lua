@@ -68,7 +68,7 @@ intercode_Holder = {
       [1] = { en1545_UNDEFINED, 85, "HolderForename" }
     }},
     [1] = { en1545_BITMAP, 2, "HolderBirth", {
-      [0] = { en1545_UNDEFINED, 32, "HolderBirthDate" },
+      [0] = { en1545_BCD_DATE, 32, "HolderBirthDate" },
       [1] = { en1545_UNDEFINED, 115, "HolderBirthPlace"}
     }},
     [2] = { en1545_UNDEFINED, 85, "HolderBirthName" },

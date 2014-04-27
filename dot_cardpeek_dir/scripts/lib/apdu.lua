@@ -260,16 +260,19 @@ end
 -- IN p1 : predicate 1, 0x00 according to ISO/IEC 7816-4,
 --			here as input because it assumes other values
 --			in Calypso card's usage.
+-- In p2 : Qualifier of the reference data according to
+--          ISO/IEC 7816-4  
 -- RETURNS : sw, data
 -----------------------------------------------------------
 
-function card.verify(pin, p1)
-	local command, length
+function card.verify(pin, p1, p2)
+    local command, length
 
-	p1 = p1 or 0x00
-	pin = bytes.new_from_chars(pin)
-	length = #pin
-	command = bytes.new(8,card.CLA,0x20,p1,0x00,length,pin)
-	return card.send(command)
+    p1 = p1 or 0x00
+    p2 = p2 or 0x00
+    pin = bytes.new_from_chars(pin)
+    length = #pin
+    command = bytes.new(8,card.CLA,0x20,p1,p2,length,pin)
+    return card.send(command)
 end
 

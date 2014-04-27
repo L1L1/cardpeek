@@ -34,13 +34,17 @@ enum {
   PATH_CONFIG_FILE_VERSION,
   PATH_CONFIG_FILE_SMARTCARD_LIST_TXT,
   PATH_CONFIG_FILE_SMARTCARD_LIST_DOWNLOAD,
+  PATH_CONFIG_FILE_CARDPEEK_UPDATE,
   NUM_PATH_CONFIG_OPTIONS
 };
 
 
 int path_config_init(void);
+
 const char *path_config_get_string(unsigned index);
+
 int path_config_set_string(unsigned index, const char *path);
+
 void path_config_release(void);
 
 #endif

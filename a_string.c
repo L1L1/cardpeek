@@ -31,12 +31,15 @@ a_string_t* a_strnnew(unsigned n, const char* str)
 {
   a_string_t* cs = (a_string_t *)malloc(sizeof(a_string_t));
 
-  if (str)
+  if (n)
   {
     cs->_alloc=n+1;
     cs->_size=cs->_alloc;
     cs->_data=(char *)malloc(cs->_alloc);
-    a_strncpy(cs,n,str);
+    if (str)
+        a_strncpy(cs,n,str);
+    else
+        memset(cs->_data,0,n+1);
   }
   else
   {
@@ -130,13 +133,13 @@ const char* a_strpushback(a_string_t* cs, char c)
   return a_strncat(cs,1,&c);
 }
 
-const char* a_strcpy_all(a_string_t* cs, unsigned n, const void* str)
+const char* a_memcpy(a_string_t* cs, unsigned n, const void* str)
 {
     cs->_size=0;
-    return a_strcat_all(cs,n,str);
+    return a_memcat(cs,n,str);
 }
 
-const char* a_strcat_all(a_string_t* cs, unsigned n, const void* str)
+const char* a_memcat(a_string_t* cs, unsigned n, const void* str)
 {
     unsigned needed_size;
 
@@ -167,9 +170,9 @@ const char* a_strcat_all(a_string_t* cs, unsigned n, const void* str)
     return cs->_data;
 }
 
-const char* a_strpushback_all(a_string_t* cs, unsigned char c)
+const char* a_mempushback(a_string_t* cs, unsigned char c)
 {
-    return a_strcat_all(cs,1,&c);
+    return a_memcat(cs,1,&c);
 }
 
 const char* a_strval(const a_string_t* cs)

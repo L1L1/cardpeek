@@ -151,4 +151,20 @@ gint cstring_equal(gconstpointer a, gconstpointer b)
 {
 	return (strcmp(a,b)==0);
 }
+/*********************************************************/
+
+unsigned version_to_bcd(const char *version)
+{
+    unsigned v[3];
+    v[0]=v[1]=v[2]=0;
+    sscanf(version,"%d.%d.%d",v,v+1,v+2);
+    return ((v[0]/10)<<28)|
+           ((v[0]%10)<<24)|
+           ((v[1]/10)<<20)|
+           ((v[1]%10)<<16)|
+           ((v[2]/1000)<<12)|
+           (((v[2]/100)%10)<<8)|
+           (((v[2]/10)%10)<<4)|
+           (v[2]%10);
+}
 

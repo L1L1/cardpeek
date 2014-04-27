@@ -42,72 +42,15 @@
 #include <signal.h>
 #include <getopt.h>
 #include "cardpeek_resources.gresource"
-#include "http_download.h"
+#include "cardpeek_update.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
-static int update_smartcard_list_txt(void)
+static int update_cardpeek(void)
 {
-    const char* smartcard_list_txt = path_config_get_string(PATH_CONFIG_FILE_SMARTCARD_LIST_TXT);
-    char *url;
-    time_t now = time(NULL);
-    unsigned next_update = (unsigned)luax_variable_get_integer("cardpeek.smartcard_list.next_update");
-    int retval = 0;
-    time_t next_update_distance;
-
-    if (!luax_variable_is_defined("cardpeek.smartcard_list"))
-    {
-        luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
-        luax_variable_set_integer("cardpeek.smartcard_list.next_update",0);
-        luax_variable_set_strval("cardpeek.smartcard_list.url",
-                                 "http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt");
-    }
-
-    if (luax_variable_get_boolean("cardpeek.smartcard_list.auto_update")!=TRUE)
-    {
-        log_printf(LOG_INFO,"smartcard_list.txt auto-update is disabled.");
-        return 0;
-    }
-
-    if (now<next_update) 
-    {
-        next_update_distance = (next_update-now)/(3600*24);
-        if (next_update_distance<1)
-            log_printf(LOG_DEBUG,"smartcard_list.txt will be scheduled for update in less than a day.");
-        else
-            log_printf(LOG_DEBUG,"smartcard_list.txt will be scheduled for update in about %u day(s).",next_update_distance);
-        return 0;
-    }
-
-    switch (gui_question("The local copy of the ATR database may be outdated.\nDo you whish to do an online update?",
-                         "Yes","No, ask me again later","No, always use the local copy",NULL))
-    {
-        case 0:
-            break;
-        case 1:
-            luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+(24*3600)));
-            return 0;
-        case 2:
-            luax_variable_set_boolean("cardpeek.smartcard_list.auto_update",FALSE);
-            return 0;
-        default:
-            return 0;
-    }
-
-    log_printf(LOG_INFO,"Attempting to update smartcard_list.txt");
-
-    url=luax_variable_get_strdup("cardpeek.smartcard_list.url");
-
-    if (url==NULL)
-        url = g_strdup("http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt");
-
-    if ((retval=http_download(url,smartcard_list_txt))!=0)
-    {
-        /* update again in a month */
-        luax_variable_set_integer("cardpeek.smartcard_list.next_update",(int)(now+30*(24*3600))); 
-    } 
-
-    luax_config_table_save();
-    g_free(url);
-    return retval;
+    if (cardpeek_update_check())
+        return cardpeek_update_perform();
+    return 0;
 }
 
 static int install_dot_file(void)
@@ -268,13 +211,6 @@ static gboolean run_command_from_cli(gpointer data)
     return FALSE;
 }
 
-/*
-static gboolean run_update_checks(gpointer data)
-{
-    update_smartcard_list_txt();
-	return FALSE;
-}
-*/
 
 #ifndef _WIN32
 #include <execinfo.h>
@@ -388,6 +324,8 @@ int main(int argc, char **argv)
     char* reader_name = NULL;
     char* exec_command = NULL;
 
+    SSL_load_error_strings();
+
     signal(SIGSEGV, save_what_can_be_saved);
 
     path_config_init();
@@ -453,7 +391,7 @@ int main(int argc, char **argv)
             if (exec_command)
                 g_idle_add(run_command_from_cli,exec_command);
             else
-                update_smartcard_list_txt();
+                update_cardpeek();
             /*else
               g_idle_add(run_update_checks,NULL);
              */
@@ -481,6 +419,8 @@ int main(int argc, char **argv)
     log_close_file();
 
     path_config_release();
+
+    ERR_free_strings();
 
     return 0;
 }

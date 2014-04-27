@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "misc.h"
 #include "lua_ext.h"
 #include "gui.h"
+#include <string.h>
 
 cardreader_t *READER=NULL;
 
@@ -34,6 +35,8 @@ void luax_set_card_reader(cardreader_t *r)
 {
     READER = r;
 }
+
+/**/
 
 static int subr_card_connect(lua_State *L)
 {
@@ -91,13 +94,83 @@ static int subr_card_info(lua_State *L)
     return 1;
 }
 
+static unsigned short luax_card_send(lua_State *L, const bytestring_t *command, bytestring_t *result)
+{
+    bytestring_t* command_dup;
+    bytestring_t* get_response;
+    bytestring_t* tmp_response;    
+    unsigned short SW;
+    unsigned char SW1, SW2;
+    apdu_descriptor_t ad;
+    char *tmp;
+    char *sw_string = NULL;
+
+    if (iso7816_describe_apdu(&ad,command)!=ISO7816_OK)
+    {
+        tmp = bytestring_to_format("%D",command);
+        log_printf(LOG_ERROR,"Could not parse APDU format: %s",tmp);
+        free(tmp);
+        return CARDPEEK_ERROR_SW;
+    }
+   
+    tmp = bytestring_to_format("%D",command);
+    if (strlen(tmp)>37)
+        strcpy(tmp+32,"(...)");
+    log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
+    free(tmp);
+
+    SW = cardreader_transmit(READER,command,result);
+    SW1 = (SW>>8)&0xFF;
+    SW2 = SW&0xFF;
+
+    luax_variable_call("card.stringify_sw","u>s",SW,&sw_string);
+
+    tmp = bytestring_to_format("%D",result);
+    if (strlen(tmp)>37)
+        strcpy(tmp+32,"(...)");
+    log_printf(LOG_INFO,"Recv: %04X %s [%s]", SW, tmp, sw_string);
+    free(tmp);
+    if (sw_string) free(sw_string);
+
+    if (SW1==0x6C) /* Re-issue with right length */
+    {
+        command_dup = bytestring_duplicate(command);
+        if (ad.le_len==3) /* in case of extended le */
+            bytestring_resize(command_dup,bytestring_get_size(command_dup)-2);
+        bytestring_set_element(command_dup,-1,SW2);
+        SW = luax_card_send(L,command_dup,result);
+        bytestring_free(command_dup);
+    }
+    else
+    {
+        while (SW1==0x61) /* use Get Response */
+        {
+            get_response = bytestring_new_from_string("8:00C0000000");
+            tmp_response = bytestring_new(8);
+
+            bytestring_set_element(get_response,4,SW2);
+
+            SW = luax_card_send(L,get_response,tmp_response);
+
+            bytestring_append_data(result,
+                    bytestring_get_size(tmp_response),
+                    bytestring_get_data(tmp_response));
+
+            bytestring_free(get_response);
+            bytestring_free(tmp_response);
+            SW1 = (SW>>8)&0xFF;
+            SW2 = SW&0xFF;
+        }
+    }
+
+    return SW;
+}
+
 static int subr_card_send(lua_State *L)
 {
     bytestring_t *command = luaL_check_bytestring(L,1);
     bytestring_t *result = bytestring_new(8);
-    unsigned short SW;
-
-    SW=cardreader_transmit(READER,command,result);
+    unsigned short SW = luax_card_send(L,command,result);
 
     lua_pushinteger(L,SW);
     lua_push_bytestring(L,result);
@@ -167,6 +240,33 @@ static int subr_card_log_clear(lua_State *L)
     return 0;
 }
 
+static int subr_card_stringify_sw(lua_State *L)
+{
+    unsigned short sw = (unsigned short)luaL_checkinteger (L,1);
+    const char *strval = iso7816_stringify_sw(sw);
+
+    lua_pushstring(L,strval);
+    return 1;   
+}
+
+int luax_card_reset_values(lua_State *L)
+{
+    lua_getglobal(L,"card");
+    if (lua_istable(L,-1)==0)
+    {
+        lua_pop(L,1);
+        return 0;
+    }
+    lua_pushstring(L, "CLA");
+    lua_pushinteger(L, 0);
+    lua_settable(L,-3);
+    lua_pushstring(L,"stringify_sw");
+    lua_pushcfunction(L,subr_card_stringify_sw);
+    lua_settable(L,-3);
+    lua_pop(L,1);
+    return 1;
+}
+
 static const struct luaL_Reg cardlib [] =
 {
     {"connect", subr_card_connect },
@@ -179,6 +279,7 @@ static const struct luaL_Reg cardlib [] =
     {"make_file_path", subr_card_make_file_path },
     {"log_clear", subr_card_log_clear },
     {"log_save", subr_card_log_save },
+    {"stringify_sw", subr_card_stringify_sw },
     {NULL, NULL}  /* sentinel */
 };
 
@@ -186,9 +287,6 @@ int luaopen_card(lua_State *L)
 {
 
     luaL_newlib(L, cardlib);
-    lua_pushstring(L, "CLA");
-    lua_pushinteger(L, 0);
-    lua_settable(L,-3);
     lua_setglobal(L,"card");
 
     return 1;

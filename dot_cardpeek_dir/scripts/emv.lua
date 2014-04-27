@@ -26,6 +26,7 @@
 -- Mar 27 2011: Added CVM patch from Adam Laurie.
 -- Jan 23 2012: Added UK Post Office Card Account in AID list from Tyson Key.
 -- Mar 25 2012: Added a few AIDs
+-- @update: Feb 21 2014: Better NFC compatibility by using current date in GPO.
 
 require('lib.tlv')
 require('lib.strict')

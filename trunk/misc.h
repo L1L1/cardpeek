@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -34,22 +34,34 @@
 typedef struct stat GStatBuf;
 #endif
 
-
+/* Not needed for maverick anymore *
 #ifdef __APPLE__
 #define DIRENT_T struct dirent
-#else
+#else*/
 #define DIRENT_T const struct dirent
-#endif
+/* #endif
+*/
 
 
 #define is_hex(a)       ((a>='0' && a<='9') || \
                          (a>='A' && a<='F') || \
-			 (a>='a' && a<='f'))
+			             (a>='a' && a<='f'))
 
 #define is_blank(a)     (a==' ' || a=='\t' || a=='\r' || a=='\n')
 
+/*****************************************************
+ * 
+ *  filename parsing 
+ */
+
 const char *filename_extension(const char *fname);
+
 const char *filename_base(const char *fname);
+
+/*****************************************************
+ * 
+ *  log functions    
+ */
 
 typedef void (*logfunc_t)(int,const char*);
 
@@ -77,12 +89,35 @@ extern const char ANSI_MAGENTA[];
 extern const char ANSI_CYAN[];
 extern const char ANSI_WHITE[];
 
+/*****************************************************
+ *
+ *  String functions for hash maps 
+ */
+
 guint cstring_hash(gconstpointer data);
+
 gint cstring_equal(gconstpointer a, gconstpointer b);
+
+/******************************************************
+ *
+ *  version_to_bcd convert string version to BCD as 
+ *                 MM.mm.rrrr
+ *                  |  |    |
+ *                  |  |    +- revision (0000-9999)
+ *                  |  +------ minor    (00-99)
+ *                  +--------- major    (00-99)
+ */
+
+unsigned version_to_bcd(const char *version);
+
+/******************************************************
+ * 
+ *  debug function  
+ */
 
 #include <stdio.h>
 #define HERE() { fprintf(stderr,"%s[%i]\n",__FILE__,__LINE__); fflush(stderr); }
 
 #define UNUSED(x) (void)x
 
-#endif
+#endif /* _MISC_H_ */

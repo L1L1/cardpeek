@@ -32,6 +32,7 @@ struct _CustomCellRendererFlexi
   unsigned	rendered_type;
   gpointer	rendered_value;  
   int		default_width; 
+  int       default_line_height;
 };
 
 

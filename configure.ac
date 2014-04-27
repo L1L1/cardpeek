@@ -2,16 +2,19 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([cardpeek],[0.8.2],[L1L1@gmx.com])
+AC_INIT([cardpeek],[0.8.3],[L1L1@gmx.com])
 AM_INIT_AUTOMAKE
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
 
 # silent build by default
+
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Checks for programs.
+
 AC_PROG_CC
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
@@ -67,7 +70,7 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 			  This program requires the openssl dev. library.
 			  Please install it first.]))
     
-AC_SEARCH_LIBS([iconv_open],[iconv])
+AM_ICONV
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES,[glib-compile-resources],no)
 
@@ -112,14 +115,6 @@ AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero getcwd memmove memset select strcasecmp strdup strerror strncasecmp strrchr strtol])
-
-#AC_PATH_PROG(PDFLATEX,[pdflatex],no)
-#if test x$PDFLATEX = xno ; then
-#AC_MSG_WARN([The pdflatex program could not be found. 
-#	This is only a problem if you wish to rebuild the pdf documentation 
-#	from the LaTeX source in the doc/ sub-directory.
-#	Otherwise this warning can be safely ignored.])
-#fi
 
 AC_CONFIG_FILES([Makefile])
 

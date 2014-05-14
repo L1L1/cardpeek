@@ -711,7 +711,7 @@ function ddd_save(card)
     fpath, fname = ui.select_file("Save ESM file as",".",fname)
 
     if fname then
-        file = io.open(fname,"w")
+        file = io.open(fname,"wb")
         for i=0,#ddd-1 do
             file:write(string.format("%c",ddd[i]))
         end

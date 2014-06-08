@@ -6,6 +6,7 @@ Kind contributors:
 - Stanislav Brabec: Intial patch for LUA 5.2 upgrade and GSM script improvements.
 - Stephane Dorte: Helped by providing some tachograph card CLF dumps and logs.
 - Patrick Gueulle: Suggested an extended list of file IDs for Calypso.
+- Andreas Heiduk: Author of the OpenPGP script.
 - Ludovic Lange: Initial patch for Mac OS X version.
 - Adam Laurie: CVM parsing in EMV.
 - Kalev Lember: Bug and compatibility fixes.

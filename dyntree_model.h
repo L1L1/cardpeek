@@ -149,6 +149,9 @@ gboolean dyntree_model_iter_from_xml(DyntreeModel *ct, GtkTreeIter *parent, gboo
  
 gboolean dyntree_model_iter_from_xml_file(DyntreeModel *ct, GtkTreeIter *parent, const char *fname);
 
+/* exporting to other formats */
+char* dyntree_model_iter_to_text(DyntreeModel *ctm, GtkTreeIter *root);
+
 /* searching */
 
 gboolean dyntree_model_iter_find_first(DyntreeModel *ctm,

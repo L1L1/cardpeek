@@ -15,13 +15,14 @@
 #include "http_download.h"
 #include <glib.h>
 #include <glib/gstdio.h>
+#include "cardpeek_update.h"
 
 /********************************************************
  *
  * new_path()
  */
 
-char *new_path(unsigned basepath, const char *basename, const char *extension)
+static char *new_path(unsigned basepath, const char *basename, const char *extension)
 {
     const char *basepath_string = path_config_get_string(basepath);
     char *n_path;
@@ -109,7 +110,7 @@ static int tokenizer_getc(char **mem, unsigned *mem_len)
     return c;
 }
 
-char *tokenizer_get_record(char **ptr, unsigned *ptr_len)
+static char *tokenizer_get_record(char **ptr, unsigned *ptr_len)
 {
     int c = tokenizer_getc(ptr,ptr_len);
     char *start = *ptr;
@@ -527,7 +528,7 @@ static a_string_t *file_get_contents(const char *fname)
 
 const char DEFAULT_UPDATE_URL[] = "http://downloads.pannetrat.com/updates/cardpeek.update";
 
-int cardpeek_update_check()
+int cardpeek_update_check(void)
 {
     int retval = 0;
     time_t now = time(NULL);
@@ -579,7 +580,7 @@ int cardpeek_update_check()
     return retval;
 }
 
-int cardpeek_update_perform()
+int cardpeek_update_perform(void)
 {
     const char* cardpeek_update_file = path_config_get_string(PATH_CONFIG_FILE_CARDPEEK_UPDATE);
     a_string_t *contents;

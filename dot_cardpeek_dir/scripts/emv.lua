@@ -321,10 +321,10 @@ function emv_process_ppse(cardenv)
 
 	AID_LIST = {}
 
-	for dirent in  nodes.find(APP,{ id="4F" }) do
-	        aid = tostring(nodes.get_attribute(dirent,"val"))
+	for dirent in nodes.find(APP,{ id="4F" }) do
+	    aid = tostring(nodes.get_attribute(dirent,"val"))
 		log.print(log.INFO,"PPSE contains application #" .. aid)
-	        table.insert(AID_LIST,"#"..aid)
+	    table.insert(AID_LIST,"#"..aid)
 	end
 	return true
 
@@ -359,8 +359,8 @@ function emv_process_pse(cardenv)
 	end
 
 	if sw ~= 0x9000 then
-     	   log.print(log.INFO,"No PSE")
-	   return false
+        log.print(log.INFO,"No PSE")
+	    return false
 	end
 
 	-- Construct tree
@@ -369,24 +369,23 @@ function emv_process_pse(cardenv)
 
 	ref = nodes.find_first(APP,{id="88"})
 	if (ref) then
-	   sfi = nodes.get_attribute(ref,"val")
-	   FILE = nodes.append(APP,{classname="file", label="file", id=sfi[0]})
+        sfi = nodes.get_attribute(ref,"val")
+	    FILE = nodes.append(APP,{classname="file", label="file", id=sfi[0]})
 
-	   rec = 1
-	   AID_LIST = {}
-	   repeat 
-	     sw,resp = card.read_record(sfi:get(0),rec)
-	     if sw == 0x9000 then
-	        RECORD = nodes.append(FILE, {classname="record", label="record", id=tostring(rec)})
-	        emv_parse(RECORD,resp)
-		tag4F = nodes.find_first(RECORD,{id="4F"})
-		if (tag4F) then
-	           aid = tostring(nodes.get_attribute(tag4F,"val"))
-		   log.print(log.INFO,"PSE contains application #" .. aid)
-	           table.insert(AID_LIST,"#"..aid)
-		   rec = rec + 1
-		end
-             end
+	    rec = 1
+	    AID_LIST = {}
+	    repeat 
+            sw,resp = card.read_record(sfi:get(0),rec)
+	        if sw == 0x9000 then
+	            RECORD = nodes.append(FILE, {classname="record", label="record", id=tostring(rec)})
+	            emv_parse(RECORD,resp)
+                for tag4F in nodes.find(RECORD,{id="4F"}) do
+	                aid = tostring(nodes.get_attribute(tag4F,"val"))
+		            log.print(log.INFO,"PSE contains application #" .. aid)
+	                table.insert(AID_LIST,"#"..aid)
+		        end
+                rec = rec + 1
+            end
 	   until sw ~= 0x9000
 	else
 	   log.print(log.WARNING,"SFI indicator (tag 88) not found in PSE")

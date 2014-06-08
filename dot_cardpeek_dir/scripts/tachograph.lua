@@ -708,7 +708,7 @@ function ddd_save(card)
 
     fname = fname:gsub("%s%s*","_"):lower()
 
-    fpath, fname = ui.select_file("Save ESM file as",".",fname)
+    fpath, fname = ui.select_file("Save ESM file as",nil,fname)
 
     if fname then
         file = io.open(fname,"wb")

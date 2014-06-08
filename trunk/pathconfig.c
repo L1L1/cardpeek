@@ -31,6 +31,7 @@ const char *PATH_CONFIG_OPTIONS[NUM_PATH_CONFIG_OPTIONS]=
 {
     NULL,
     NULL,
+    NULL,
     "",
     "scripts",
     "replay",
@@ -58,8 +59,8 @@ int path_config_init(void)
     home_dir = getenv("HOME");
 #else
     home_dir = getenv("USERDATA");
-        if (home_dir==NULL)
-            home_dir = getenv("USERPROFILE");
+    if (home_dir==NULL)
+        home_dir = getenv("USERPROFILE");
 #endif
     if (home_dir==NULL)
         return 0;
@@ -77,7 +78,9 @@ int path_config_init(void)
     snprintf(path_config_string,PATH_MAX,"%s/.cardpeek.log",home_dir);
     PATH_CONFIG_STRING[1]=strdup(path_config_string);
 
-    for (i=2; i<NUM_PATH_CONFIG_OPTIONS; i++)
+    PATH_CONFIG_STRING[2]=strdup(home_dir);
+
+    for (i=PATH_CONFIG_FOLDER_CARDPEEK; i<NUM_PATH_CONFIG_OPTIONS; i++)
     {
         snprintf(path_config_string,PATH_MAX,"%s/%s",cardpeek_dir,PATH_CONFIG_OPTIONS[i]);
         PATH_CONFIG_STRING[i]=strdup(path_config_string);

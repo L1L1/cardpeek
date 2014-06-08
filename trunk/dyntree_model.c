@@ -896,6 +896,195 @@ gboolean dyntree_model_iter_attributes_get(DyntreeModel *ctm,
     return retval;
 }
 
+/* TEXT Export */
+
+static gboolean internal_node_to_text(a_string_t *res, DyntreeModel *store, GtkTreeIter *iter, unsigned depth, gboolean process_siblings)
+{
+    unsigned i,j;
+    GtkTreeIter child;
+    DyntreeModelNode *node;
+    const char *classname;
+    const char *icontext;
+    unsigned pos_a;
+    unsigned pos_b;
+
+    do
+    {
+        pos_a = a_strlen(res);
+        node = iter->user_data;
+
+        g_assert(node != NULL);
+
+        for(i=0; i<depth; i++) a_strcat(res,"  ");
+
+        if (dyntree_model_iter_n_attributes(store,iter)==0
+                && dyntree_model_iter_n_children(GTK_TREE_MODEL(store),iter)==0)
+            a_strcat(res,"(i)\n");
+        else
+        {
+            classname = node->attributes[CC_CLASSNAME].value; 
+            icontext = NULL;
+
+            if (classname!=NULL && classname[0]=='t')
+            {
+                switch (classname[2])
+                {
+                    case 'a':
+                        if (strcmp("t:application",classname)==0) icontext = "[A] ";
+                        else if (strcmp("t:atr",classname)==0)    icontext = "[a] ";
+                        break;
+                    case 'b':
+                        if (strcmp("t:block",classname)==0)       icontext = "[b] ";
+                        else if (strcmp("t:body",classname)==0)   icontext = "[B] ";
+                        break;
+                    case 'c':
+                        if (strcmp("t:card",classname)==0)        icontext = "[C] ";
+                        break;
+                    case 'f':
+                        if (strcmp("t:file",classname)==0)        icontext = "[f] ";
+                        else if (strcmp("t:folder",classname)==0) icontext = "[F] ";
+                        break;
+                    case 'h':
+                        if (strcmp("t:header",classname)==0)      icontext = "[h] ";
+                        break;
+                    case 'r':
+                        if (strcmp("t:record",classname)==0)      icontext = "[r] ";
+                        break;
+                }
+            }
+            if (icontext==NULL)
+                a_strcat(res,"[i] ");
+            else
+                a_strcat(res,icontext);
+
+            if (node->attributes[CC_LABEL].value)
+                a_strcat(res,node->attributes[CC_LABEL].value+2);
+            
+            a_strcat(res," (");
+            if (node->attributes[CC_ID].value)
+            {
+                a_strcat(res,"id=");
+                a_strcat(res,node->attributes[CC_ID].value+2);
+            }
+            if (node->attributes[CC_ID].value && node->attributes[CC_SIZE].value)
+                a_strcat(res,",");
+            if (node->attributes[CC_SIZE].value)
+            {
+                a_strcat(res,"size=");
+                a_strcat(res,node->attributes[CC_SIZE].value+2);
+            }
+            a_strcat(res,")");
+            
+
+            if (node->attributes[CC_VAL].value && strlen(node->attributes[CC_VAL].value)>2)
+            {
+                if (node->attributes[CC_VAL].value[0]!='t')
+                {
+                    pos_b = a_strlen(res);
+                    a_strcat(res,"  :");
+
+                    for (i=0;i<strlen(node->attributes[CC_VAL].value)-2;i++)
+                    {
+                        if (i && (i&0x1F)==0)
+                        {
+                            a_strcat(res,"\n");
+                            for(j=0; j<pos_b-pos_a; j++) a_strpushback(res,' ');
+                            a_strcat(res,"   ");
+                        }
+                        if ((i&1)==0)
+                            a_strpushback(res,' ');
+                        a_strpushback(res,node->attributes[CC_VAL].value[2+i]);
+                    }
+                    switch (node->attributes[CC_VAL].value[0])
+                    {
+                        case '8': a_strpushback(res,'h'); break;
+                        case '4': a_strpushback(res,'q'); break;
+                        case '1': a_strpushback(res,'b'); break;
+                    }
+                }
+                else 
+                {
+                    pos_b = a_strlen(res);
+                    a_strcat(res," :> ");
+                    for (i=0;i<strlen(node->attributes[CC_VAL].value)-2;i++)
+                    {
+                        if (node->attributes[CC_VAL].value[2+i]=='\n')
+                        {
+                            a_strcat(res,"\n");
+                            for(j=0; j<pos_b-pos_a; j++) a_strpushback(res,' ');
+                            a_strcat(res,"    ");
+                        }
+                        else
+                            a_strpushback(res,node->attributes[CC_VAL].value[2+i]);
+                    }
+                }
+            }
+            a_strcat(res,"\n");
+            /*
+            a_strcat(res,"<node>\n");
+
+            for (attr_index=0; attr_index<store->n_columns && attr_index<node->max_attributes; attr_index++)
+            {
+                col_name = dyntree_model_column_index_to_name(store,attr_index);
+                if (node->attributes[attr_index].value && col_name[0]!='-')
+                {
+                    for(i=0; i<=depth; i++) a_strcat(res,"  ");
+                    a_strcat(res,"<attr name=\"");
+                    a_strcat(res,col_name);
+                    switch (node->attributes[attr_index].value[0])
+                    {
+                        case '8':
+                        case '4':
+                        case '2':
+                            a_strcat(res,"\" type=\"bytes\">");
+                            a_strcat(res,node->attributes[attr_index].value);
+                            break;
+                        default:
+                            a_strcat(res,"\">");
+                            esc_value = g_markup_escape_text(node->attributes[attr_index].value+2,-1);
+                            a_strcat(res,esc_value);
+                            g_free(esc_value);
+                    }
+                    a_strcat(res,"</attr>\n");
+                }
+            }
+            */
+
+            if (gtk_tree_model_iter_children(GTK_TREE_MODEL(store),&child,iter))
+            {
+                internal_node_to_text(res,store,&child,depth+1,TRUE);
+            }
+            /*
+            for(i=0; i<depth; i++) a_strcat(res,"  ");
+            a_strcat(res,"</node>\n");
+            */
+        }
+    }
+    while (process_siblings && gtk_tree_model_iter_next(GTK_TREE_MODEL(store),iter));
+
+    return TRUE;
+}
+
+char* dyntree_model_iter_to_text(DyntreeModel *ctm, GtkTreeIter *root)
+{
+    a_string_t *res;
+    GtkTreeIter root_copy;
+
+    res = a_strnew("");
+
+    if (root==NULL)
+    {
+        if (dyntree_model_iter_children(GTK_TREE_MODEL(ctm),&root_copy,NULL)==TRUE)
+            internal_node_to_text(res,ctm,&root_copy,0,TRUE);
+    }
+    else
+    {
+        root_copy = *root;
+        internal_node_to_text(res,ctm,&root_copy,0,FALSE);
+    }
+    return a_strfinalize(res);
+}
+
 /* XML EXPORT */
 
 static gboolean internal_node_to_xml(a_string_t *res, DyntreeModel *store, GtkTreeIter *iter, int depth)

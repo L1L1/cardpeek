@@ -27,6 +27,7 @@
 #include "gui_scratchpad.h"
 #include "misc.h"
 #include "a_string.h"
+#include "pathconfig.h"
 
 #include "cardpeek_resources.gresource"
 
@@ -213,6 +214,9 @@ char **gui_select_file(const char *title,
 
     if (path)
         gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (filew), path);
+    else
+        gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (filew), path_config_get_string(PATH_CONFIG_FOLDER_HOME));
+
     if (filename)
         gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (filew), filename);
 

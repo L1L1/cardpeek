@@ -144,6 +144,31 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
     }
 }
 
+static void menu_cardview_copy(GtkWidget *menuitem, gpointer userdata)
+{
+    UNUSED(userdata);
+    UNUSED(menuitem);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(CARDVIEW));
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    char *text;
+    GtkClipboard *clipboard;
+
+    if (gtk_tree_selection_get_selected(selection,&model,&iter))
+    {
+        text = dyntree_model_iter_to_text(DYNTREE_MODEL(model),&iter);
+        if (text)
+        {    
+            clipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+            gtk_clipboard_set_text(clipboard,text,-1);
+            clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+            gtk_clipboard_set_text(clipboard,text,-1);
+            /* g_printf("%s",text); */
+            g_free(text);
+        }
+    }
+}
+
 static void menu_cardview_switch_column(void)
 {
     GtkTreeViewColumn *column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(CARDVIEW),2);
@@ -200,10 +225,19 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
 /* Create a right click context menu */
 {
     GtkWidget *menu, *menuitem;
+    GtkWidget *menuitem_child;
     GtkTreeViewColumn *column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
     UNUSED(userdata);
 
     menu = gtk_menu_new();
+
+    /* Menu Item */
+    menuitem = gtk_menu_item_new_with_label("Copy");
+    g_signal_connect(menuitem, "activate",
+                     (GCallback) menu_cardview_copy, treeview);
+    menuitem_child = gtk_bin_get_child (GTK_BIN (menuitem));
+    gtk_accel_label_set_accel (GTK_ACCEL_LABEL (menuitem_child), GDK_KEY_c, GDK_CONTROL_MASK);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
     /* Menu Item */
     menuitem = gtk_menu_item_new_with_label("Expand all");
@@ -224,6 +258,8 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
         g_signal_connect(menuitem, "activate",
                          (GCallback) menu_cardview_context_menu_change_value_type, treeview);
     }
+    menuitem_child = gtk_bin_get_child (GTK_BIN (menuitem));
+    gtk_accel_label_set_accel (GTK_ACCEL_LABEL (menuitem_child), GDK_KEY_r, GDK_CONTROL_MASK);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
 
@@ -232,6 +268,27 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                    (event != NULL) ? event->button : 0,
                    gdk_event_get_time((GdkEvent *)event));
+}
+
+static gboolean menu_cardview_key_press_event(GtkWidget *treeview,  GdkEventKey *event, gpointer user_data)
+{
+    UNUSED(user_data);
+
+    if ((event->state&GDK_CONTROL_MASK)!=0)
+    {
+        if (event->keyval == GDK_KEY_c)
+        {
+            menu_cardview_copy(treeview,user_data);
+            return TRUE;
+        }
+        if (event->keyval == GDK_KEY_r)
+        {
+            menu_cardview_context_menu_change_value_type(treeview,user_data);
+            return TRUE;
+        }
+
+    }
+    return FALSE;
 }
 
 static gboolean menu_cardview_button_press_event(GtkWidget *treeview, GdkEventButton *event, gpointer userdata)
@@ -664,6 +721,9 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
     g_signal_connect(CARDVIEW,
                      "button-press-event", (GCallback) menu_cardview_button_press_event, NULL);
+
+    g_signal_connect(CARDVIEW,
+                     "key-press-event", (GCallback) menu_cardview_key_press_event, NULL);
 
 
     gtk_container_add (GTK_CONTAINER (scrolled_window), CARDVIEW);

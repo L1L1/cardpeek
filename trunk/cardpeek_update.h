@@ -22,8 +22,8 @@
 #ifndef _CARDPEEK_UPDATE_H
 #define _CARDPEEK_UPDATE_H
 
-int cardpeek_update_check();
+int cardpeek_update_check(void);
 
-int cardpeek_update_perform();
+int cardpeek_update_perform(void);
 
 #endif /* _CARDPEEK_UPDATE_H_ */

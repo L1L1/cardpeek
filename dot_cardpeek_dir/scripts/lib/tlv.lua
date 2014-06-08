@@ -233,9 +233,14 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
 
 	while tlv do
         tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
-	    
+    
 	    if tlv_tag==nil or tlv_tag==0 then 
-	       return false
+	       ref = nodes.append(cardenv,{ classname="card",
+					                    label="Unparsed ASN1 data",
+					                    val=tlv,
+                                        alt="(error)", 
+					                    size=#tlv })
+	       return ref
 	    end--if
 
         tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
@@ -262,7 +267,7 @@ function internal_tlv_parse(cardenv,tlv,reference,parent)
                 end--if
             end--if
 	    tlv = tlv_tail
-        end--while
+    end--while
 	return ref
 end
 

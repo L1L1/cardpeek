@@ -59,7 +59,7 @@ static int subr_iconv_open(lua_State *L)
 static int subr_iconv_iconv(lua_State *L)
 {
     iconv_t ic = luaL_check_iconv(L,1);
-    char *src = (char *)luaL_checkstring(L,2);
+    ICONV_CONST char *src = (ICONV_CONST char *)luaL_checkstring(L,2);
     size_t src_len = strlen(src);
     char conv_block[16];
     size_t conv_len;

@@ -212,7 +212,7 @@ static gboolean run_command_from_cli(gpointer data)
 }
 
 
-#ifndef _WIN32
+#ifdef HAVE_DECL_BACKTRACE 
 #include <execinfo.h>
 static void do_backtrace()
 {
@@ -230,6 +230,11 @@ static void do_backtrace()
     }
 
     free(btrace);
+}
+#else
+static void do_backtrace()
+{
+   /* void */
 }
 #endif
 
@@ -262,9 +267,7 @@ static void save_what_can_be_saved(int sig_num)
     write(2,buf,strlen(buf));
    
     log_printf(LOG_ERROR,"Received signal %i",sig_num); 
-#ifndef _WIN32
     do_backtrace();
-#endif
     log_close_file();
     exit(-2);
 }

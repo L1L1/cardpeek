@@ -47,7 +47,10 @@ PKG_CHECK_MODULES([LUA],[lua-5.2],,[
         fi 
       done
       if test $HAVE_LIBLUA != yes; then
-            AC_MSG_ERROR([Could not find lua 5.2-dev. This program requires the lua 5.2 development library. Please install the lua 5.2 library first.])
+            AC_MSG_ERROR([Could not find lua 5.2-dev.
+ 
+		This program requires the lua 5.2 development library.
+		Please install the lua 5.2 library first.])
       fi
 ])
 ])
@@ -57,7 +60,14 @@ PKG_CHECK_MODULES([CURL],[libcurl],,[
     AC_CHECK_LIB([curl],[curl_easy_init],[
         AC_SUBST([CURL_CFLAGS],[""])
         AC_SUBST([CURL_LIBS],[-lcurl])
-    ])
+	HAVE_LIBCURL=yes
+        ],[HAVE_LIBCURL=no])
+    if test $HAVE_LIBCURL != yes; then
+	AC_MSG_ERROR([Cloud not find libcurl. 
+	
+	This program requires the libcurl development library. 
+	Please install the required library first.]) 
+    fi
 ])
 
 AC_CHECK_LIB([ssl],[SSL_free],,
@@ -69,8 +79,15 @@ AC_CHECK_LIB([crypto],[CRYPTO_free],,
 	     AC_MSG_ERROR([Could not find openssl-dev.
 			  This program requires the openssl dev. library.
 			  Please install it first.]))
-    
+
+AC_CHECK_LIB([execinfo],[backtrace],,)
+AC_CHECK_DECLS([backtrace], [], [], [[#include <execinfo.h>]])
+
+AC_ARG_VAR(ICONV_LIBS,[linker flags for ICONV (e.g. -l iconv), overriding the detected value.])
 AM_ICONV
+if test ! $ICONV_LIBS; then
+	AC_SUBST([ICONV_LIBS],[$LIBICONV])	
+fi
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES,[glib-compile-resources],no)
 

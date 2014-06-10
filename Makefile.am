@@ -8,7 +8,7 @@ cardpeek_SOURCES = asn1.c asn1.h bytestring.c bytestring.h gui_flexi_cell_render
 
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
-cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@ @LIBICONV@
+cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@ @ICONV_LIBS@
 
 cardpeek_LDFLAGS=-g
 #cardpeek_LDFLAGS=-O2

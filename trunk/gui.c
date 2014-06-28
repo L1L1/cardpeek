@@ -35,6 +35,8 @@
 /* THE INFAMOUS UGLY GLOBALS *****************************/
 /*********************************************************/
 
+#define DISPLAY_SUPPORTED_MIME_TYPES 1
+
 GtkWidget *MAIN_WINDOW=NULL;
 GtkWidget *MAIN_NOTEBOOK=NULL;
 
@@ -314,19 +316,19 @@ char *gui_select_reader(unsigned list_size, const char **list)
 
     switch (result)
     {
-        case GTK_RESPONSE_ACCEPT:
-            retval = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-            log_printf(LOG_INFO,"Selected '%s'",retval);
-            if (strcmp(retval,"none")==0)
-            {
-                g_free(retval);
-                retval = NULL;
-            }
-            break;
-        default:
+    case GTK_RESPONSE_ACCEPT:
+        retval = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+        log_printf(LOG_INFO,"Selected '%s'",retval);
+        if (strcmp(retval,"none")==0)
+        {
+            g_free(retval);
             retval = NULL;
-            log_printf(LOG_INFO,"Select empty");
-            break;
+        }
+        break;
+    default:
+        retval = NULL;
+        log_printf(LOG_INFO,"Select empty");
+        break;
     }
     gtk_widget_destroy (dialog);
     return retval;
@@ -339,22 +341,27 @@ static void gui_get_supported_image_mime_types(void)
     GdkPixbufFormat *format;
     a_string_t *info;
     char **mime_types;
-    int i;
+    int i,total;
 
     info = a_strnew("");
+    total=0;
     while (formats)
     {
         format = (GdkPixbufFormat *)formats->data;
         formats = formats->next;
         mime_types =  gdk_pixbuf_format_get_mime_types(format);
-        for (i=0;mime_types[i]!=NULL;i++)
+        for (i=0; mime_types[i]!=NULL; i++)
         {
-            a_strcat(info," ");
+            total++;
+            if (((total+1)%5)==0)
+                a_strcat(info,"\n\t ");
+            else
+                a_strcat(info," ");
             a_strcat(info,mime_types[i]);
         }
         g_strfreev(mime_types);
     }
-    log_printf(LOG_INFO,"Supported image mime-types:%s",a_strval(info));
+    log_printf(LOG_DEBUG,"Supported image mime-types:%s",a_strval(info));
     g_slist_free(formats);
     a_strfree(info);
 }

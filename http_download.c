@@ -41,7 +41,7 @@ int http_download(const char *src_url, const char *dst_filename)
 
     progress = gui_inprogress_new(a_strval(progress_title),"Please wait...");
     
-    temp_fd = fopen(dst_filename,"w");
+    temp_fd = fopen(dst_filename,"wb");
 
     curl_easy_setopt(curl,CURLOPT_URL,src_url);
     curl_easy_setopt(curl,CURLOPT_WRITEDATA, temp_fd);

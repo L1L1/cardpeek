@@ -78,7 +78,6 @@ static char *tokenizer_string_alloc(char *value, int len)
             i++;
             switch (value[i]) 
             {
-                case '\n':
                 case 'n':
                     *ptr++ = '\n';
                     break;
@@ -221,7 +220,7 @@ static int sha256sum(const char *filename, unsigned char *digest)
     int fd;
     int rlen;
     
-    if ((fd = open(filename,O_RDONLY))<0)
+    if ((fd = open(filename,O_RDONLY | O_BINARY))<0)
         return 0;
 
     
@@ -341,8 +340,9 @@ static int update_load(update_t *update, const char *data, unsigned data_len)
 #define fail_update(m) { log_printf(LOG_ERROR,"Failed to parse update information: %s",m); \
                          goto update_new_fail; }
 
+
     if ((value = tokenizer_get_record(&ptr,&ptr_len))==NULL) fail_update("Missing header");
-    if (strcmp(value,"header")!=0) fail_update("Missing header");
+    if (strcmp(value,"header")!=0) fail_update("Incorrect header");
     g_free(value);
     
     if ((value = tokenizer_get_field("version",&ptr,&ptr_len))==NULL) fail_update("missing version");
@@ -500,13 +500,14 @@ static int update_filter_version(update_t *update, const char *version)
 static a_string_t *file_get_contents(const char *fname)
 {
     struct stat st;
-    int fd = open(fname,O_RDONLY);
+    int fd = open(fname,O_RDONLY | O_BINARY);
     a_string_t *res; 
 
     if (fd<0) return NULL;
 
     if (fstat(fd,&st)<0) 
     {
+	log_printf(LOG_ERROR,"Could not stat file '%s'",fname);
         close(fd);
         return NULL;
     }
@@ -515,6 +516,7 @@ static a_string_t *file_get_contents(const char *fname)
 
     if (read(fd,res->_data,st.st_size)!=st.st_size)
     {
+	log_printf(LOG_ERROR,"Could not read content of file '%s'",fname);
         close(fd);
         a_strfree(res);
         return NULL;

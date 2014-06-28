@@ -157,7 +157,7 @@ unsigned version_to_bcd(const char *version)
 {
     unsigned v[3];
     v[0]=v[1]=v[2]=0;
-    sscanf(version,"%d.%d.%d",v,v+1,v+2);
+    sscanf(version,"%u.%u.%u",v,v+1,v+2);
     return ((v[0]/10)<<28)|
            ((v[0]%10)<<24)|
            ((v[1]/10)<<20)|

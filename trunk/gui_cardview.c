@@ -146,13 +146,15 @@ static void menu_cardview_save_as_cb(GtkWidget *w, gpointer user_data)
 
 static void menu_cardview_copy(GtkWidget *menuitem, gpointer userdata)
 {
-    UNUSED(userdata);
-    UNUSED(menuitem);
-    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(CARDVIEW));
+    GtkTreeSelection *selection;
     GtkTreeIter iter;
     GtkTreeModel *model;
     char *text;
     GtkClipboard *clipboard;
+    UNUSED(userdata);
+    UNUSED(menuitem);
+ 
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(CARDVIEW));
 
     if (gtk_tree_selection_get_selected(selection,&model,&iter))
     {

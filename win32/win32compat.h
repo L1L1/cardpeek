@@ -1,5 +1,6 @@
-#ifndef _POSIXIFY_H
-#define _POSIXIFY_H
+#ifndef _WIN32COMPAT_H
+#define _WIN32COMPAT_H
+#ifdef _WIN32
 
 #include <dirent.h>
 
@@ -11,4 +12,5 @@ int alphasort (const struct dirent **a, const struct dirent **b);
 
 const char *pcsc_stringify_error(long err);
 
+#endif
 #endif

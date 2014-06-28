@@ -25,6 +25,7 @@
 #include <string.h>
 #include <errno.h>
 #include "misc.h"
+#include "win32/config.h"
 
 static void lua_push_iconv(lua_State* L, iconv_t ic)
 {

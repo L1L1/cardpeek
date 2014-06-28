@@ -9,7 +9,7 @@ OBJECTS = asn1.o bytestring.o gui_flexi_cell_renderer.o dyntree_model.o \
 	  gui_logview.o  gui_cardview.o  gui_readerview.o \
 	  http_download.o gui_scratchpad.o  gui_inprogress.o \
 	  lua_iconv.o win32/win32compat.o win32/resource.o \
-	  cardpeek_resources.o 
+	  cardpeek_resources.o cardpeek_update.o 
 
 ICONS=icons/analyzer.png icons/item.png icons/record.png \
       icons/smartcard.png icons/folder.png icons/cardpeek.png \

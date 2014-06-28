@@ -76,7 +76,8 @@ static int install_dot_file(void)
 
         if ((f = g_fopen(version_file,"r"))!=NULL)
         {
-            fscanf(f,"%u",&dot_version);
+            if (fscanf(f,"%u",&dot_version)!=1)
+		dot_version=0;
             fclose(f);
             if (dot_version>=SCRIPT_VERSION)
             {
@@ -169,7 +170,12 @@ static int install_dot_file(void)
     }
     dot_cardpeek_tar_gz_start = (unsigned char *)g_bytes_get_data(dot_cardpeek_tar_gz,&dot_cardpeek_tar_gz_size);
 
-    chdir(cardpeek_dir);
+    if (chdir(cardpeek_dir)==-1)
+    {
+	log_printf(LOG_ERROR,"Could not change directory to '%s'",cardpeek_dir);
+	return 0;
+    }
+
     if ((f = g_fopen("dot_cardpeek.tar.gz","wb"))==NULL)
     {
         log_printf(LOG_ERROR,"Could not create dot_cardpeek.tar.gz in %s (%s)", cardpeek_dir, strerror(errno));
@@ -259,12 +265,12 @@ static void save_what_can_be_saved(int sig_num)
     const char *logfile;
     char buf[32];
 
-    write(2,message,strlen(message));
+    if (write(2,message,strlen(message))<=0) return;
     logfile = path_config_get_string(PATH_CONFIG_FILE_CARDPEEK_LOG);
-    write(2,logfile,strlen(logfile));
-    write(2,signature,strlen(signature));
+    if (write(2,logfile,strlen(logfile))<=0) return;
+    if (write(2,signature,strlen(signature))<=0) return;
     sprintf(buf,"Received signal %i\n",sig_num);
-    write(2,buf,strlen(buf));
+    if (write(2,buf,strlen(buf))<=0) return;
    
     log_printf(LOG_ERROR,"Received signal %i",sig_num); 
     do_backtrace();

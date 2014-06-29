@@ -8,10 +8,10 @@
 -- 
 cardpeek = {
   ['updates'] = {
-    ['auto_update'] = true,
-    ['url'] = "http://downloads.pannetrat.com/updates/cardpeek.update",
-    ['next_update'] = 1402852970,
     ['first_update'] = 1393856387,
+    ['next_update'] = 1404576736,
+    ['url'] = "http://downloads.pannetrat.com/updates/cardpeek.update",
+    ['auto_update'] = true,
   },
 }
 

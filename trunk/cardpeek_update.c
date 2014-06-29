@@ -16,6 +16,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include "cardpeek_update.h"
+#include "win32/config.h"
 
 /********************************************************
  *

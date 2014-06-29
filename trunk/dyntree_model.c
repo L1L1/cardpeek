@@ -1123,7 +1123,7 @@ static gboolean internal_node_to_xml(a_string_t *res, DyntreeModel *store, GtkTr
                         case '8':
                         case '4':
                         case '2':
-                            a_strcat(res,"\" type=\"bytes\">");
+                            a_strcat(res,"\" encoding=\"bytes\">");
                             a_strcat(res,node->attributes[attr_index].value);
                             break;
                         default:
@@ -1161,7 +1161,7 @@ char *dyntree_model_iter_to_xml(DyntreeModel *ct, GtkTreeIter *root, gboolean fu
         res = a_strnew("<?xml version=\"1.0\" type=\"UTF-8\"?>\n");
 
         a_strcat(res,"<cardpeek>\n");
-        a_strcat(res,"  <version>0.8</version>\n");
+        a_strcat(res,"  <version>0.8.3</version>\n");
         initial_depth = 1;
     }
     else
@@ -1323,7 +1323,8 @@ static void xml_start_element_cb  (GMarkupParseContext *context,
                 }
 
             }
-            else if (g_strcmp0("type",attribute_names[attr_index])==0)
+            else if (g_strcmp0("type",attribute_names[attr_index])==0 ||
+                     g_strcmp0("encoding",attribute_names[attr_index])==0)
             {
                 if (g_strcmp0("bytes",attribute_values[attr_index])==0)
                 {

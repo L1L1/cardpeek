@@ -128,13 +128,20 @@ function ui_parse_CVM(node,data)
 				val=bytes.sub(data,4,7)})
 
 	for i= 4,(#data/2)-1 do
+		left = data:get(i*2)
+		right = data:get(i*2+1)
+
+		if left == 0 and right == 0 then
+			-- Amex pads the list with zeroes at the end
+			-- Once we reach the zeroes, we're done parsing
+			break
+		end
+		
 		subnode = nodes.append(node, { classname="item",
 						   label="CVM",
 						   id=i-3,
 						   size=2,
 						   val=bytes.sub(data,i*2,i*2+1)})
-		left = data:get(i*2)
-		right = data:get(i*2+1)
 
 		if bit.AND(left,0x40) == 0x40 then
 			out = "Apply succeeding CV rule if this rule is unsuccessful: "
@@ -631,8 +638,14 @@ function emv_process_application(cardenv,aid)
 				log.print(log.INFO,string.format("Reading SFI %i, record %i",sfi_index, rec_index))
 			        sw,resp = card.read_record(sfi_index,rec_index)
 		                if sw ~= 0x9000 then
-			            log.print(log.WARNING,string.format("Read record failed for SFI %i, record %i",sfi_index,rec_index))
-				    break
+	                                  log.print(log.WARNING,string.format("Read record failed for SFI %i, record %i",sfi_index,rec_index))
+
+                                    -- Amex has files where records don't start at 1
+                                    -- The highest starting number I've seen is 4, 
+                                    -- so don't treat a failure of a lower-than-five record number as "end of records in a file"
+                                    if rec_index > 5 then
+					    break
+				    end
 			        else
 				    if (SFI==nil) then
 	   		    		    SFI = nodes.append(APP,{classname="file", label="file",	id=sfi_index})

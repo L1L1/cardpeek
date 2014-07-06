@@ -333,7 +333,9 @@ int main(int argc, char **argv)
     char* reader_name = NULL;
     char* exec_command = NULL;
 
+#ifndef _WIN32
     SSL_load_error_strings();
+#endif
 
     signal(SIGSEGV, save_what_can_be_saved);
 

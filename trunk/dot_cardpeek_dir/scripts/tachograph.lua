@@ -16,7 +16,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Cardpeek.  If not, see <http://www.gnu.org/licenses/>.
 --
--- @name Tachograph (beta) 
+-- @name Tachograph 
 -- @description Driver tachograph cards
 -- @targets 0.8.2
 --
@@ -44,6 +44,14 @@ function tacho_select(fileid)
     end
     log.print(log.DEBUG,"Selection du fichier " .. fileid);
     return sw
+end
+
+function tacho_perform_hash()
+    return card.send(bytes.new(8, "80 2A 90 00"))
+end
+
+function tacho_compute_digital_signature()
+    return card.send(bytes.new(8, "00 2A 9E 9A 80"))
 end
 
 function tacho_read_file(size)
@@ -686,8 +694,12 @@ end
 
 local ddd = bytes.new(8)
 
-function ddd_append(ef, data)
+function ddd_append_data(ef, data)
     ddd = bytes.concat(ddd,ef,00,bit.SHR(#data,8),bit.AND(#data,0xFF),data)
+end
+
+function ddd_append_signature(ef, signature)
+    ddd = bytes.concat(ddd,ef,01,bit.SHR(#signature,8),bit.AND(#signature,0xFF),signature)
 end
 
 function ddd_save(card)
@@ -695,10 +707,6 @@ function ddd_save(card)
     local user_surname
     local current_date
     local fpath, fname
-
-    if ui.question("Do you whish to export content of this card in an ESM file\n(also called DDD or C1B)?", {"Yes", "No"})~=1 then
-        return false
-    end
 
     user_name = card:find_first({label='hoderSurname'}):get_attribute("alt")
     user_surnames = card:find_first({label='hoderFirstNames'}):get_attribute("alt")
@@ -725,18 +733,39 @@ end
 
 local MAP_TABLE = {}
 
-function tacho_read_file_and_store(node,fid,length,fname,cname)
+function tacho_read_file_and_store(node,fid,length,fname,cname, with_storage, with_signature)
+    local h_sw
     local sw, resp
+    local s_sw, s_resp
     local sub_node
-    
+
     sw = tacho_select(fid)
     sub_node = node:append({classname=cname,label=fname,id=fid})
+
+    if with_signature==true then
+        h_sw = tacho_perform_hash()
+        if h_sw~=0x9000 then
+            log.print(log.WARNING,"Perform hash failed for file " .. fid)
+        end
+    end
 
     if sw==0x9000 and length>0 then
         sw, resp = tacho_read_file(length)
         if sw==0x9000 then
             table.insert(MAP_TABLE,{ sub_node, fid, length, fname, cname, resp })
-            ddd_append(fid:sub(2),resp)
+
+            if with_storage==true then
+                ddd_append_data(fid:sub(2),resp)
+            end
+
+            if with_signature==true and h_sw==0x9000 then
+                s_sw, s_resp = tacho_compute_digital_signature()
+                if s_sw==0x9000 then
+                    ddd_append_signature(fid:sub(2),s_resp)
+                else
+                    log.print(log.WARNING,"Compute digital signature failed for file " .. fid)
+                end
+            end
         else
             sub_node:set_attribute("alt",string.format("File read error: %x",sw)) 
         end
@@ -750,14 +779,31 @@ if card.connect() then
     local sw 
     local CARD = card.tree_startup("Tachograph") 
     local TACHO
+    local answer
+    local export_signed
+    local export_ddd
 
-    tacho_read_file_and_store(CARD,".0002",25,"EF_ICC","file")
+    answer = ui.question("Do you whish to export content of this card in an ESM file\n(also called DDD or C1B)?", 
+                         {"Export signed data file", "Export unsigned data file", "No, don't export"})
 
-    tacho_read_file_and_store(CARD,".0005",8,"EF_IC","file")
+    if answer==1 then
+        export_signed = true
+        export_ddd = true
+    elseif answer==2 then   
+        export_signed = false
+        export_ddd = true
+    else
+        export_signed = false
+        export_ddd = false
+    end
 
-    sw,resp,TACHO = tacho_read_file_and_store(CARD,"#FF544143484F",0,"DF_Tachograph","application")
+    tacho_read_file_and_store(CARD,".0002",25,"EF_ICC","file",true,false)
 
-    sw,resp = tacho_read_file_and_store(TACHO,".0501",10,"EF_Application_Identification","file")
+    tacho_read_file_and_store(CARD,".0005",8,"EF_IC","file",true,false)
+
+    sw,resp,TACHO = tacho_read_file_and_store(CARD,"#FF544143484F",0,"DF_Tachograph","application",false,false)
+
+    sw,resp = tacho_read_file_and_store(TACHO,".0501",10,"EF_Application_Identification","file",true,export_signed)
 
     if sw==0x9000 then
         typeOfTachographCardId = resp[0]
@@ -771,31 +817,31 @@ if card.connect() then
             ui.question("This is not a tachograph DRIVER card.\nThis script may not work on this card.",{"OK"})
         end
 
-        tacho_read_file_and_store(TACHO,".C100",194,"EF_Card_Certificate","file")
+        tacho_read_file_and_store(TACHO,".C100",194,"EF_Card_Certificate","file", true, false)
 
-        tacho_read_file_and_store(TACHO,".C108",194, "EF_CA_Certificate", "file")
+        tacho_read_file_and_store(TACHO,".C108",194, "EF_CA_Certificate", "file", true, false)
         
-        tacho_read_file_and_store(TACHO,".0520",143,"EF_Identification", "file")
+        tacho_read_file_and_store(TACHO,".0520",143,"EF_Identification", "file", true, export_signed)
     
-        tacho_read_file_and_store(TACHO,".050E",4,"EF_Card_Download","file")
+        tacho_read_file_and_store(TACHO,".050E",4,"EF_Card_Download","file", true, false)
 
-        tacho_read_file_and_store(TACHO,".0521",53,"EF_Driving_Licence_info","file")
+        tacho_read_file_and_store(TACHO,".0521",53,"EF_Driving_Licence_info","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0502",noOfEventsPerType*24*6,"EF_Events_Data","file")
+        tacho_read_file_and_store(TACHO,".0502",noOfEventsPerType*24*6,"EF_Events_Data","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0503",noOfFaultsPerType*24*2,"EF_Faults_Data","file")
+        tacho_read_file_and_store(TACHO,".0503",noOfFaultsPerType*24*2,"EF_Faults_Data","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0504",activityStructureLength+4,"EF_Driver_Activity_Data","file")
+        tacho_read_file_and_store(TACHO,".0504",activityStructureLength+4,"EF_Driver_Activity_Data","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0505",noOfCardVehicleRecords*31+2,"EF_Vehicles_Used","file")
+        tacho_read_file_and_store(TACHO,".0505",noOfCardVehicleRecords*31+2,"EF_Vehicles_Used","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0506",noOfCardPlaceRecords*10+1,"EF_Places","file")
+        tacho_read_file_and_store(TACHO,".0506",noOfCardPlaceRecords*10+1,"EF_Places","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0507",19,"EF_Current_Usage","file")
+        tacho_read_file_and_store(TACHO,".0507",19,"EF_Current_Usage","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0508",46,"EF_Control_Activity_Data","file")
+        tacho_read_file_and_store(TACHO,".0508",46,"EF_Control_Activity_Data","file", true, export_signed)
 
-        tacho_read_file_and_store(TACHO,".0522",280,"EF_Specific_Conditions","file")
+        tacho_read_file_and_store(TACHO,".0522",280,"EF_Specific_Conditions","file", true, export_signed)
 
         for i,v in ipairs(MAP_TABLE) do
             if v[3]>0 then
@@ -820,12 +866,14 @@ if card.connect() then
             end
         end
 
-        ddd_save(CARD)
+        if export_ddd==true then
+            ddd_save(CARD)
+        end
 
     end
 
     card.disconnect();
 end
 
-log.print(log.INFO,"Fin de test");
+log.print(log.INFO,"End of script");
 

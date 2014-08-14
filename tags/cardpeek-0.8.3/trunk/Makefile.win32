@@ -1,0 +1,45 @@
+CC = gcc 
+GLIB_COMPILE_RESOURCES = glib-compile-resources 
+
+OBJECTS = asn1.o bytestring.o gui_flexi_cell_renderer.o dyntree_model.o \
+	  crypto.o  replay.o  gui.o  iso7816.o  lua_nodes.o  lua_asn1.o \
+	  lua_bit.o  lua_bytes.o  lua_card.o  lua_crypto.o  lua_ext.o \
+	  lua_log.o  lua_ui.o  main.o misc.o  pathconfig.o  smartcard.o \
+	  system_info.o  a_string.o  gui_about.o  gui_toolbar.o \
+	  gui_logview.o  gui_cardview.o  gui_readerview.o \
+	  http_download.o gui_scratchpad.o  gui_inprogress.o \
+	  lua_iconv.o win32/win32compat.o win32/resource.o \
+	  cardpeek_resources.o cardpeek_update.o 
+
+ICONS=icons/analyzer.png icons/item.png icons/record.png \
+      icons/smartcard.png icons/folder.png icons/cardpeek.png \
+      icons/application.png icons/file.png icons/block.png \
+      icons/atr.png icons/header.png icons/body.png
+
+LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv
+
+CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -DHAVE_GSTATBUF -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
+
+all:		cardpeek
+
+cardpeek:	$(OBJECTS) win32/libwinscard.a
+		$(CC) -mwindows -o cardpeek $(OBJECTS) $(LIBS)
+
+dot_cardpeek.tar.gz:    dot_cardpeek_dir	
+			@echo "  TAR      $<"
+			tar czf dot_cardpeek.tar.gz --directory dot_cardpeek_dir --exclude=.svn .
+
+cardpeek_resources.o:	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
+			$(GLIB_COMPILE_RESOURCES) --generate-source --target=cardpeek_resources.c cardpeek_resources.gresource.xml
+			$(CC) $(CFLAGS) -c cardpeek_resources.c
+			@echo "COMPILED RESOURCES"
+
+win32/resource.o:	win32/resource.rc
+			windres win32/resource.rc -O coff -o win32/resource.o
+
+win32/libwinscard.a:	win32/winscard.def win32/winscard.h
+			dlltool.exe -k -d win32/winscard.def -l win32/libwinscard.a c:/WINDOWS/system32/winscard.dll
+
+clean:			
+			rm -f $(OBJECTS) cardpeek.exe win32/libwinscard.a dot_cardpeek.tar.gz *~ cardpeek_resources.c
+

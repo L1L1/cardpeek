@@ -6,16 +6,6 @@
 -- See cardpeekrc.lua for adding your own functions and variables to
 -- cardpeek.
 -- 
-cardpeek = {
-  ['updates'] = {
-    ['auto_update'] = true,
-    ['next_update'] = 1408526057,
-    ['next_upates'] = 0,
-    ['next_updates'] = 0,
-    ['first_update'] = 1393856387,
-    ['url'] = "http://downloads.pannetrat.com/updates/cardpeek.update",
-  },
-}
 
 dofile('scripts/lib/apdu.lua')
 -- end --

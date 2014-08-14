@@ -540,7 +540,7 @@ int cardpeek_update_check(void)
 
     if (!luax_variable_is_defined("cardpeek.updates"))
     {
-        luax_variable_set_boolean("cardpeek.updates.auto_update",FALSE);
+        luax_variable_set_boolean("cardpeek.updates.auto_update",TRUE);
         luax_variable_set_integer("cardpeek.updates.next_update",0);
         luax_variable_set_strval("cardpeek.updates.url",DEFAULT_UPDATE_URL);
         luax_variable_set_integer("cardpeek.updates.first_update",(int)now);

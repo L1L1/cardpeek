@@ -85,8 +85,8 @@ int gui_question_l(const char *message, unsigned item_count, const char **items)
     for (result=0; result<(int)item_count; result++)
         gtk_dialog_add_button(GTK_DIALOG(dialog),items[result],result);
 
-    img = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,
-                                   GTK_ICON_SIZE_DIALOG);
+    img = gtk_image_new_from_icon_name("dialog-question", 
+                                       GTK_ICON_SIZE_DIALOG);
 
     label = gtk_label_new(message);
 
@@ -137,14 +137,14 @@ int gui_readline(const char *message, unsigned input_max, char *input)
     dialog = gtk_dialog_new_with_buttons("Question",
                                          GTK_WINDOW(MAIN_WINDOW),
                                          GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
-                                         GTK_STOCK_OK,
+                                         "_OK",
                                          GTK_RESPONSE_ACCEPT,
-                                         GTK_STOCK_CANCEL,
+                                         "_Cancel",
                                          GTK_RESPONSE_REJECT,
                                          NULL);
 
-    img = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,
-                                   GTK_ICON_SIZE_DIALOG);
+    img = gtk_image_new_from_icon_name("dialog-question",
+                                       GTK_ICON_SIZE_DIALOG);
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
@@ -199,8 +199,8 @@ char **gui_select_file(const char *title,
         filew = gtk_file_chooser_dialog_new (title,
                                              NULL,
                                              GTK_FILE_CHOOSER_ACTION_OPEN,
-                                             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                             GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                             "_Cancel", GTK_RESPONSE_CANCEL,
+                                             "_Open", GTK_RESPONSE_ACCEPT,
                                              NULL);
     }
     else /* save a file - filename contains the default name */
@@ -208,8 +208,8 @@ char **gui_select_file(const char *title,
         filew = gtk_file_chooser_dialog_new (title,
                                              NULL,
                                              GTK_FILE_CHOOSER_ACTION_SAVE,
-                                             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                             "_Cancel", GTK_RESPONSE_CANCEL,
+                                             "_Save", GTK_RESPONSE_ACCEPT,
                                              NULL);
         gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (filew), TRUE);
     }
@@ -277,12 +277,12 @@ char *gui_select_reader(unsigned list_size, const char **list)
     dialog = gtk_dialog_new_with_buttons("Select card reader",
                                          GTK_WINDOW(MAIN_WINDOW),
                                          GTK_DIALOG_MODAL,
-                                         GTK_STOCK_OK,
+                                         "_OK",
                                          GTK_RESPONSE_ACCEPT,
                                          NULL);
 
-    img = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,
-                                   GTK_ICON_SIZE_DIALOG);
+    img = gtk_image_new_from_icon_name("dialog-question", 
+                                       GTK_ICON_SIZE_DIALOG);
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 
@@ -390,9 +390,11 @@ static int gui_load_icons(void)
     GBytes *icon_bytes;
     unsigned char *icon_bytes_start;
     gsize icon_bytes_size;
-    GtkIconSet *icon_set;
+    int icon_height;
+    int icon_height_big_toolbar;
+    int icon_width_big_toolbar;
     GdkPixbuf *pixbuf;
-    GtkIconFactory *icon_factory;
+    GdkPixbuf *scaled_pixbuf;
     unsigned u;
     int is_ok = 1;
 
@@ -403,7 +405,7 @@ static int gui_load_icons(void)
         return 0;
     }
 
-    icon_factory = gtk_icon_factory_new();
+    gtk_icon_size_lookup(GTK_ICON_SIZE_LARGE_TOOLBAR,&icon_width_big_toolbar,&icon_height_big_toolbar);
 
     u=0;
     while (icon_resources[u*2])
@@ -418,20 +420,21 @@ static int gui_load_icons(void)
         icon_bytes_start = (unsigned char *)g_bytes_get_data(icon_bytes,&icon_bytes_size);
 
         pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
-        icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
-        g_object_unref(pixbuf);
-        gtk_icon_factory_add(icon_factory,icon_resources[u*2+1],icon_set);
+        icon_height = gdk_pixbuf_get_height(pixbuf);
+        scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf,icon_width_big_toolbar,icon_height_big_toolbar,GDK_INTERP_BILINEAR);
+        gtk_icon_theme_add_builtin_icon(icon_resources[u*2+1], icon_height, pixbuf);
+        gtk_icon_theme_add_builtin_icon(icon_resources[u*2+1], icon_height_big_toolbar, scaled_pixbuf);
 
         if (strcmp(icon_resources[u*2+1],"cardpeek-cardpeek")==0)
             gtk_window_set_default_icon (pixbuf);
 
+        g_object_unref(scaled_pixbuf);
+        g_object_unref(pixbuf);
         g_bytes_unref(icon_bytes);
 
         u++;
     }
 
-    gtk_icon_factory_add_default(icon_factory);
-    g_object_unref(icon_factory);
     return is_ok;
 }
 

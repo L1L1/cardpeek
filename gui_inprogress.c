@@ -56,7 +56,7 @@ GtkWidget* gui_inprogress_new(const char *title, const char *message)
    dialog = gtk_dialog_new_with_buttons (title,
                                          NULL,
                                          GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
-                                         GTK_STOCK_CANCEL,
+                                         "_Cancel",
                                          GTK_RESPONSE_CANCEL,
                                          NULL);
 

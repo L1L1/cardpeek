@@ -24,42 +24,20 @@
 #include <string.h>
 #include <stdio.h>
 #include "config.h"
+#include <sys/utsname.h>
 
 const char *system_string_info(void)
 {
-	static char info[128];
-	char first_line[128];
-	FILE *cmd;
-	char *p;
-
-	if ((cmd=popen("uname -smr","r")))
-	{
-		if (fgets(first_line,127,cmd))
-		{
-			for (p=first_line;*p!='\0';p++)
-				if (*p=='\r' || *p=='\n') 
-				{ 
-					*p='\0'; 
-					break; 
-				} 	
-		}
-		else 
-		{
-			strcpy(first_line,"Unknown os");
-		}
-		if (pclose(cmd),0)
-		{
-			strcpy(first_line,"Unknown os");
-		}
-	}
-	else
-	{
-		strcpy(first_line,"Unknown os");
-	}
-	snprintf(info,128,"Cardpeek %s on %s", 
-		VERSION,
-		first_line);
-	return info;	
+    static char info[128];
+    static struct utsname u;
+    
+    if ( uname( &u ) < 0 )    
+    {       
+        return "Unknown OS";      
+    }
+    snprintf(info,128,"%s %s %s",u.sysname,u.release,u.machine);
+    
+    return info;
 }
 
 

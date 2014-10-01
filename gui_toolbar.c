@@ -74,6 +74,7 @@ static void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
 
 GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 {
+    GtkWidget   *icon;
 	GtkWidget	*toolbar;
 	GtkToolItem	*item;
 	int 		i;
@@ -101,9 +102,11 @@ GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 		}
 		else
 		{
-			item = gtk_tool_button_new_from_stock (tbitems[i].icon);
-			if (tbitems[i].text) 
-				gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),tbitems[i].text);
+            icon = gtk_image_new_from_icon_name(tbitems[i].icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
+			//item = gtk_tool_button_new_from_stock (tbitems[i].icon);
+            item = gtk_tool_button_new(icon, tbitems[i].text);
+			//if (tbitems[i].text) 
+			//	gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),tbitems[i].text);
 			if (tbitems[i].callback)
 				g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(tbitems[i].callback),(gpointer)tbitems[i].callback_data);
 			if (tbitems[i].tooltip)

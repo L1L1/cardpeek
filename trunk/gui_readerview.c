@@ -70,16 +70,16 @@ static void menu_readerview_save_as_cb(GtkWidget *w, gpointer user_data)
 /*********************************************************/
 
 toolbar_item_t TB_READER_VIEW[] = {
-	{ "reader-view-connect", 	GTK_STOCK_CONNECT, "Connect", G_CALLBACK(gui_toolbar_run_command_cb), "card.connect()", 
+	{ "reader-view-connect", 	"gtk-connect", "Connect", G_CALLBACK(gui_toolbar_run_command_cb), "card.connect()", 
 	  "Connect a card to the reader." },
-	{ "reader-view-reset", 		GTK_STOCK_REDO, "Reset", G_CALLBACK(gui_toolbar_run_command_cb), "card.warm_reset()", 
+	{ "reader-view-reset", 		"edit-redo", "Reset", G_CALLBACK(gui_toolbar_run_command_cb), "card.warm_reset()", 
 	  "Reset the card in the reader." },
-	{ "reader-view-disconnect", 	GTK_STOCK_DISCONNECT, "Disconnect", G_CALLBACK(gui_toolbar_run_command_cb), "card.disconnect()", 
+	{ "reader-view-disconnect", 	"gtk-disconnect", "Disconnect", G_CALLBACK(gui_toolbar_run_command_cb), "card.disconnect()", 
 	  "Diconnect the card in the reader." },
 	{ NULL,				TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
-	{ "reader-view-clear", 		GTK_STOCK_CLEAR, "Clear", G_CALLBACK(gui_toolbar_run_command_cb), "card.log_clear()", 
+	{ "reader-view-clear", 		"edit-clear", "Clear", G_CALLBACK(gui_toolbar_run_command_cb), "card.log_clear()", 
 	  "Clear the reader view." },
-	{ "reader-view-save-as", 	GTK_STOCK_SAVE_AS, "Save replay", G_CALLBACK(menu_readerview_save_as_cb), NULL, 
+	{ "reader-view-save-as", 	"document-save-as", "Save replay", G_CALLBACK(menu_readerview_save_as_cb), NULL, 
 	  "Save card/reader data exchange for later replay\nYou can then select a replay during application startup." },	
 	{ NULL, 			NULL, NULL, NULL, NULL, NULL }
 };
@@ -116,7 +116,7 @@ GtkWidget *gui_readerview_create_window(void)
   view = gtk_text_view_new ();
 
   font_desc = pango_font_description_from_string ("Monospace");
-  gtk_widget_modify_font (view, font_desc);
+  gtk_widget_override_font (view, font_desc);
   pango_font_description_free (font_desc);
 
   gtk_container_add (GTK_CONTAINER (scrolled_window), view);

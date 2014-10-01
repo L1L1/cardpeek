@@ -109,7 +109,7 @@ GtkWidget *gui_logview_create_window(void)
 			     NULL);
 
   font_desc = pango_font_description_from_string ("Monospace");
-  gtk_widget_modify_font (view, font_desc);
+  gtk_widget_override_font (view, font_desc);
   pango_font_description_free (font_desc);
 
   LOG_WINDOW = GTK_WIDGET(gtk_scrolled_window_new (NULL, NULL));

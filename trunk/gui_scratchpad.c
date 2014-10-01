@@ -66,7 +66,7 @@ GtkWidget *gui_scratchpad_create_window(void)
   label = gtk_label_new("Command:");
   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
   
-  if ((icon = gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU)))
+  if ((icon = gtk_image_new_from_icon_name("system-run",GTK_ICON_SIZE_MENU)))
     gtk_box_pack_start (GTK_BOX (hbox), icon, FALSE, FALSE, 0);
 
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);

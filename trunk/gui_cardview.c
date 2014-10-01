@@ -471,8 +471,7 @@ static GtkWidget *script_info_add(const char *path, const char *fname)
         si->prev = SCRIPTS;
         SCRIPTS = si;
 
-        menuitem = gtk_image_menu_item_new_with_label(si->script_name);
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_EXECUTE,GTK_ICON_SIZE_MENU));
+        menuitem = gtk_menu_item_new_with_label(si->script_name);
         if (si->script_description) gtk_widget_set_tooltip_text(menuitem,si->script_description);
         g_signal_connect(GTK_WIDGET(menuitem),"activate",G_CALLBACK(menu_run_script_cb),si);
         gtk_widget_show(menuitem);
@@ -517,8 +516,9 @@ static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
     gtk_widget_show(menuitem);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
 
-    menuitem = gtk_image_menu_item_new_with_label("Load a script");
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_stock(GTK_STOCK_OPEN,GTK_ICON_SIZE_MENU));
+    menuitem = gtk_menu_item_new_with_label("Load a script");
+    // FIXME:
+    // gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_icon_name("document-open",GTK_ICON_SIZE_MENU));
     g_signal_connect(GTK_WIDGET(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
 
     gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_KEY_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
@@ -536,25 +536,25 @@ toolbar_item_t TB_CARD_VIEW[] =
     },
     { NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
     {
-        "card-view-clear", 	GTK_STOCK_CLEAR, "Clear", G_CALLBACK(menu_cardview_clear_cb), NULL,
+        "card-view-clear", 	"edit-clear", "Clear", G_CALLBACK(menu_cardview_clear_cb), NULL,
         "Clear the card view content."
     },
     {
-        "card-view-open", 	GTK_STOCK_OPEN, "Open", G_CALLBACK(menu_cardview_open_cb), NULL,
+        "card-view-open", 	"document-open", "Open", G_CALLBACK(menu_cardview_open_cb), NULL,
         "Load previously saved card view content (XML fomat)."
     },
     {
-        "card-view-save-as",	GTK_STOCK_SAVE_AS, "Save", G_CALLBACK(menu_cardview_save_as_cb), NULL,
+        "card-view-save-as",	"document-save-as", "Save", G_CALLBACK(menu_cardview_save_as_cb), NULL,
         "Save current card view content into a file (XML fomat)."
     },
     { NULL, 		TOOLBAR_ITEM_EXPANDER, NULL, NULL, NULL, NULL },
     {
-        "card-view-about",	GTK_STOCK_ABOUT, "About", G_CALLBACK(gui_toolbar_run_command_cb), "ui.about()",
+        "card-view-about",	"help-about", "About", G_CALLBACK(gui_toolbar_run_command_cb), "ui.about()",
         "About cardpeek " VERSION
     },
     { NULL, 		TOOLBAR_ITEM_SEPARATOR, NULL, NULL, NULL, NULL },
     {
-        "card-view-quit",	GTK_STOCK_QUIT, "Quit", G_CALLBACK(gtk_main_quit), NULL,
+        "card-view-quit",	"application-exit", "Quit", G_CALLBACK(gtk_main_quit), NULL,
         "Quit cardpeek"
     },
     /* END MARKER : */
@@ -775,7 +775,7 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
     colheader = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,10);
     gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Raw value"), FALSE, FALSE, 0);
-    if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
+    if ((colitem = gtk_image_new_from_icon_name("gtk-convert",GTK_ICON_SIZE_MENU)))
     {
         gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
     }
@@ -802,7 +802,7 @@ GtkWidget *gui_cardview_create_window(GtkAccelGroup *accel_group)
 
     colheader = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,10);
     gtk_box_pack_start (GTK_BOX (colheader), gtk_label_new("Interpreted value"), FALSE, FALSE, 0);
-    if ((colitem = gtk_image_new_from_stock(GTK_STOCK_CONVERT,GTK_ICON_SIZE_MENU)))
+    if ((colitem = gtk_image_new_from_icon_name("gtk-convert",GTK_ICON_SIZE_MENU)))
     {
         gtk_box_pack_start (GTK_BOX (colheader), colitem, FALSE, FALSE, 0);
     }

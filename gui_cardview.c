@@ -608,7 +608,7 @@ static void internal_cell_renderer_icon_cb (GtkTreeViewColumn *col,
     if (icon_name==NULL)
         icon_name="cardpeek-item";
 
-    g_object_set(renderer, "stock-id", icon_name, NULL);
+    g_object_set(renderer, "icon-name", icon_name, NULL);
 
     g_free(classname);
 }

@@ -162,7 +162,7 @@ static int install_dot_file(void)
         log_printf(LOG_ERROR,"Could not load cardpeek internal resources. This is not good.");
         return -1;
     }
-    dot_cardpeek_tar_gz = g_resources_lookup_data("/cardpeek/dot_cardpeek.tar.gz",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+    dot_cardpeek_tar_gz = g_resources_lookup_data("/com/pannetrat/cardpeek/dot_cardpeek.tar.gz",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
     if (dot_cardpeek_tar_gz == NULL)
     {
         log_printf(LOG_ERROR,"Could not load .cardpeek.tar.gz");

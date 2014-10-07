@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -48,5 +48,9 @@ char** gui_select_file(const char *title,
    		       const char *filename);
 
 void gui_set_title(const char *title);
+
+#include <gtk/gtk.h>
+
+extern GtkWidget *MAIN_WINDOW;
 
 #endif

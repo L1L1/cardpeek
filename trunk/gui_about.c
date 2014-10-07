@@ -19,6 +19,7 @@
 *
 */
 
+#include "gui.h"
 #include "gui_about.h"
 
 #include <gtk/gtk.h>
@@ -48,12 +49,12 @@ void gui_about(void)
 	gsize size;
 	const char *authors[2];
 
-	authors_bytes = g_resources_lookup_data("/cardpeek/AUTHORS",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+	authors_bytes = g_resources_lookup_data("/com/pannetrat/cardpeek/AUTHORS",G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
 	authors[0] = (const char *)g_bytes_get_data(authors_bytes,&size);
 	authors[1] = NULL;
 
-	gtk_show_about_dialog(NULL,
-			      "program-name", "cardpeek",
+	gtk_show_about_dialog(GTK_WINDOW(MAIN_WINDOW),
+                  "program-name", "cardpeek",
 			      "version", VERSION,
 			      "license", LICENSE,
 			      "wrap-license", TRUE,
@@ -61,7 +62,7 @@ void gui_about(void)
 			      "comments", "Cardpeek is a tool to read the contents of smart cards.",
 			      "copyright", "Copyright Alain Pannetrat <L1L1@gmx.com>",
 			      "website", "http://pannetrat.com/Cardpeek/",
-                  	      "website-label", "http://pannetrat.com/Cardpeek/",  
+                  "website-label", "http://pannetrat.com/Cardpeek/",  
 			      NULL);
 }
 

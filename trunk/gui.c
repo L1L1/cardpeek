@@ -194,10 +194,13 @@ char **gui_select_file(const char *title,
     static char *ret_values[2];
     GtkWidget *filew;
 
+    ret_values[0] = NULL;
+    ret_values[1] = NULL;
+
     if (filename==NULL) /* open a file - filename==NULL */
     {
         filew = gtk_file_chooser_dialog_new (title,
-                                             NULL,
+                                             GTK_WINDOW(MAIN_WINDOW),
                                              GTK_FILE_CHOOSER_ACTION_OPEN,
                                              "_Cancel", GTK_RESPONSE_CANCEL,
                                              "_Open", GTK_RESPONSE_ACCEPT,
@@ -206,12 +209,18 @@ char **gui_select_file(const char *title,
     else /* save a file - filename contains the default name */
     {
         filew = gtk_file_chooser_dialog_new (title,
-                                             NULL,
+                                             GTK_WINDOW(MAIN_WINDOW),
                                              GTK_FILE_CHOOSER_ACTION_SAVE,
                                              "_Cancel", GTK_RESPONSE_CANCEL,
                                              "_Save", GTK_RESPONSE_ACCEPT,
                                              NULL);
         gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (filew), TRUE);
+    }
+
+    if (filew==NULL)
+    { 
+        log_printf(LOG_ERROR,"Could not load 'gtk file chooser', this is probably a local configuration issue.");
+        return ret_values;
     }
 
     if (path)
@@ -227,11 +236,7 @@ char **gui_select_file(const char *title,
         ret_values[0] = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER (filew));
         ret_values[1] = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (filew));
     }
-    else
-    {
-        ret_values[0] = NULL;
-        ret_values[1] = NULL;
-    }
+    
     gtk_widget_destroy (filew);
     return ret_values;
 }
@@ -367,75 +372,21 @@ static void gui_get_supported_image_mime_types(void)
 }
 #endif
 
-const char *icon_resources[] =
-{
-    "/cardpeek/icons/analyzer.png", 	"cardpeek-analyzer",
-    "/cardpeek/icons/application.png",	"cardpeek-application",
-    "/cardpeek/icons/block.png", 	"cardpeek-block",
-    "/cardpeek/icons/record.png", 	"cardpeek-record",
-    "/cardpeek/icons/cardpeek.png", 	"cardpeek-cardpeek",
-    "/cardpeek/icons/file.png", 	"cardpeek-file",
-    "/cardpeek/icons/folder.png", 	"cardpeek-folder",
-    "/cardpeek/icons/item.png", 	"cardpeek-item",
-    "/cardpeek/icons/smartcard.png", 	"cardpeek-smartcard",
-    "/cardpeek/icons/atr.png", 		"cardpeek-atr",
-    "/cardpeek/icons/header.png", 	"cardpeek-header",
-    "/cardpeek/icons/body.png", 	"cardpeek-body",
-    NULL
-};
-
 static int gui_load_icons(void)
 {
-    GResource *cardpeek_resources;
-    GBytes *icon_bytes;
-    unsigned char *icon_bytes_start;
-    gsize icon_bytes_size;
-    int icon_height;
-    int icon_height_big_toolbar;
-    int icon_width_big_toolbar;
     GdkPixbuf *pixbuf;
-    GdkPixbuf *scaled_pixbuf;
-    unsigned u;
-    int is_ok = 1;
 
-    cardpeek_resources = cardpeek_resources_get_resource();
-    if (cardpeek_resources == NULL)
-    {
-        log_printf(LOG_ERROR,"Could not load cardpeek internal resources. This is not good.");
-        return 0;
-    }
-
-    gtk_icon_size_lookup(GTK_ICON_SIZE_LARGE_TOOLBAR,&icon_width_big_toolbar,&icon_height_big_toolbar);
-
-    u=0;
-    while (icon_resources[u*2])
-    {
-        icon_bytes = g_resources_lookup_data(icon_resources[u*2],G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
-        if (icon_bytes == NULL)
-        {
-            log_printf(LOG_ERROR,"Could not load icon %s",icon_resources[u*2]);
-            is_ok = 0;
-        }
-
-        icon_bytes_start = (unsigned char *)g_bytes_get_data(icon_bytes,&icon_bytes_size);
-
-        pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
-        icon_height = gdk_pixbuf_get_height(pixbuf);
-        scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf,icon_width_big_toolbar,icon_height_big_toolbar,GDK_INTERP_BILINEAR);
-        gtk_icon_theme_add_builtin_icon(icon_resources[u*2+1], icon_height, pixbuf);
-        gtk_icon_theme_add_builtin_icon(icon_resources[u*2+1], icon_height_big_toolbar, scaled_pixbuf);
-
-        if (strcmp(icon_resources[u*2+1],"cardpeek-cardpeek")==0)
-            gtk_window_set_default_icon (pixbuf);
-
-        g_object_unref(scaled_pixbuf);
+    gtk_icon_theme_add_resource_path (gtk_icon_theme_get_default(), "/com/pannetrat/cardpeek/icons/");
+    pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(), "cardpeek-logo",48,0,NULL);
+    if (pixbuf) {
+        gtk_window_set_default_icon(pixbuf);
         g_object_unref(pixbuf);
-        g_bytes_unref(icon_bytes);
-
-        u++;
+        return 1;
     }
-
-    return is_ok;
+    /* This does not work:
+     * gtk_window_set_default_icon_name("cardpeek-logo");
+     */
+    return 0;
 }
 
 static void notebook_on_destroy(GtkWidget *window, gpointer user_data)

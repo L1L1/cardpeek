@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/cardpeek/">
+  <gresource prefix="/com/pannetrat/cardpeek/">
     <file>dot_cardpeek.tar.gz</file>
-    <file preprocess="to-pixdata">icons/analyzer.png</file>
-    <file preprocess="to-pixdata">icons/application.png</file>
-    <file preprocess="to-pixdata">icons/block.png</file>
-    <file preprocess="to-pixdata">icons/record.png</file>
-    <file preprocess="to-pixdata">icons/cardpeek.png</file>
-    <file preprocess="to-pixdata">icons/file.png</file>
-    <file preprocess="to-pixdata">icons/folder.png</file>
-    <file preprocess="to-pixdata">icons/item.png</file> 
-    <file preprocess="to-pixdata">icons/smartcard.png</file>
-    <file preprocess="to-pixdata">icons/atr.png</file>
-    <file preprocess="to-pixdata">icons/header.png</file>
-    <file preprocess="to-pixdata">icons/body.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-analyzer.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-application.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-block.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-record.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-logo.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-file.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-folder.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-item.png</file> 
+    <file preprocess="to-pixdata">icons/cardpeek-smartcard.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-atr.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-header.png</file>
+    <file preprocess="to-pixdata">icons/cardpeek-body.png</file>
     <file>AUTHORS</file>
   </gresource>
 </gresources>

@@ -11,12 +11,12 @@ OBJECTS = asn1.o bytestring.o gui_flexi_cell_renderer.o dyntree_model.o \
 	  lua_iconv.o win32/win32compat.o win32/resource.o \
 	  cardpeek_resources.o cardpeek_update.o 
 
-ICONS=icons/analyzer.png icons/item.png icons/record.png \
-      icons/smartcard.png icons/folder.png icons/cardpeek.png \
-      icons/application.png icons/file.png icons/block.png \
-      icons/atr.png icons/header.png icons/body.png
+ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.png \
+      icons/cardpeek-smartcard.png icons/cardpeek-folder.png icons/cardpeek-logo.png \
+      icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png \
+      icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv
+LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurldll -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv
 
 CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -DHAVE_GSTATBUF -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
 

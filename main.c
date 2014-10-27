@@ -19,6 +19,10 @@
 *
 */
 
+#ifdef _WIN32
+#define _WIN32_WINNT 0x0501
+#include <windows.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -332,6 +336,13 @@ int main(int argc, char **argv)
     int run_gui = 1;
     char* reader_name = NULL;
     char* exec_command = NULL;
+
+#ifdef _WIN32
+    /* Enable console output when run from CLI */
+    AttachConsole((DWORD)-1);
+    freopen("CONOUT$","w",stdout);
+    freopen("CONERR$","w",stderr);
+#endif
 
 #ifndef _WIN32
     SSL_load_error_strings();

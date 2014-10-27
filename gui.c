@@ -372,11 +372,129 @@ static void gui_get_supported_image_mime_types(void)
 }
 #endif
 
+
+#if GTK_CHECK_VERSION(3,14,0)
+
+static void add_icons_from_resource(const gchar *path)
+{
+    gtk_icon_theme_add_resource_path (gtk_icon_theme_get_default(),path);
+}
+
+#else
+
+static char *resource_basename(const char *r)
+{
+    static char name[128];
+    const char *str_begin;
+    const char *str_end;
+    
+    str_begin = strrchr(r,'/');
+    if (str_begin==NULL)
+        str_begin = r;
+    else
+        str_begin++;
+    
+    str_end = strchr(str_begin,'.');
+    if (str_end==NULL)
+        str_end = r+strlen(r);
+    
+    if (str_end-str_begin>127) 
+        str_end = str_begin+127;
+    
+    memcpy(name,str_begin,str_end-str_begin);
+    name[str_end-str_begin]=0;
+    return name;
+}
+
+static void deprecated_icon_theme_add(GResource *resource, const gchar *path)
+{
+    char **children;
+    int i;
+    char *ext_path;
+    GBytes *icon_bytes;
+    unsigned char *icon_bytes_start;
+    gsize icon_bytes_size;
+    GdkPixbuf *pixbuf;
+    GdkPixbuf *pixbuf_scaled;
+    int real_icon_height;
+    int icon_height;
+    int icon_width;
+
+
+    icon_bytes = g_resources_lookup_data(path,G_RESOURCE_LOOKUP_FLAGS_NONE,NULL);
+
+    if (icon_bytes!=NULL)
+    {
+        icon_bytes_start = (unsigned char *)g_bytes_get_data(icon_bytes,&icon_bytes_size);
+
+        pixbuf = gdk_pixbuf_new_from_inline (-1, icon_bytes_start, FALSE, NULL);
+
+        real_icon_height = gdk_pixbuf_get_height(pixbuf);
+
+        gtk_icon_theme_add_builtin_icon(resource_basename(path),
+                                        real_icon_height,
+                                        pixbuf);
+
+
+        gtk_icon_size_lookup(GTK_ICON_SIZE_LARGE_TOOLBAR,&icon_width,&icon_height);
+
+        pixbuf_scaled = gdk_pixbuf_scale_simple(pixbuf,icon_width,icon_height,GDK_INTERP_BILINEAR);
+ 
+        gtk_icon_theme_add_builtin_icon(resource_basename(path),
+                                        icon_height,
+                                        pixbuf_scaled);
+        
+        icon_height = gdk_pixbuf_get_height(pixbuf_scaled);
+        
+        g_object_unref(pixbuf_scaled);
+        g_object_unref(pixbuf);
+        g_bytes_unref(icon_bytes);
+    }
+    else
+    {
+        children = g_resource_enumerate_children(resource, path, G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+
+        if (children)
+        {
+            for (i=0;children[i]!=NULL;i++)
+            {
+                ext_path = g_malloc(strlen(path)+strlen(children[i])+2);
+                sprintf(ext_path,"%s/%s",path,children[i]);
+                deprecated_icon_theme_add(resource,ext_path);
+                g_free(ext_path);
+            }
+            g_strfreev(children);
+        }
+    }
+}
+
+static void add_icons_from_resource(const gchar *path)
+{
+    GResource *cardpeek_resources = cardpeek_resources_get_resource();
+    char *clean_path = g_strdup(path);
+    
+    if (strlen(clean_path)>0)
+    {
+        if (clean_path[strlen(clean_path)-1]=='/')
+            clean_path[strlen(clean_path)-1]=0;
+    }
+    if (cardpeek_resources == NULL)
+    {
+        log_printf(LOG_ERROR,"Could not load cardpeek internal resources. This is not good.");
+        return;
+    }
+    deprecated_icon_theme_add(cardpeek_resources,clean_path);
+    g_free(clean_path);
+}
+
+#endif
+
 static int gui_load_icons(void)
 {
     GdkPixbuf *pixbuf;
 
-    gtk_icon_theme_add_resource_path (gtk_icon_theme_get_default(), "/com/pannetrat/cardpeek/icons/");
+    add_icons_from_resource("/com/pannetrat/cardpeek/icons/");
+
     pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(), "cardpeek-logo",48,0,NULL);
     if (pixbuf) {
         gtk_window_set_default_icon(pixbuf);

@@ -33,8 +33,9 @@
 #include "smartcard.h"
 #include "misc.h"
 #include "a_string.h"
-#include "gui.h"
-#include "gui_readerview.h"
+#include "ui.h"
+#include "ui/gtk/gui_core.h"
+#include "ui/console/console_core.h"
 #include "pathconfig.h"
 #include "lua_ext.h"
 #include "script_version.h"
@@ -81,7 +82,7 @@ static int install_dot_file(void)
         if ((f = g_fopen(version_file,"r"))!=NULL)
         {
             if (fscanf(f,"%u",&dot_version)!=1)
-		dot_version=0;
+                dot_version=0;
             fclose(f);
             if (dot_version>=SCRIPT_VERSION)
             {
@@ -98,7 +99,7 @@ static int install_dot_file(void)
             a_sprintf(astr,"Some scripts in '%s' seem to be outdated or missing\n"
                       "Do you want to upgrade these scripts?",cardpeek_dir);
 
-        if ((response = gui_question(a_strval(astr),"Yes","No","No, don't ask me again",NULL))!=0)
+        if ((response = ui_question(a_strval(astr),"Yes","No","No, don't ask me again",NULL))!=0)
         {
             log_printf(LOG_DEBUG,"The files in '%s' will not be upgraded.",cardpeek_dir);
             a_strfree(astr);
@@ -121,7 +122,7 @@ static int install_dot_file(void)
         a_sprintf(astr,"It seems this is the first time you run Cardpeek, because \n'%s' does not exit (%s).\n"
                   "Do you want to create '%s'?",cardpeek_dir,strerror(errno),cardpeek_dir);
 
-        if (gui_question(a_strval(astr),"Yes","No",NULL)!=0)
+        if (ui_question(a_strval(astr),"Yes","No",NULL)!=0)
         {
             log_printf(LOG_DEBUG,"'%s' will not be created",cardpeek_dir);
             a_strfree(astr);
@@ -136,11 +137,11 @@ static int install_dot_file(void)
 #else
         if (mkdir(cardpeek_dir)!=0)
 #endif
-	{
+        {
             astr = a_strnew(NULL);
             a_sprintf(astr,"'%s' could not be created: %s",cardpeek_dir,strerror(errno));
             log_printf(LOG_ERROR,a_strval(astr));
-            gui_question(a_strval(astr),"OK",NULL);
+            ui_question(a_strval(astr),"OK",NULL);
             a_strfree(astr);
             return 0;
         }
@@ -176,21 +177,21 @@ static int install_dot_file(void)
 
     if (chdir(cardpeek_dir)==-1)
     {
-	log_printf(LOG_ERROR,"Could not change directory to '%s'",cardpeek_dir);
-	return 0;
+        log_printf(LOG_ERROR,"Could not change directory to '%s'",cardpeek_dir);
+        return 0;
     }
 
     if ((f = g_fopen("dot_cardpeek.tar.gz","wb"))==NULL)
     {
         log_printf(LOG_ERROR,"Could not create dot_cardpeek.tar.gz in %s (%s)", cardpeek_dir, strerror(errno));
-        gui_question("Could not create dot_cardpeek.tar.gz, aborting.","Ok",NULL);
+        ui_question("Could not create dot_cardpeek.tar.gz, aborting.","Ok",NULL);
         return 0;
     }
 
     if (fwrite(dot_cardpeek_tar_gz_start,dot_cardpeek_tar_gz_size,1,f)!=1)
     {
         log_printf(LOG_ERROR,"Could not write to dot_cardpeek.tar.gz in %s (%s)", cardpeek_dir, strerror(errno));
-        gui_question("Could not write to dot_cardpeek.tar.gz, aborting.","Ok",NULL);
+        ui_question("Could not write to dot_cardpeek.tar.gz, aborting.","Ok",NULL);
         fclose(f);
         return 0;
     }
@@ -205,38 +206,31 @@ static int install_dot_file(void)
     log_printf(LOG_INFO,"'tar xzvf dot_cardpeek.tar.gz' returned %i",status);
     if (status!=0)
     {
-        gui_question("Extraction of dot_cardpeek.tar.gz failed, aborting.","Ok",NULL);
+        ui_question("Extraction of dot_cardpeek.tar.gz failed, aborting.","Ok",NULL);
         return 0;
     }
     status = system("rm dot_cardpeek.tar.gz");
     log_printf(LOG_INFO,"'rm dot_cardpeek.tar.gz' returned %i",status);
 
-    gui_question("Note: The files have been created.\nIt is recommended that you quit and restart cardpeek, for changes to take effect.","Ok",NULL);
+    ui_question("Note: The files have been created.\nIt is recommended that you quit and restart cardpeek, for changes to take effect.","Ok",NULL);
     return 1;
 }
 
-static gboolean run_command_from_cli(gpointer data)
-{
-    luax_run_command((const char *)data);
-    return FALSE;
-}
-
-
-#ifdef HAVE_DECL_BACKTRACE 
+#ifdef HAVE_DECL_BACKTRACE
 #include <execinfo.h>
 static void do_backtrace()
 {
     char **btrace;
     void *buffer[32];
     int i,depth;
-    
+
     depth=backtrace(buffer,32);
 
     btrace = backtrace_symbols(buffer,depth);
 
-    for (i=0;i<depth;i++)
+    for (i=0; i<depth; i++)
     {
-        log_printf(LOG_DEBUG,"backtrace: %s",btrace[i]);    
+        log_printf(LOG_DEBUG,"backtrace: %s",btrace[i]);
     }
 
     free(btrace);
@@ -244,7 +238,7 @@ static void do_backtrace()
 #else
 static void do_backtrace()
 {
-   /* void */
+    /* void */
 }
 #endif
 
@@ -275,8 +269,8 @@ static void save_what_can_be_saved(int sig_num)
     if (write(2,signature,strlen(signature))<=0) return;
     sprintf(buf,"Received signal %i\n",sig_num);
     if (write(2,buf,strlen(buf))<=0) return;
-   
-    log_printf(LOG_ERROR,"Received signal %i",sig_num); 
+
+    log_printf(LOG_ERROR,"Received signal %i",sig_num);
     do_backtrace();
     log_close_file();
     exit(-2);
@@ -293,7 +287,7 @@ static void display_readers_and_version(void)
 
     luax_init();
 
-    fprintf(stdout,"%sThis is %s.%s\n",ANSI_GREEN,system_string_info(),ANSI_RESET);
+    fprintf(stdout,"This is %s.\n",system_string_info());
     fprintf(stdout,"Cardpeek path is %s\n",path_config_get_string(PATH_CONFIG_FOLDER_CARDPEEK));
 
     CTX = cardmanager_new();
@@ -312,10 +306,21 @@ static void display_readers_and_version(void)
     luax_release();
 }
 
+char *cardpeek_help =
+   " --reader   Select a reader by name (see -v option to get a list of readers).\n" 
+   " \n"
+   " --exec     Execute the command.\n" 
+   " \n"
+   " --version  Print version of cardpeek, configuration path and list of detected card readers and replay files.\n"
+   " \n"
+   " --console Run in console mode, disabling the GTK GUI."
+   " \n";
+
+
 static void display_help(char *progname)
 {
-    fprintf(stderr, "Usage: %s [-r|--reader reader-name] [-e|--exec lua-command] [-v|--version]\n",
-            progname);
+    fprintf(stderr, "Usage: %s [-r|--reader reader-name] [-e|--exec lua-command] [-v|--version] [-c|--console]\n\n%s\n",
+            progname,cardpeek_help);
 }
 
 static struct option long_options[] =
@@ -324,6 +329,7 @@ static struct option long_options[] =
     {"exec",    	required_argument, 0,  'e' },
     {"version", 	no_argument, 	   0,  'v' },
     {"help", 		no_argument, 	   0,  'h' },
+    {"console",     no_argument,       0,  'c' },
     {0,        	 	0,                 0,   0 }
 };
 
@@ -333,108 +339,96 @@ int main(int argc, char **argv)
     cardreader_t* READER;
     int opt;
     int opt_index = 0;
-    int run_gui = 1;
     char* reader_name = NULL;
     char* exec_command = NULL;
+    ui_driver_t *ui_driver = ui_driver_for_gtk();
 
 #ifdef _WIN32
     /* Enable console output when run from CLI */
     AttachConsole((DWORD)-1);
     freopen("CONOUT$","w",stdout);
     freopen("CONERR$","w",stderr);
+    freopen("CONIN$", "r",stdin);
 #endif
 
 #ifndef _WIN32
     SSL_load_error_strings();
 #endif
 
-    signal(SIGSEGV, save_what_can_be_saved);
-
     path_config_init();
 
-    log_open_file();
-
-    while ((opt = getopt_long(argc,argv,"r:e:vh",long_options,&opt_index))!=-1)
+    while ((opt = getopt_long(argc,argv,"r:e:vhc",long_options,&opt_index))!=-1)
     {
         switch (opt)
         {
-        case 'r':
-            reader_name = g_strdup(optarg);
-            break;
-        case 'e':
-            exec_command = optarg;
-            break;
-        case 'v':
-            display_readers_and_version();
-            run_gui = 0;
-            break;
-        default:
-            display_help(argv[0]);
-            run_gui = 0;
+            case 'r':
+                reader_name = g_strdup(optarg);
+                break;
+            case 'e':
+                exec_command = optarg;
+                break;
+            case 'v':
+                display_readers_and_version();
+                path_config_release();
+                exit(0);
+                break;
+            case 'c':
+                ui_driver = ui_driver_for_console();
+                break;
+            default:
+                display_help(argv[0]);
+                path_config_release();
+                exit(1);
         }
     }
 
-    if (run_gui)
+    signal(SIGSEGV, save_what_can_be_saved);
+
+    log_open_file();
+
+
+    ui_initialize(ui_driver,&argc,&argv);
+
+    log_printf(LOG_INFO,"Running in %s mode on %s",ui_driver_name(),system_string_info());
+
+    luax_init();
+
+    install_dot_file();
+
+    if (reader_name == NULL)
     {
-        /* if we want threads:
-           gdk_threads_init();
-           gdk_threads_enter();
-         */
-
-        gui_init(&argc,&argv);
-
-        gui_create();
-
-        log_printf(LOG_INFO,"Running %s",system_string_info());
-
-        install_dot_file();
-
-        luax_init();
-
-
         CTX = cardmanager_new();
 
-        if (reader_name == NULL)
-        {
-            reader_name = gui_select_reader(cardmanager_count_readers(CTX),
-                                            cardmanager_reader_name_list(CTX));
-        }
-
-        READER = cardreader_new(reader_name);
+        reader_name = ui_select_reader(cardmanager_count_readers(CTX),
+                cardmanager_reader_name_list(CTX));
 
         cardmanager_free(CTX);
-
-        if (READER)
-        {
-            luax_set_card_reader(READER);
-
-            cardreader_set_callback(READER,gui_readerview_print,NULL);
-
-            if (exec_command)
-                g_idle_add(run_command_from_cli,exec_command);
-            else
-                update_cardpeek();
-            /*else
-              g_idle_add(run_update_checks,NULL);
-             */
-            gui_run();
-
-            cardreader_free(READER);
-        }
-        else
-        {
-            fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
-            log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
-        }
-
-        luax_config_table_save();
-
-        luax_release();
-
-        /* if we want threads:
-           gdk_threads_leave();
-         */
     }
+
+    READER = cardreader_new(reader_name);
+
+    if (READER)
+    {
+        luax_set_card_reader(READER);
+
+        cardreader_set_callback(READER,ui_card_event_print,NULL);
+
+        if (exec_command==NULL)
+            update_cardpeek();
+
+        ui_run(exec_command);
+
+        cardreader_free(READER);
+    }
+    else
+    {
+        fprintf(stderr,"Failed to open smart card reader '%s'.\n",reader_name);
+        log_printf(LOG_ERROR,"Failed to open smart card reader '%s'.", reader_name);
+    }
+
+    luax_config_table_save();
+
+    luax_release();
 
     if (reader_name) g_free(reader_name);
 

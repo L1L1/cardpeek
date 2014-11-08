@@ -19,14 +19,14 @@
 *
 */
 #include <lauxlib.h>
-#include "lua_card.h"
+//#include "lua_card.h"
 #include "smartcard.h"
 #include "lua_bytes.h"
-#include <stdlib.h>
+//#include <stdlib.h>
 #include "iso7816.h"
 #include "misc.h"
 #include "lua_ext.h"
-#include "gui.h"
+#include "ui.h"
 #include <string.h>
 
 cardreader_t *READER=NULL;
@@ -90,7 +90,7 @@ static int subr_card_info(lua_State *L)
     g_free(info);
 
     /* this update is needed since cardreader_get_info is silent upon success */
-    gui_update(0);
+    ui_update();
     return 1;
 }
 
@@ -109,7 +109,7 @@ static unsigned short luax_card_send(lua_State *L, const bytestring_t *command, 
     {
         tmp = bytestring_to_format("%D",command);
         log_printf(LOG_ERROR,"Could not parse APDU format: %s",tmp);
-        free(tmp);
+        g_free(tmp);
         return CARDPEEK_ERROR_SW;
     }
    
@@ -117,7 +117,7 @@ static unsigned short luax_card_send(lua_State *L, const bytestring_t *command, 
     if (strlen(tmp)>37)
         strcpy(tmp+32,"(...)");
     log_printf(LOG_INFO,"send: %s [%s]", tmp, iso7816_stringify_apdu_class(ad.apdu_class));
-    free(tmp);
+    g_free(tmp);
 
     SW = cardreader_transmit(READER,command,result);
     SW1 = (SW>>8)&0xFF;
@@ -129,8 +129,8 @@ static unsigned short luax_card_send(lua_State *L, const bytestring_t *command, 
     if (strlen(tmp)>37)
         strcpy(tmp+32,"(...)");
     log_printf(LOG_INFO,"Recv: %04X %s [%s]", SW, tmp, sw_string);
-    free(tmp);
-    if (sw_string) free(sw_string);
+    g_free(tmp);
+    if (sw_string) g_free(sw_string);
 
     if (SW1==0x6C) /* Re-issue with right length */
     {

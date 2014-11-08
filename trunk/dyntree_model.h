@@ -64,6 +64,8 @@ GType dyntree_model_get_type(void);
 
 /***** USER FUNCS *****/
 
+extern DyntreeModel *CARD_DATA_STORE;
+
 /* Creating our model */
 
 DyntreeModel *dyntree_model_new (void);

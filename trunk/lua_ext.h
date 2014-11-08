@@ -37,6 +37,11 @@ void luax_release(void);
 
 char *luax_escape_string(const char *src);
 
+enum {
+    LUAX_INIT_WITHOUT_UI=0,
+    LUAX_INIT_WITH_UI=1
+};
+
 /*****/
 
 gboolean luax_config_table_save(void);

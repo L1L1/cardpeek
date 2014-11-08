@@ -1,21 +1,21 @@
+#include "ui.h"
 #include "config.h"
 #include "misc.h"
 #include "a_string.h"
 #include "http_download.h"
-#include "gui_inprogress.h"
 #include <curl/curl.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 static int progress_download(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-    GtkWidget *progress = (GtkWidget *)clientp;
     UNUSED(ultotal);
     UNUSED(ulnow);
 
     if (dltotal==0)
-        return !gui_inprogress_pulse(progress);
-    return !gui_inprogress_set_fraction(progress,dlnow/dltotal);
+        return !ui_inprogress_pulse(clientp);
+    return !ui_inprogress_set_fraction(clientp,dlnow/dltotal);
 }
 
 
@@ -23,7 +23,7 @@ int http_download(const char *src_url, const char *dst_filename)
 {
     CURL *curl;
     CURLcode res;
-    GtkWidget *progress;  
+    void *progress;  
     a_string_t *user_agent;
     a_string_t *progress_title;
     FILE *temp_fd;
@@ -39,7 +39,7 @@ int http_download(const char *src_url, const char *dst_filename)
     user_agent = a_strnew(NULL);     
     a_sprintf(user_agent,"cardpeek/%s",VERSION);
 
-    progress = gui_inprogress_new(a_strval(progress_title),"Please wait...");
+    progress = ui_inprogress_new(a_strval(progress_title),"Please wait...");
     
     temp_fd = fopen(dst_filename,"wb");
 
@@ -63,7 +63,7 @@ int http_download(const char *src_url, const char *dst_filename)
 
     curl_easy_cleanup(curl);
 
-    gui_inprogress_free(progress);
+    ui_inprogress_free(progress);
 
     a_strfree(user_agent);
     a_strfree(progress_title);

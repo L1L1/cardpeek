@@ -85,8 +85,7 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
  * CARDREADER
  */
 
-#include "gui.h"
-#include "gui_inprogress.h"
+#include "ui.h"
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
 #include "drivers/replay_driver.c"

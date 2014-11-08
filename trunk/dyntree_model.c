@@ -8,6 +8,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+DyntreeModel *CARD_DATA_STORE = NULL;
+
 /*
  * NOTE: Integration of the data model in GTK+ is based on the GtkTreeView
  * tutorial by Tim-Philipp Müller (thanks!).
@@ -530,20 +532,19 @@ static gboolean dyntree_model_iter_parent (GtkTreeModel *tree_model,
 *****************************************************************************/
 DyntreeModel *dyntree_model_new (void)
 {
-    DyntreeModel *newctm;
-    newctm = (DyntreeModel *) g_object_new (DYNTREE_MODEL_TYPE, NULL);
-    g_assert( newctm != NULL );
+    CARD_DATA_STORE = (DyntreeModel *) g_object_new (DYNTREE_MODEL_TYPE, NULL);
+    g_assert( CARD_DATA_STORE != NULL );
 
-    dyntree_model_column_register(newctm,"classname");
-    dyntree_model_column_register(newctm,"label");
-    dyntree_model_column_register(newctm,"id");
-    dyntree_model_column_register(newctm,"size");
-    dyntree_model_column_register(newctm,"val");
-    dyntree_model_column_register(newctm,"alt");
-    dyntree_model_column_register(newctm,"mime-type");
-    g_assert(newctm->n_columns == CC_INITIAL_COUNT);
+    dyntree_model_column_register(CARD_DATA_STORE,"classname");
+    dyntree_model_column_register(CARD_DATA_STORE,"label");
+    dyntree_model_column_register(CARD_DATA_STORE,"id");
+    dyntree_model_column_register(CARD_DATA_STORE,"size");
+    dyntree_model_column_register(CARD_DATA_STORE,"val");
+    dyntree_model_column_register(CARD_DATA_STORE,"alt");
+    dyntree_model_column_register(CARD_DATA_STORE,"mime-type");
+    g_assert(CARD_DATA_STORE->n_columns == CC_INITIAL_COUNT);
 
-    return newctm;
+    return CARD_DATA_STORE;
 }
 
 /*****************************************************************************

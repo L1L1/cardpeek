@@ -136,7 +136,7 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
     SCARD_READERSTATE reader_state;
     pcsc_data_t* pcsc = cr->extra_data;
     int counter = 0;
-    GtkWidget *progress;
+    void *progress;
 
     memset(&reader_state,0,sizeof(reader_state));
     reader_state.szReader = cr->name+7;
@@ -151,7 +151,7 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
         return 0;
     }
 
-    progress = gui_inprogress_new("Connection","Waiting for the reader to connect to a card.");
+    progress = ui_inprogress_new("Connection","Waiting for the reader to connect to a card.");
     while ((reader_state.dwEventState & SCARD_STATE_PRESENT)==0)
     {
         reader_state.dwCurrentState = reader_state.dwEventState;
@@ -161,10 +161,10 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
                     pcsc_stringify_state(reader_state.dwEventState));
         }
 
-        if (!gui_inprogress_pulse(progress))
+        if (!ui_inprogress_pulse(progress))
         {
             log_printf(LOG_ERROR,"Connection aborted by user");
-            gui_inprogress_free(progress);
+            ui_inprogress_free(progress);
             pcsc->status = 0x6FFF;
             return 0;	    
         }
@@ -179,7 +179,7 @@ static int pcsc_connect(cardreader_t *cr, unsigned prefered_protocol)
             return 0;
         }
     }
-    gui_inprogress_free(progress);
+    ui_inprogress_free(progress);
 
     log_printf(LOG_DEBUG,"Attempting to connect to '%s'",cr->name);
     pcsc->status = SCardConnect(pcsc->hcontext,

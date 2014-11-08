@@ -30,6 +30,16 @@
 #include <unistd.h>
 #include <glib/gstdio.h>
 
+#ifdef _WIN32
+const char ANSI_RESET[] = "";
+const char ANSI_RED[]     = "";
+const char ANSI_GREEN[]   = "";
+const char ANSI_YELLOW[]  = "";
+const char ANSI_BLUE[]    = "";
+const char ANSI_MAGENTA[] = "";
+const char ANSI_CYAN[]    = "";
+const char ANSI_WHITE[]   = "";
+#else
 const char ANSI_RESET[] = "\x1b[0m";
 const char ANSI_RED[]     = "\x1b[31m";
 const char ANSI_GREEN[]   = "\x1b[32m";
@@ -38,6 +48,7 @@ const char ANSI_BLUE[]    = "\x1b[34m";
 const char ANSI_MAGENTA[] = "\x1b[35m";
 const char ANSI_CYAN[]    = "\x1b[36m";
 const char ANSI_WHITE[]   = "\x1b[37m";
+#endif
 
 const char *filename_extension(const char *fname)
 {

@@ -11,7 +11,7 @@
 #include "cardpeek_public_key.h"
 #include "pathconfig.h"
 #include "lua_ext.h"
-#include "gui.h"
+#include "ui.h"
 #include "http_download.h"
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -563,9 +563,9 @@ int cardpeek_update_check(void)
         return 0;
     }
 
-    switch (gui_question("Cardpeek is configured to check for script updates periodically.\n"
-                         "Do you whish to perform this check now?",
-                         "Yes","No, ask me again later","No, always use the local copy",NULL))
+    switch (ui_question("Cardpeek is configured to check for script updates periodically.\n"
+                        "Do you whish to perform this check now?",
+                        "Yes","No, ask me again later","No, always use the local copy",NULL))
     {
         case 0:
             retval = 1;

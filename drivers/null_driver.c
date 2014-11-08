@@ -60,7 +60,7 @@ static int null_fail(cardreader_t* cr)
 
 static void null_finalize(cardreader_t* cr)
 {
-  null_error(cr);
+  /* null_error(cr); */
 }
 
 static int null_initialize(cardreader_t *reader)

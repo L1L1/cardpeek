@@ -147,7 +147,7 @@ void luax_run_script(const char* scriptname)
     if (chdir(path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS))==-1)
     {
         log_printf(LOG_ERROR,"Could not change director to '%s'",path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS));
-        return;       
+        return;
     }
     log_printf(LOG_INFO,"Running script %s (please wait)",scriptname);
     run_file(LUA_STATE,scriptname);
@@ -160,7 +160,7 @@ void luax_run_command(const char* command)
     if (chdir(path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS))==-1)
     {
         log_printf(LOG_ERROR,"Could not change director to '%s'",path_config_get_string(PATH_CONFIG_FOLDER_SCRIPTS));
-        return; 
+        return;
     }
 
     log_printf(LOG_DEBUG,"Executing '%s'",command);
@@ -175,7 +175,7 @@ void luax_run_command(const char* command)
 }
 
 
-int luax_init(void)
+int luax_init()
 {
     GStatBuf st;
     const char *config_lua;
@@ -188,10 +188,10 @@ int luax_init(void)
     luaopen_bit(LUA_STATE);
     luaopen_card(LUA_STATE);
     luaopen_log(LUA_STATE);
-    luaopen_ui(LUA_STATE);
     luaopen_crypto(LUA_STATE);
     luaopen_nodes(LUA_STATE);
     luaopen_iconv(LUA_STATE);
+    luaopen_ui(LUA_STATE);
 
     lua_newtable(LUA_STATE);
     lua_setglobal(LUA_STATE,"cardpeek");
@@ -326,11 +326,11 @@ static void internal_save_table(FILE *cf, int depth)
                 for (i=0; i<depth; i++) fprintf(cf,"  ");
                 fprintf(cf,"},\n");
                 break;
-                /*   case LUA_TFUNCTION:
-                     case LUA_TUSERDATA:
-                     case LUA_TTHREAD:
-                     case LUA_TLIGHTUSERDATA:
-                     case LUA_TNIL: */
+            /*   case LUA_TFUNCTION:
+                 case LUA_TUSERDATA:
+                 case LUA_TTHREAD:
+                 case LUA_TLIGHTUSERDATA:
+                 case LUA_TNIL: */
             default:
                 fprintf(cf,"nil, -- %s is not a serializable format.\n",
                         lua_typename(LUA_STATE,lua_type(LUA_STATE,-1)));

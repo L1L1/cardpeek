@@ -19,10 +19,7 @@
 *
 */
 
-#ifdef _WIN32
-#define _WIN32_WINNT 0x0501
-#include <windows.h>
-#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -323,13 +320,36 @@ static void display_help(char *progname)
             progname,cardpeek_help);
 }
 
+#ifdef _WIN32
+#define _WIN32_WINNT 0x0501
+#include <windows.h>
+void init_console(int detach)
+{
+   /* Enable console output when run from CLI */
+    if (!detach)
+    	AttachConsole(ATTACH_PARENT_PROCESS);
+    else
+    	AllocConsole();
+    
+    freopen("CONIN$", "r",stdin);
+    freopen("CONOUT$","w",stdout);
+    freopen("CONOUT$","w",stderr);
+}
+#else
+void init_console(int detach)
+{
+	/* void */
+}
+#endif
+
 static struct option long_options[] =
 {
     {"reader",  	required_argument, 0,  'r' },
     {"exec",    	required_argument, 0,  'e' },
     {"version", 	no_argument, 	   0,  'v' },
     {"help", 		no_argument, 	   0,  'h' },
-    {"console",     no_argument,       0,  'c' },
+    {"console",         no_argument,       0,  'c' },
+    {"detach",		no_argument,	   0,  'D' },
     {0,        	 	0,                 0,   0 }
 };
 
@@ -342,22 +362,19 @@ int main(int argc, char **argv)
     char* reader_name = NULL;
     char* exec_command = NULL;
     ui_driver_t *ui_driver = ui_driver_for_gtk();
+    int detach = 0;
+   
 
-#ifdef _WIN32
-    /* Enable console output when run from CLI */
-    AttachConsole((DWORD)-1);
-    freopen("CONOUT$","w",stdout);
-    freopen("CONERR$","w",stderr);
-    freopen("CONIN$", "r",stdin);
+#if !GLIB_CHECK_VERSION(2,36,0)
+    g_type_init();
 #endif
 
 #ifndef _WIN32
     SSL_load_error_strings();
 #endif
-
     path_config_init();
-
-    while ((opt = getopt_long(argc,argv,"r:e:vhc",long_options,&opt_index))!=-1)
+    
+    while ((opt = getopt_long(argc,argv,"r:e:vhcD",long_options,&opt_index))!=-1)
     {
         switch (opt)
         {
@@ -368,6 +385,7 @@ int main(int argc, char **argv)
                 exec_command = optarg;
                 break;
             case 'v':
+		init_console(detach);
                 display_readers_and_version();
                 path_config_release();
                 exit(0);
@@ -375,17 +393,22 @@ int main(int argc, char **argv)
             case 'c':
                 ui_driver = ui_driver_for_console();
                 break;
+	    case 'D':
+		detach =1 ;
+		break;
             default:
+		init_console(detach);
                 display_help(argv[0]);
                 path_config_release();
                 exit(1);
         }
     }
 
+    init_console(detach);
+
     signal(SIGSEGV, save_what_can_be_saved);
 
     log_open_file();
-
 
     ui_initialize(ui_driver,&argc,&argv);
 

@@ -19,10 +19,8 @@
 *
 */
 #include <lauxlib.h>
-//#include "lua_card.h"
 #include "smartcard.h"
 #include "lua_bytes.h"
-//#include <stdlib.h>
 #include "iso7816.h"
 #include "misc.h"
 #include "lua_ext.h"

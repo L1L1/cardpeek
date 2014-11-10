@@ -42,10 +42,10 @@ static const struct luaL_Reg loglib [] = {
 int luaopen_log(lua_State* L)
 {
   luaL_newlib(L,loglib);
-  lua_pushstring(L,"GOOD");    lua_pushinteger(L, 0); lua_settable(L,-3);
-  lua_pushstring(L,"INFO");    lua_pushinteger(L, 1); lua_settable(L,-3);
-  lua_pushstring(L,"WARNING"); lua_pushinteger(L, 2); lua_settable(L,-3);
-  lua_pushstring(L,"ERROR");   lua_pushinteger(L, 3); lua_settable(L,-3);
+  lua_pushstring(L,"DEBUG");   lua_pushinteger(L, LOG_DEBUG); lua_settable(L,-3);
+  lua_pushstring(L,"INFO");    lua_pushinteger(L, LOG_INFO); lua_settable(L,-3);
+  lua_pushstring(L,"WARNING"); lua_pushinteger(L, LOG_WARNING); lua_settable(L,-3);
+  lua_pushstring(L,"ERROR");   lua_pushinteger(L, LOG_ERROR); lua_settable(L,-3);
   lua_setglobal(L, "log");
 
   return 1;

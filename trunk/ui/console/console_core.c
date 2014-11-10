@@ -44,6 +44,7 @@
 #else /* !defined(HAVE_READLINE_READLINE_H) */
 #error "Missing readline library"
 #endif /* HAVE_LIBREADLINE */
+
 #ifdef HAVE_READLINE_HISTORY
 #  if defined(HAVE_READLINE_HISTORY_H)
 #    include <readline/history.h>

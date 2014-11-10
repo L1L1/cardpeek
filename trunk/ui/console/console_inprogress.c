@@ -44,7 +44,7 @@ void *console_inprogress_new(const char *title, const char *message)
 unsigned console_inprogress_pulse(void *pulser)
 {
     inprogress_t *prog = (inprogress_t *)pulser;
-    printf("\r%s: %c",prog->message,ascii_pulse[prog->pulse%4]);
+    printf("%s: %c\r",prog->message,ascii_pulse[prog->pulse%4]);
     prog->pulse++;
     return 1;
 }
@@ -52,7 +52,7 @@ unsigned console_inprogress_pulse(void *pulser)
 unsigned console_inprogress_set_fraction(void *pulser, double level)
 {
     inprogress_t *prog = (inprogress_t *)pulser;
-    printf("\r%s: %3i",prog->message,(int)(level*100));
+    printf("%s: %3i\r",prog->message,(int)(level*100));
     return 1;    
 }
 

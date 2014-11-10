@@ -1,13 +1,15 @@
 CC = gcc 
 GLIB_COMPILE_RESOURCES = glib-compile-resources 
 
-OBJECTS = asn1.o bytestring.o gui_flexi_cell_renderer.o dyntree_model.o \
-	  crypto.o  replay.o  gui.o  iso7816.o  lua_nodes.o  lua_asn1.o \
+OBJECTS = asn1.o bytestring.o ui/gtk/gui_flexi_cell_renderer.o dyntree_model.o \
+	  crypto.o  replay.o  ui.o  iso7816.o  lua_nodes.o  lua_asn1.o \
 	  lua_bit.o  lua_bytes.o  lua_card.o  lua_crypto.o  lua_ext.o \
 	  lua_log.o  lua_ui.o  main.o misc.o  pathconfig.o  smartcard.o \
-	  system_info.o  a_string.o  gui_about.o  gui_toolbar.o \
-	  gui_logview.o  gui_cardview.o  gui_readerview.o \
-	  http_download.o gui_scratchpad.o  gui_inprogress.o \
+	  system_info.o  a_string.o  ui/gtk/gui_about.o  ui/gtk/gui_toolbar.o \
+	  ui/gtk/gui_logview.o  ui/gtk/gui_cardview.o  ui/gtk/gui_readerview.o \
+	  http_download.o ui/gtk/gui_scratchpad.o  ui/gtk/gui_inprogress.o \
+	  ui/gtk/gui_core.o ui/console/console_core.o \
+	  ui/console/console_about.o ui/console/console_inprogress.o \
 	  lua_iconv.o win32/win32compat.o win32/resource.o \
 	  cardpeek_resources.o cardpeek_update.o 
 
@@ -16,9 +18,9 @@ ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.
       icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png \
       icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurldll -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv
+LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv -lreadline -lpdcurses
 
-CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -DHAVE_GSTATBUF -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
+CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -I . -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
 
 all:		cardpeek
 

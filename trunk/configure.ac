@@ -27,25 +27,21 @@ PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.6])
 
 case "${host}" in
   *-*-darwin*)
-    PCSC_CFLAGS='-Wno-deprecated-declarations -I/System/Library/Frameworks/PCSC.framework/Headers'
-    PCSC_LIBS='-framework PCSC'
+    PCSC_HEADERS=`ls -d /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/*.sdk/System/Library/Frameworks/PCSC.framework/Versions/Current/Headers/ | sort | head -1`
+    PCSC_CFLAGS="-Wno-deprecated-declarations -I$PCSC_HEADERS"
+    PCSC_LIBS="-framework PCSC"
     ;;
   *)
     PKG_CHECK_MODULES([PCSC],[libpcsclite])
     ;;
 esac
 
+
+
 PKG_CHECK_MODULES([LUA],[lua-5.2],,[
   PKG_CHECK_MODULES([LUA],[lua5.2],,[
     PKG_CHECK_MODULES([LUA],[lua >= 5.2],,[
-      for lua_lib_name in lua.5.2 lua-5.2 lua5.2; do 
-        AC_CHECK_LIB([$lua_lib_name], [lua_close], [HAVE_LIBLUA=yes], [HAVE_LIBLUA=no])
-        if test x$HAVE_LIBLUA = xyes; then
-            AC_SUBST([LUA_CFLAGS], [""])
-            AC_SUBST([LUA_LIBS], ["-l$lua_lib_name"])
-            break
-        fi 
-      done
+      AC_SEARCH_LIBS([lua_close], [lua.5.2 lua-5.2 lua5.2], [HAVE_LIBLUA=yes], [HAVE_LIBLUA=no])
       if test x$HAVE_LIBLUA != xyes; then
             AC_MSG_ERROR([Could not find lua 5.2-dev.
                           This program requires the lua 5.2 development library.
@@ -56,11 +52,7 @@ PKG_CHECK_MODULES([LUA],[lua-5.2],,[
 ])
 
 PKG_CHECK_MODULES([CURL],[libcurl],,[
-    AC_CHECK_LIB([curl],[curl_easy_init],[
-        AC_SUBST([CURL_CFLAGS],[""])
-        AC_SUBST([CURL_LIBS],[-lcurl])
-	HAVE_LIBCURL=yes
-        ],[HAVE_LIBCURL=no])
+    AC_SEARCH_LIBS([curl_easy_init],[curl], [HAVE_LIBCURL=yes], [HAVE_LIBCURL=no])
     if test x$HAVE_LIBCURL != xyes; then
 	AC_MSG_ERROR([Cloud not find libcurl. 
                   This program requires the libcurl development library. 

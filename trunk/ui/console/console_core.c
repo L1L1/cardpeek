@@ -134,7 +134,7 @@ static int console_question_l(const char *message, unsigned item_count, const ch
                 break;
         }    
     }
-    return selection;
+    return selection-1;
 }
 
 static char* console_select_reader(unsigned list_size, const char** list)

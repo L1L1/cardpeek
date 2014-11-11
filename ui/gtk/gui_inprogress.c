@@ -22,6 +22,7 @@
 #include "ui.h"
 #include "gui_inprogress.h"
 #include "misc.h"
+#include "gui_core.h"
 
 /*********************************************************/
 /* LOG FUNCTIONS AND UI CALLBACKS ************************/
@@ -54,7 +55,7 @@ void* gui_inprogress_new(const char *title, const char *message)
    
 
    dialog = gtk_dialog_new_with_buttons (title,
-                                         NULL,
+                                         GTK_WINDOW(MAIN_WINDOW),
                                          GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
                                          "_Cancel",
                                          GTK_RESPONSE_CANCEL,

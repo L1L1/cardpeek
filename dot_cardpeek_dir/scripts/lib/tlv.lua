@@ -223,52 +223,64 @@ TLV_TYPES = {
   "TLV (Private)"
 }
 
+
+function internal_tag_value_parse(cardenv,tlv_tag,tlv_value,reference,parent)
+    local tlv_name
+    local tlv_ui_func
+    local ref
+
+    tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
+	    
+    if tlv_name==nil then
+        tlv_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tlv_tag),6)+1]
+    end--if
+
+    ref = nodes.append(cardenv,{ classname="item",
+                                 label=tostring(tlv_name),
+                                 id=string.format('%X',tlv_tag), 
+                                 size=#tlv_value })
+
+    if (tlv_tag_is_compound(tlv_tag)) then
+        if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
+            nodes.remove(ref)
+            return false
+        end
+        else
+        if tlv_ui_func then
+            tlv_ui_func(ref,tlv_value)
+            else
+            nodes.set_attribute(ref,"val",tlv_value)
+        end--if
+    end--if
+    return ref
+end
+
 function internal_tlv_parse(cardenv,tlv,reference,parent)
     local ref = false
     local tlv_tag
-	local tlv_value
-	local tlv_tail
-    local tlv_name
-	local tlv_ui_func
+    local tlv_value
+    local tlv_tail
 
-	while tlv do
+    while tlv do
         tlv_tag, tlv_value, tlv_tail = asn1.split(tlv)
     
-	    if tlv_tag==nil or tlv_tag==0 then 
-	       ref = nodes.append(cardenv,{ classname="card",
-					                    label="Unparsed ASN1 data",
-					                    val=tlv,
+        if tlv_tag==nil or tlv_tag==0 then 
+           ref = nodes.append(cardenv,{ classname="card",
+                                        label="Unparsed ASN1 data",
+                                        val=tlv,
                                         alt="(error)", 
-					                    size=#tlv })
-	       return ref
-	    end--if
+                                        size=#tlv })
+           return ref
+        end--if
 
-        tlv_name, tlv_ui_func = tlv_tag_info(tlv_tag,reference,parent)
-	    
-	    if tlv_name==nil then
-	       tlv_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tlv_tag),6)+1]
-	    end--if
+        ref = internal_tag_value_parse(cardenv,tlv_tag,tlv_value,reference,parent)
+        if ref==false then
+            return false
+        end
 
-	    ref = nodes.append(cardenv,{ classname="item",
-					                 label=tostring(tlv_name),
-					                 id=string.format('%X',tlv_tag), 
-					                 size=#tlv_value })
-
-        if (tlv_tag_is_compound(tlv_tag)) then
-            if (internal_tlv_parse(ref,tlv_value,reference,tlv_tag)==false) then
-		        nodes.remove(ref)
-                return false
-	        end
-        else
-	        if tlv_ui_func then
-	            tlv_ui_func(ref,tlv_value)
-                else
-                    nodes.set_attribute(ref,"val",tlv_value)
-                end--if
-            end--if
-	    tlv = tlv_tail
+        tlv = tlv_tail
     end--while
-	return ref
+    return ref
 end
 
 function tlv_parse(cardenv,tlv,reference)
@@ -276,5 +288,12 @@ function tlv_parse(cardenv,tlv,reference)
         reference = {}
 	end
 	return internal_tlv_parse(cardenv,tlv,reference,0)
+end
+
+function tag_value_parse(cardenv,tlv_tag,tlv_value,reference)
+	if reference == nil then
+        reference = {}
+	end
+	return internal_tag_value_parse(cardenv,tlv_tag,tlv_value,reference,0)
 end
 

@@ -7,6 +7,7 @@ Kind contributors:
 - Stephane Dorte: Helped by providing some tachograph card CLF dumps and logs.
 - Patrick Gueulle: Suggested an extended list of file IDs for Calypso and corrections for GPO handling in EMV cards.
 - Andreas Heiduk: Author of the OpenPGP script.
+- Andrew R. Kozlik: Many enhancements to parsing capabilities of the EMV script, added AIDs, added GPO format 1.
 - Ludovic Lange: Initial patch for Mac OS X version.
 - Adam Laurie: CVM parsing in EMV.
 - Kalev Lember: Bug and compatibility fixes.

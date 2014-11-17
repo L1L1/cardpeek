@@ -3,5 +3,5 @@
 
 
 -- The next line is needed for card commands.
-dofile("scripts/lib/apdu.lua")
+require("scripts.lib.apdu")
 dofile("scripts/lib/compatibility-with-0.7.lua")

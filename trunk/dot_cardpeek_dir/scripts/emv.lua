@@ -26,7 +26,8 @@
 -- Mar 27 2011: Added CVM patch from Adam Laurie.
 -- Jan 23 2012: Added UK Post Office Card Account in AID list from Tyson Key.
 -- Mar 25 2012: Added a few AIDs
--- @update: Feb 21 2014: Better NFC compatibility by using current date in GPO.
+-- Feb 21 2014: Better NFC compatibility by using current date in GPO.
+-- @update: Nov 16 2014: Many improvements from Andrew Kozlic (Many new AIDs, parses AIP, GPO Format 1, AFLs, and more.)
 
 require('lib.tlv')
 require('lib.strict')
@@ -166,6 +167,124 @@ function ui_parse_CVM(node,data)
 	return true
 end
 
+
+function ui_parse_bits(node,data,reference,data_label)
+    local i
+    local j
+    local meaning
+    
+    nodes.set_attribute(node,"val",data)
+    for i = 1,#data do
+        for j = 8,1,-1 do
+            if bit32.extract(data[i-1], j-1) ~= 0 then
+    	        if reference[i][j] == nil then
+                    meaning = "Unknown"
+    	        else
+                    meaning = reference[i][j]
+                end
+                nodes.append(node,{ classname="item",
+                                                  label=data_label,
+                                                  id=string.format("%d.%d",i,j),
+                                                  val=meaning })
+    	    end
+        end
+    end
+end
+
+function ui_parse_AIP(node,data)
+    ui_parse_bits(node,data,AIP_REFERENCE,"Application Function")
+end
+
+function ui_parse_AUC(node,data)
+    ui_parse_bits(node,data,AUC_REFERENCE,"Application Usage")
+end
+
+function ui_parse_IAC(node,data)
+    ui_parse_bits(node,data,IAC_REFERENCE,"Condition")
+end
+
+function ui_parse_DOL(node,data)
+    local tag
+    local len
+    local tag_name
+    local tag_func
+    local list
+
+    nodes.set_attribute(node, "val", data)
+
+    list = ""
+    while data 
+    do
+        tag, data = asn1.split_tag(data)
+        len, data = asn1.split_length(data)
+        tag_name, tag_func = tlv_tag_info(tag, EMV_REFERENCE, 0);
+        if tag_name == nil then
+            tag_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tag),6)+1];
+        end
+        list = list .. string.format("%s %X [%d]. ", tag_name, tag, len);
+    end
+    nodes.set_attribute(node, "alt", list);
+end
+
+function ui_parse_TL(node,data)
+    local tag
+    local tag_name
+    local tag_func
+    local list
+
+    nodes.set_attribute(node, "val", data)
+
+    list = ""
+    while data 
+    do
+        tag, data = asn1.split_tag(data)
+        tag_name, tag_func = tlv_tag_info(tag, EMV_REFERENCE, 0);
+        if tag_name == nil then
+            tag_name = TLV_TYPES[bit.SHR(tlv_tag_msb(tag),6)+1];
+        end
+        list = list .. string.format("%s %X. ", tag_name, tag);
+    end
+    nodes.set_attribute(node, "alt", list);
+end
+
+function ui_parse_AFL(node,data)
+    local ref
+    local i
+
+    nodes.set_attribute(node, "val", data)
+
+    if #data % 4 ~= 0 then
+	log.print(log.WARNING,"Size of AFL is not a multiple of 4")
+        return
+    end
+
+    for i=0,#data-1,4 do 
+        ref = nodes.append(node,{ classname="item",
+                                  label="Item",
+                                  id=i/4 + 1,
+                                  val=bytes.sub(data,i,i+3),
+                                  size=4 })
+        nodes.append(ref,{ classname="item",
+                           label="Short File Identifier (SFI)",
+                           id='88',
+                           val=bit.SHR(data:get(i),3),
+                           size=1 })
+        nodes.append(ref,{ classname="item",
+                           label="First record",
+                           val=data:get(i+1),
+                           size=1 })
+        nodes.append(ref,{ classname="item",
+                           label="Last record",
+                           val=data:get(i+2),
+                           size=1 })
+        nodes.append(ref,{ classname="item",
+                           label="Number of records involved in offline data authentication",
+                           val=data:get(i+3),
+                           size=1 })
+        
+    end
+end
+
 CVM_REFERENCE_BYTE1 = {
    [0x00] = "Fail CVM processing",
    [0x01] = "Plaintext PIN verification performed by ICC",
@@ -190,45 +309,142 @@ CVM_REFERENCE_BYTE2 = {
    [0x09] = "If transaction is in the application currency and is over Y value"
 }	
 
+AIP_REFERENCE = {
+  [1] = { -- Byte 1
+    [1] = "CDA supported",
+    [3] = "Issuer authentication is supported",
+    [4] = "Terminal risk management is to be performed",
+    [5] = "Cardholder verification is supported",
+    [6] = "DDA supported",
+    [7] = "SDA supported"
+  },
+  [2] = { -- Byte 2
+  }
+}
+
+AUC_REFERENCE = {
+  [1] = { -- Byte 1
+    [1] = "Valid at terminals other than ATMs",
+    [2] = "Valid at ATMs",
+    [3] = "Valid for international services",
+    [4] = "Valid for domestic services",
+    [5] = "Valid for international goods",
+    [6] = "Valid for domestic goods",
+    [7] = "Valid for international cash transactions",
+    [8] = "Valid for domestic cash transactions"
+  },
+  [2] = { -- Byte 2
+    [7] = "International cashback allowed",
+    [8] = "Domestic cashback allowed"
+  }
+}
+
+IAC_REFERENCE = {
+  [1] = { -- Byte 1
+    [3] = "CDA failed",
+    [4] = "DDA failed",
+    [5] = "Card appears on terminal exception file",
+    [6] = "ICC data missing",
+    [7] = "SDA failed",
+    [8] = "Offline data authentication was not performed"
+  },
+  [2] = { -- Byte 2
+    [4] = "New card",
+    [5] = "Requested service not allowed for card product",
+    [6] = "Application not yet effective",
+    [7] = "Expired application",
+    [8] = "ICC and terminal have different application versions"
+  },
+  [3] = { -- Byte 3
+    [3] = "Online PIN entered",
+    [4] = "PIN entry required, PIN pad present, but PIN was not entered",
+    [5] = "PIN entry required and PIN pad not present or not working",
+    [6] = "PIN Try Limit exceeded",
+    [7] = "Unrecognised CVM",
+    [8] = "Cardholder verification was not successful"
+  },
+  [4] = { -- Byte 4
+    [4] = "Merchant forced transaction online",
+    [5] = "Transaction selected randomly for online processing",
+    [6] = "Upper consecutive offline limit exceeded",
+    [7] = "Lower consecutive offline limit exceeded",
+    [8] = "Transaction exceeds floor limit"
+  },
+  [5] = { -- Byte 5
+    [5] = "Script processing failed after final GENERATE AC",
+    [6] = "Script processing failed before final GENERATE AC",
+    [7] = "Issuer authentication failed",
+    [8] = "Default TDOL used"
+  }
+}
+
 EMV_REFERENCE = {
    ['5D'] = {"Directory Definition File (DDF) Name" }, 
+   ['61'] = {"Application Template" },
    ['70'] = {"Application Data File (ADF)" }, 
+   ['71'] = {"Issuer Script Template 1" },
+   ['77'] = {"Response Message Template Format 2" },
    ['80'] = {"Response Message Template Format 1" }, 
-   ['82'] = {"Application Interchange Profile (AIP)" }, 
+   ['82'] = {"Application Interchange Profile (AIP)", ui_parse_AIP }, 
    ['87'] = {"Application Priority Indicator" }, 
    ['88'] = {"Short File Identifier (SFI)" }, 
-   ['8C'] = {"Card Risk Management Data Object List 1 (CDOL1)" }, 
-   ['8D'] = {"Card Risk Management Data Object List 2 (CDOL2)" }, 
+   ['89'] = {"Authorisation Code" },
+   ['8A'] = {"Authorisation Response Code" },
+   ['8C'] = {"Card Risk Management Data Object List 1 (CDOL1)", ui_parse_DOL }, 
+   ['8D'] = {"Card Risk Management Data Object List 2 (CDOL2)", ui_parse_DOL }, 
    ['8E'] = {"Cardholder Verification Method (CVM) List", ui_parse_CVM }, 
    ['8F'] = {"Certificate Authority Public Key Index (PKI)" }, 
    ['90'] = {"Issuer PK Certificate" }, 
    ['91'] = {"Issuer Authentication Data" }, 
    ['92'] = {"Issuer PK Remainder" }, 
    ['93'] = {"Signed Static Application Data" }, 
-   ['94'] = {"Application File Locator (AFL)" },
+   ['94'] = {"Application File Locator (AFL)", ui_parse_AFL },
    ['95'] = {"Terminal Verification Results (TVR)" },
-   ['97'] = {"Transaction Certificate Data Object List (TDOL)" }, 
+   ['97'] = {"Transaction Certificate Data Object List (TDOL)", ui_parse_DOL }, 
+   ['98'] = {"Transaction Certificate (TC) Hash Value" },
+   ['99'] = {"Transaction Personal Identification Number (PIN) Data" },
    ['9A'] = {"Transaction Date", ui_parse_YYMMDD },
+   ['9B'] = {"Transaction Status Information" },
    ['9C'] = {"Transaction Type", ui_parse_transaction_type },
+   ['9D'] = {"Directory Definition File (DDF) Name" },
    ['A5'] = {"FCI Proprietary Template" }, 
+   ['5F36'] = {"Transaction Currency Exponent" },
+   ['5F53'] = {"International Bank Account Number (IBAN)" },
+   ['5F54'] = {"Bank Identifier Code (BIC)" },
+   ['5F55'] = {"Issuer Country Code (alpha2 format)" },
+   ['5F56'] = {"Issuer Country Code (alpha3 format)" },
+   ['9F01'] = {"Acquirer Identifier" },
    ['9F02'] = {"Amount, Authorized" },
    ['9F03'] = {"Amount, Other" },
+   ['9F04'] = {"Amount, Other (Binary)" },
    ['9F05'] = {"Application Discretionary Data" }, 
-   ['9F07'] = {"Application Usage Control" }, 
+   ['9F06'] = {"Application Identifier (AID) - terminal" },
+   ['9F07'] = {"Application Usage Control", ui_parse_AUC }, 
    ['9F08'] = {"Application Version Number" }, 
+   ['9F09'] = {"Application Version Number" },
    ['9F0B'] = {"Cardholder Name - Extended" }, 
-   ['9F0D'] = {"Issuer Action Code - Default" }, 
-   ['9F0E'] = {"Issuer Action Code - Denial" }, 
-   ['9F0F'] = {"Issuer Action Code - Online" }, 
+   ['9F0D'] = {"Issuer Action Code - Default", ui_parse_IAC }, 
+   ['9F0E'] = {"Issuer Action Code - Denial", ui_parse_IAC }, 
+   ['9F0F'] = {"Issuer Action Code - Online", ui_parse_IAC }, 
    ['9F10'] = {"Issuer Application Data" }, 
    ['9F11'] = {"Issuer Code Table Index" }, 
    ['9F12'] = {"Application Preferred Name" }, 
-   ['9F13'] = {"Last Online ATC Register" }, 
+   ['9F13'] = {"Last Online ATC Register", ui_parse_number }, 
    ['9F14'] = {"Lower Consecutive Offline Limit (Terminal Check)" }, 
+   ['9F15'] = {"Merchant Category Code" },
+   ['9F16'] = {"Merchant Identifier" },
    ['9F17'] = {"PIN Try Counter", ui_parse_number }, 
-   ['9F19'] = {"Dynamic Data Authentication Data Object List (DDOL)" }, 
+   ['9F18'] = {"Issuer Script Identifier" },
+   ['9F19'] = {"Dynamic Data Authentication Data Object List (DDOL)", ui_parse_DOL }, 
    ['9F1A'] = {"Terminal Country Code", ui_parse_country_code },
+   ['9F1B'] = {"Terminal Floor Limit" },
+   ['9F1C'] = {"Terminal Identification" },
+   ['9F1D'] = {"Terminal Risk Management Data" },
+   ['9F1E'] = {"Interface Device (IFD) Serial Number" },
    ['9F1F'] = {"Track 1 Discretionary Data", ui_parse_printable }, 
+   ['9F20'] = {"Track 2 Discretionary Data" },
+   ['9F21'] = {"Transaction Time" },
+   ['9F22'] = {"Certification Authority Public Key Index" },
    ['9F23'] = {"Upper Consecutive Offline Limit (Terminal Check)" }, 
    ['9F26'] = {"Application Cryptogram (AC)" }, 
    ['9F27'] = {"Cryptogram Information Data" }, 
@@ -236,21 +452,34 @@ EMV_REFERENCE = {
    ['9F2E'] = {"ICC PIN Encipherment Public Key Exponent" }, 
    ['9F2F'] = {"ICC PIN Encipherment Public Key Remainder" },
    ['9F32'] = {"Issuer PK Exponent" }, 
-   ['9F36'] = {"Application Transaction Counter (ATC)" }, 
+   ['9F33'] = {"Terminal Capabilities" },
+   ['9F34'] = {"Cardholder Verification Method (CVM) Results" },
+   ['9F35'] = {"Terminal Type" },
+   ['9F36'] = {"Application Transaction Counter (ATC)", ui_parse_number }, 
    ['9F37'] = {"Unpredictable number" }, 
-   ['9F38'] = {"Processing Options Data Object List (PDOL)" }, 
-   ['9F42'] = {"Application Currency Code" }, 
+   ['9F38'] = {"Processing Options Data Object List (PDOL)", ui_parse_DOL }, 
+   ['9F39'] = {"Point-of-Service (POS) Entry Mode" },
+   ['9F3A'] = {"Amount, Reference Currency" },
+   ['9F3B'] = {"Application Reference Currency" },
+   ['9F3C'] = {"Transaction Reference Currency Code" },
+   ['9F3D'] = {"Transaction Reference Currency Exponent" },
+   ['9F40'] = {"Additional Terminal Capabilities" },
+   ['9F41'] = {"Transaction Sequence Counter" },
+   ['9F42'] = {"Application Currency Code", ui_parse_currency_code }, 
+   ['9F43'] = {"Application Reference Currency Exponent" },
    ['9F44'] = {"Application Currency Exponent" }, 
    ['9F45'] = {"Data Authentication Code" }, 
    ['9F46'] = {"ICC Public Key Certificate" }, 
    ['9F47'] = {"ICC Public Key Exponent" }, 
    ['9F48'] = {"ICC Public Key Remainder" }, 
-   ['9F4A'] = {"Static Data Authentication Tag List" }, 
+   ['9F49'] = {"Dynamic Data Authentication Data Object List (DDOL)", ui_parse_DOL },
+   ['9F4A'] = {"Static Data Authentication Tag List", ui_parse_TL }, 
    ['9F4B'] = {"Signed Dynamic Application Data" }, 
    ['9F4C'] = {"Integrated Circuit Card (ICC) Dynamic Number" },
    ['9F4D'] = {"Log Entry" },
-   ['9F4F'] = {"Log Fromat" },
-   ['9F51'] = {"Application Currency Code" },
+   ['9F4E'] = {"Merchant Name and Location" },
+   ['9F4F'] = {"Log Format", ui_parse_DOL },
+   ['9F51'] = {"Application Currency Code", ui_parse_currency_code },
    ['9F52'] = {"Card Verification Results (CVR)" }, 
    ['9F53'] = {"Consecutive Transaction Limit (International)" }, 
    ['9F54'] = {"Cumulative Total Transaction Amount Limit" }, 
@@ -265,7 +494,7 @@ EMV_REFERENCE = {
    ['9F73'] = {"Currency Conversion Factor" }, 
    ['9F74'] = {"VLP Issuer Authorization Code" }, 
    ['9F75'] = {"Cumulative Total Transaction Amount Limit - Dual Currency" }, 
-   ['9F76'] = {"Secondary Application Currency Code" }, 
+   ['9F76'] = {"Secondary Application Currency Code", ui_parse_currency_code }, 
    ['9F77'] = {"VLP Funds Limit" }, 
    ['9F78'] = {"VLP Single Transaction Limit" }, 
    ['9F79'] = {"VLP Available Funds" }, 
@@ -284,27 +513,68 @@ PSE  = "#315041592E5359532E4444463031"
 -- http://en.wikipedia.org/wiki/EMV
 
 AID_LIST = { 
-  "#A0000000421010", -- French CB
-  "#A0000000422010", -- French CB
-
-  "#A0000000031010", -- Visa credit or debit
-  "#A0000000032010", -- Visa electron
-  "#A0000000032020", -- V pay
-  "#A0000000032010", -- Visa electron
-  "#A0000000038010", -- Visa Plus
-
-  "#A0000000041010", -- Mastercard credit or debit 
-  "#A0000000042010", -- 
-  "#A0000000043060", -- Mastercard Maestro
-  "#A0000000046000", -- Mastercard Cirrus 
-
-  "#A00000006900",   -- FR Moneo
-  "#A00000002501",   -- American Express
-  "#A0000001850002", -- UK Post Office Card Account card
-  "#A0000001523010", -- Diners club/Discover
-  "#A0000002771010", -- Interac
-  "#A0000003241010", -- Discover
-  "#A0000000651010", -- JCB
+  "#A0000000031010",        -- Visa credit or debit
+  "#A000000003101001",      -- VISA Credit
+  "#A000000003101002",      -- VISA Debit
+  "#A0000000032010",        -- Visa electron
+  "#A0000000032020",        -- V pay
+  "#A0000000033010",        -- VISA Interlink	
+  "#A0000000034010",        -- VISA Specific	
+  "#A0000000035010",        -- VISA Specific	
+  "#A0000000036010",        -- Domestic Visa Cash Stored Value
+  "#A0000000036020",        -- International Visa Cash Stored Value
+  "#A0000000038002",        -- Barclays/HBOS		
+  "#A0000000038010",        -- Visa Plus
+  "#A0000000039010",        -- VISA Loyalty
+  "#A000000003999910",      -- VISA ATM	
+  "#A000000004",            -- US Debit (MC)
+  "#A0000000041010",        -- Mastercard credit or debit 
+  "#A00000000410101213",    -- MasterCard
+  "#A00000000410101215",    -- MasterCard
+  "#A000000004110101213",   -- Mastercard Credit
+  "#A0000000042010",        -- MasterCard Specific
+  "#A0000000043010",        -- MasterCard Specific
+  "#A0000000043060",        -- Mastercard Maestro
+  "#A0000000044010",        -- MasterCard Specific
+  "#A0000000045010",        -- MasterCard Specific
+  "#A0000000046000",        -- Mastercard Cirrus 
+  "#A0000000048002",        -- NatWest or SecureCode Auth
+  "#A0000000049999",        -- Mastercard
+  "#A0000000050001",        -- UK Domestic Maestro - Switch (debit card) Maestro
+  "#A0000000050002",        -- UK Domestic Maestro - Switch (debit card) Solo
+  "#A0000000250000",        -- American Express (Credit/Debit)
+  "#A00000002501",          -- American Express
+  "#A000000025010402",      -- American Express
+  "#A000000025010701",      -- American Express ExpressPay
+  "#A000000025010801",      -- American Express
+  "#A0000000291010",        -- ATM card LINK (UK) ATM network
+  "#A0000000421010",        -- French CB
+  "#A0000000422010",        -- French CB
+  "#A00000006510",          -- JCB
+  "#A0000000651010",        -- JCB
+  "#A00000006900",          -- FR Moneo
+  "#A000000098",            -- US Debit (Visa)
+  "#A0000000980848",        -- Schwab Bank Debit Card
+  "#A0000001211010",        -- Dankort Danish domestic debit card
+  "#A0000001410001",        -- Pagobancomat Italian domestic debit card	
+  "#A000000152",            -- US Debit (Discover)
+  "#A0000001523010",        -- Diners club/Discover
+  "#A0000001544442",        -- Banricompras Debito (Brazil)
+  "#A0000001850002",        -- UK Post Office Card Account card
+  "#A0000002281010",        -- SAMA Saudi Arabia domestic credit/debit card
+  "#A0000002282010",        -- SAMA Saudi Arabia domestic credit/debit card
+  "#A0000002771010",        -- Interac
+  "#A0000003156020",        -- Chipknip
+  "#A0000003241010",        -- Discover
+  "#A0000003591010028001",  -- ZKA Girocard (Germany)
+  "#A0000003710001",        -- InterSwitch Verve Card (Nigeria)
+  "#A0000004540010",        -- Etranzact Genesis Card (Nigeria)
+  "#A0000004540011",        -- Etranzact Genesis Card 2 (Nigeria)
+  "#A0000004766C",          -- Google
+  "#A0000005241010",        -- RuPay (India)
+  "#A000000620",            -- US Debit (DNA)
+  "#D27600002545500100",    -- ZKA Girocard (Germany)
+  "#D5780000021010",        -- BankAxept Norwegian domestic debit card
 }
 
 EXTRA_DATA = { 0x9F36, 0x9F13, 0x9F17, 0x9F4D, 0x9F4F }
@@ -523,10 +793,14 @@ end
 function emv_process_application(cardenv,aid)
 	local sw, resp
 	local ref
+	local ref2
 	local pdol
-	local AFL
+	local AFL = bytes.new(8);
 	local extra
 	local j -- counter
+	local tag_name
+	local tag_func
+	local AIP
 
 	log.print(log.INFO,"Processing application "..aid)
 
@@ -552,8 +826,15 @@ function emv_process_application(cardenv,aid)
 
 	-- INITIATE get processing options, now that we have pdol
 	local GPO
+	local query
 
-        if ui.question("Issue a GET PROCESSING OPTIONS command?",{"Yes","No"})==1 then
+	query = "Issue a GET PROCESSING OPTIONS command?";
+	ref = nodes.find_first(FCI,{id="50"})
+	if (ref) then
+	   query = "Issue a GET PROCESSING OPTIONS command to the "..nodes.get_attribute(ref,"alt"):match( "^%s*(.-)%s*$").." application?"
+	end
+
+        if ui.question(query,{"Yes","No"})==1 then
             -- Get processing options
             log.print(log.INFO,"Attempting GPO")
             sw,resp = card.get_processing_options(pdol)
@@ -571,6 +852,21 @@ function emv_process_application(cardenv,aid)
            else
  	   	GPO = nodes.append(APP,{classname="block",label="processing_options", size=#resp, val=resp})
 		emv_parse(GPO,resp)
+                ref = nodes.find_first(GPO,{id="94"})
+                ref2 = nodes.find_first(GPO,{id="80"})
+		if ref then
+		    AFL = nodes.get_attribute(ref, "val")
+		elseif ref2 then
+		    -- Parse a Format 1 GET PROCESSING OPTIONS response message.
+		    AFL = nodes.get_attribute(ref2, "val")
+		    AIP = bytes.sub(AFL,0,1)
+		    AFL = bytes.sub(AFL,2)
+		    tag_value_parse(ref2, 0x82, AIP, EMV_REFERENCE)
+		    tag_value_parse(ref2, 0x94, AFL, EMV_REFERENCE)
+	        else
+	            log.print(log.WARNING,
+		              "GPO Response message contains neither a Format 1 nor a Format 2 Data Field")
+		end
 	   end
 	end
 
@@ -626,11 +922,36 @@ function emv_process_application(cardenv,aid)
 
 	local sfi_index
 	local rec_index
+	local max_rec_index
 	local SFI
 	local REC
+	local i
+
+	-- Process Application File Locator
+	local AFL_info = {}
+	for i=0,#AFL-1,4 do 
+	    sfi_index=bit.SHR(AFL:get(i),3)
+	    if AFL_info[sfi_index] == nil then
+	       AFL_info[sfi_index] = {['max'] = AFL:get(i+2)}
+	    else
+	       AFL_info[sfi_index]['max'] = math.max(AFL:get(i+2), AFL_info[sfi_index]['max'])
+	    end
+	    for j=AFL:get(i+1),AFL:get(i+2) do
+	        -- Include in offline data authentication.
+	        AFL_info[sfi_index][j] = AFL_info[sfi_index][j] or (j < AFL:get(i+1)+AFL:get(i+3))
+	    end
+	end
+
 	    
         for sfi_index=1,31 do
 		SFI = nil
+		max_rec_index = 5
+		-- Amex has files where records don't start at 1
+		-- The highest starting number I've seen is 4, 
+		-- so don't treat a failure of a lower-than-five record number as "end of records in a file"
+		if AFL_info[sfi_index] then
+		   max_rec_index = math.max(max_rec_index, AFL_info[sfi_index]['max'])
+		end
 
 		if (logformat==nil or LOG:get(0)~=sfi_index) then
 
@@ -640,10 +961,7 @@ function emv_process_application(cardenv,aid)
 		                if sw ~= 0x9000 then
 	                                  log.print(log.WARNING,string.format("Read record failed for SFI %i, record %i",sfi_index,rec_index))
 
-                                    -- Amex has files where records don't start at 1
-                                    -- The highest starting number I've seen is 4, 
-                                    -- so don't treat a failure of a lower-than-five record number as "end of records in a file"
-                                    if rec_index > 5 then
+                                    if rec_index > max_rec_index then
 					    break
 				    end
 			        else
@@ -651,6 +969,9 @@ function emv_process_application(cardenv,aid)
 	   		    		    SFI = nodes.append(APP,{classname="file", label="file",	id=sfi_index})
 				    end
 			            REC = nodes.append(SFI,{classname="record", label="record", id=rec_index})
+				    if (AFL_info[sfi_index] ~= nil) and (AFL_info[sfi_index][rec_index] == true) then
+					    nodes.append(REC,{classname="item", label="AFL Information", val="This record is to be included in offline data authentication"})
+				    end
 			            if (emv_parse(REC,resp)==false) then
 					    nodes.set_attribute(REC,"val",resp)
 					    nodes.set_attribute(REC,"size",#resp)
@@ -674,29 +995,83 @@ function emv_process_application(cardenv,aid)
 	return true
 end
 
+DAYCOUNT_DATA =
+{
+  [0] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},
+  [1] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}
+}
+
+function yearday_to_day_and_month(yday, leap)
+-- yday = 1, ..., 366 (day of year)
+-- leap = 0 (non-leap year) or 1 (leap year)
+    if (yday < 1) or (yday - leap > 365) then
+        return nil, nil;
+    end
+
+    local month
+    month = math.floor(yday/30)
+    if yday > DAYCOUNT_DATA[leap][month + 1] then
+        month = month + 1
+    end
+    return yday - DAYCOUNT_DATA[leap][month], month
+end
+
+function ui_parse_cplc_date(node,data)
+    local date = tostring(data)
+    local day
+    local month
+    local year
+    local yday
+
+    if string.len(date) ~= 4 then
+        return
+    end
+
+    year = 0 + string.sub(date, 1, 1)
+    yday = 0 + string.sub(date, 2, 4)
+
+    if yday == 366 then
+        date = "???" .. year .. "-12-31"
+	nodes.set_attribute(node, "alt", date)
+	return
+    end
+
+    day, month = yearday_to_day_and_month(yday, 0)
+    if day == nil then
+        return
+    end
+
+    date = string.format("???%d-%02d-%02d", year, month, day)
+
+    if (year % 2 == 0) and (yday >= 60) then
+        day, month = yearday_to_day_and_month(yday, 1)
+        date = date .. string.format(" or ???%d-%02d-%02d", year, month, day)
+    end
+
+    nodes.set_attribute(node, "alt", date)
+end
 
 CPLC_DATA =
 {
-  { "IC Fabricator", 2, 0 } ,
-  { "IC Type", 2, 0 },
+  { "IC Fabricator", 2 } ,
+  { "IC Type", 2 },
   { "Operating System Provider Identifier", 2 },
-  { "Operating System Release Date", 2 },
+  { "Operating System Release Date", 2, ui_parse_cplc_date },
   { "Operating System Release Level", 2 },
-  { "IC Fabrication Date", 2 },
+  { "IC Fabrication Date", 2, ui_parse_cplc_date },
   { "IC Serial Number", 4 },
   { "IC Batch Identifier", 2 },
   { "IC ModuleFabricator", 2 },
-  { "IC ModulePackaging Date", 2 },
+  { "IC ModulePackaging Date", 2, ui_parse_cplc_date },
   { "ICC Manufacturer", 2 },
-  { "IC Embedding Date", 2 },
+  { "IC Embedding Date", 2, ui_parse_cplc_date },
   { "Prepersonalizer Identifier", 2 },
-  { "Prepersonalization Date", 2 },
+  { "Prepersonalization Date", 2, ui_parse_cplc_date },
   { "Prepersonalization Equipment", 4 },
   { "Personalizer Identifier", 2 },
-  { "Personalization Date", 2 },
+  { "Personalization Date", 2, ui_parse_cplc_date },
   { "Personalization Equipment", 4 },
 }
-
 
 function emv_process_cplc(cardenv)
 	local sw, resp
@@ -706,6 +1081,8 @@ function emv_process_cplc(cardenv)
 	local i
 	local pos
 	local ref2
+	local tlv_value
+	local tlv_ui_func
 
 	log.print(log.INFO,"Processing CPLC data")
 	sw,resp = card.get_data(0x9F7F)
@@ -716,7 +1093,12 @@ function emv_process_cplc(cardenv)
 	   pos = 0
 	   for i=1,#CPLC_DATA do
 	       ref2 = nodes.append(CPLC,{classname="item", label=CPLC_DATA[i][1], id=pos});
-	       nodes.set_attribute(ref2,"val",bytes.sub(cplc_data,pos,pos+CPLC_DATA[i][2]-1))
+	       tlv_value = bytes.sub(cplc_data,pos,pos+CPLC_DATA[i][2]-1)
+               nodes.set_attribute(ref2,"val",tlv_value)
+	       tlv_ui_func = CPLC_DATA[i][3]
+	       if tlv_ui_func then
+	           tlv_ui_func(ref2,tlv_value)
+               end
 	       pos = pos + CPLC_DATA[i][2]
 	   end
 	end

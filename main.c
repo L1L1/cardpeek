@@ -338,6 +338,8 @@ void init_console(int detach)
 #else
 void init_console(int detach)
 {
+    if (detach)
+        log_printf(LOG_WARNING,"The detach option is not implemented on this platform."); 
 	/* void */
 }
 #endif

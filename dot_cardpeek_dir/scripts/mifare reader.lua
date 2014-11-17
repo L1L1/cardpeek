@@ -105,7 +105,7 @@ function MIFARE_first_sector(init,data)
 	init:append{ classname="item",
 		     label="UID",
 		     size=#UID,
-		     vale=UID }
+		     val=UID }
 
 	init:append{ classname="item",
 		     label="Check byte",
@@ -115,7 +115,7 @@ function MIFARE_first_sector(init,data)
 	init:append{ classname="item",
 		     label="Manufacturer data",
 		     size=#manu, 
-		     vale=manu }
+		     val=manu }
 	
 end
 

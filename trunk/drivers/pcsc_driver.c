@@ -232,10 +232,20 @@ static int pcsc_reset(cardreader_t *cr)
     pcsc_data_t* pcsc = cr->extra_data;
 
     pcsc->status = SCardReconnect(pcsc->hcard,
-                                  SCARD_SHARE_EXCLUSIVE,
+                                  SCARD_SHARE_SHARED, 
+                                  /* SCARD_SHARE_EXCLUSIVE, */
                                   cr->protocol,
                                   SCARD_RESET_CARD,
                                   &(cr->protocol));
+
+#ifdef __APPLE__
+    pcsc->status = SCardReconnect(pcsc->hcard,
+                                  SCARD_SHARE_SHARED,
+                                  /* SCARD_SHARE_EXCLUSIVE, */
+                                  cr->protocol,
+                                  SCARD_LEAVE_CARD,
+                                  &(cr->protocol));
+#endif
 
     if (pcsc->status==SCARD_S_SUCCESS)
     {

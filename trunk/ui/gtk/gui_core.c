@@ -583,18 +583,34 @@ static int gui_create(void)
     GtkWidget *label;
     GtkAccelGroup *accel_group;
 
-    /* gui_widget_table_init(); */
-
-    /* Build icon sets */
-
-    gui_load_icons();
-
     /* main window start */
 
     MAIN_WINDOW = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(MAIN_WINDOW),600,400);
     gtk_container_set_border_width (GTK_CONTAINER (MAIN_WINDOW), 0);
     g_signal_connect (MAIN_WINDOW, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    /* Check if those bloody GTK icons are there */
+
+    if (gtk_icon_theme_has_icon(gtk_icon_theme_get_default(), "image-missing")==FALSE)
+    {
+        GtkWidget *dialog;
+
+        dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(MAIN_WINDOW),
+                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+                                 GTK_MESSAGE_ERROR,
+                                 GTK_BUTTONS_CLOSE,
+                                 "<b>It seems that the default GTK+ 3 icons are not correctly installed on your system.</b>\n\n"
+                                 "This will cause problems in the Cardpeek user interface.\n\n"
+                                 "Suggestion: Check that the <tt>gnome-icon-theme</tt> is installed on your system and that the icon cache is up-to-date.");
+        
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+    }
+
+    /* Build icon sets */
+
+    gui_load_icons();
 
     /* log frame */
 

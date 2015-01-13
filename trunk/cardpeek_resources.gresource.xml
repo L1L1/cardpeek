@@ -14,6 +14,7 @@
     <file preprocess="to-pixdata">icons/cardpeek-atr.png</file>
     <file preprocess="to-pixdata">icons/cardpeek-header.png</file>
     <file preprocess="to-pixdata">icons/cardpeek-body.png</file>
+    <file preprocess="to-pixdata">icons/image-missing.png</file>
     <file>AUTHORS</file>
   </gresource>
 </gresources>

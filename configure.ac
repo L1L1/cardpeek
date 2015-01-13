@@ -27,6 +27,11 @@ PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.6])
 
 case "${host}" in
   *-*-darwin*)
+    if test ! -e "/Applications/Xcode.app/"; then
+        AC_MSG_ERROR([Could not find /Applications/Xcode.app/.
+        This program requires the PCSC framework that is distributed with XCode on OS X.
+        Please install XCode first.])
+    fi
     PCSC_HEADERS=`ls -d /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/*.sdk/System/Library/Frameworks/PCSC.framework/Versions/Current/Headers/ | sort | head -1`
     PCSC_CFLAGS="-Wno-deprecated-declarations -I$PCSC_HEADERS"
     PCSC_LIBS="-framework PCSC"

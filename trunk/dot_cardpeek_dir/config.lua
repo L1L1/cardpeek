@@ -7,12 +7,6 @@
 -- cardpeek.
 -- 
 cardpeek = {
-  ['updates'] = {
-    ['first_update'] = 1408049340,
-    ['auto_update'] = true,
-    ['next_update'] = 1416301647,
-    ['url'] = "http://downloads.pannetrat.com/updates/cardpeek.update",
-  },
 }
 
 dofile('scripts/lib/apdu.lua')

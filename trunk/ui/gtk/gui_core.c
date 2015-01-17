@@ -221,12 +221,14 @@ static char **gui_select_file(const char *title,
 
 static void gui_update()
 {
+    /*
     static unsigned ref=0;
     unsigned now = time(NULL);
 
     if (now-ref<1)
         return;
     ref = now;
+    */
     while (gtk_events_pending ())
         gtk_main_iteration ();
 }

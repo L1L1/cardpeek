@@ -20,6 +20,17 @@
 */
 #include "system_info.h"
 
+/* this hash function is used by SDBM. */
+static unsigned int simple_hash(const char *str)
+{
+    unsigned int hash = 0;
+    int c;
+
+    while ((c = *str++)!=0)
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    return hash;
+}
+
 #ifndef _WIN32
 #include <string.h>
 #include <stdio.h>
@@ -31,7 +42,7 @@ const char *system_string_info(void)
     static char info[128];
     static struct utsname u;
     
-    if ( uname( &u ) < 0 )    
+    if (uname(&u)<0)    
     {       
         return "Unknown OS";      
     }
@@ -40,6 +51,15 @@ const char *system_string_info(void)
     return info;
 }
 
+unsigned int system_name_hash(void)
+{
+    static struct utsname u;
+    if (uname(&u)<0)
+    {
+        return 0;
+    }
+    return simple_hash(u.nodename);
+}
 
 #else
 
@@ -89,6 +109,15 @@ const char *system_string_info(void)
 	};
 	return info;
 }
+
+unsigned int system_name_hash() 
+{
+    static char computer_name[1024]; 
+    DWORD size = 1024;     
+    GetComputerName(computer_name,&size);           
+    return simple_hash(computerName);   
+}
+
 
 #endif
 

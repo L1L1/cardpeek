@@ -15,6 +15,7 @@
 #include "http_download.h"
 #include <glib.h>
 #include <glib/gstdio.h>
+#include "system_info.h"
 #include "cardpeek_update.h"
 #include "win32/config.h"
 
@@ -280,20 +281,7 @@ static update_t *update_new()
 {
     return g_new0(update_t,1);
 }
-/*
-static void update_item_dump(update_item_t *item, FILE *out)
-{
-    char *digest =  bytestring_to_format("%D",&item->digest);
- 
-    fprintf(out,"* Update:\n");
-    fprintf(out,"   - file: %s\n",item->file);
-    fprintf(out,"   - url: %s\n",item->url);
-    fprintf(out,"   - required_version: %s\n",item->required_version);
-    fprintf(out,"   - digest: %s\n",digest); 
-    fprintf(out,"   - message: %s\n",item->message); 
-    free(digest);
-}
-*/
+
 static void update_clear(update_t *update)
 {
     update_item_t *item = update->items;
@@ -314,19 +302,7 @@ static void update_free(update_t *update)
     update_clear(update);
     g_free(update);
 }
-/*
-static void update_dump(update_t *update, FILE* out)
-{
-    update_item_t *item = update->items;
 
-    fprintf(out,"Update version %s\n",update->update_version);
-    while (item)
-    {
-        update_item_dump(item,out);
-        item = item->next;
-    }
-}
-*/
 static int update_load(update_t *update, const char *data, unsigned data_len)
 {
     char *ptr = (char *)data;
@@ -611,7 +587,7 @@ int cardpeek_update_perform(void)
     log_printf(LOG_INFO,"Fetching '%s'",url);
 
     url_request = a_strnew(NULL);
-    a_sprintf(url_request,"%s?u=%x&v=%s",url,first_update,VERSION);
+    a_sprintf(url_request,"%s?u=%x-%x&v=%s",url,first_update,system_name_hash(),VERSION);
 
     if (http_download(a_strval(url_request),cardpeek_update_file)==0)
     {

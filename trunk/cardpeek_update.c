@@ -587,7 +587,7 @@ int cardpeek_update_perform(void)
     log_printf(LOG_INFO,"Fetching '%s'",url);
 
     url_request = a_strnew(NULL);
-    a_sprintf(url_request,"%s?u=%x-%x&v=%s",url,first_update,system_name_hash(),VERSION);
+    a_sprintf(url_request,"%s?u=%x%x&v=%s&s=%s",url,first_update,system_name_hash(),VERSION,system_type());
 
     if (http_download(a_strval(url_request),cardpeek_update_file)==0)
     {

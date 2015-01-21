@@ -418,7 +418,9 @@ int main(int argc, char **argv)
 
     luax_init();
 
+#ifndef _WIN32
     install_dot_file();
+#endif
 
     if (reader_name == NULL)
     {

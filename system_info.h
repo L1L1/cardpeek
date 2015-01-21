@@ -20,6 +20,8 @@
 */
 #ifndef SYSTEM_INFO_H
 
+const char *system_type(void);
+
 const char *system_string_info(void);
 
 unsigned int system_name_hash(void);

@@ -37,6 +37,20 @@ static unsigned int simple_hash(const char *str)
 #include "config.h"
 #include <sys/utsname.h>
 
+const char *system_type(void)
+{
+    static char info[32];
+    static struct utsname u;
+    
+    if (uname(&u)<0)    
+    {       
+        return "Unknown";      
+    }
+    snprintf(info,32,"%s",u.sysname);
+    
+    return info;
+}
+
 const char *system_string_info(void)
 {
     static char info[128];
@@ -67,6 +81,11 @@ unsigned int system_name_hash(void)
 #include <string.h>
 #include <stdio.h>
 #include "win32/config.h"
+
+const char *system_type(void)
+{
+	return "Windows";
+}
 
 typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 
@@ -115,7 +134,7 @@ unsigned int system_name_hash()
     static char computer_name[1024]; 
     DWORD size = 1024;     
     GetComputerName(computer_name,&size);           
-    return simple_hash(computerName);   
+    return simple_hash(computer_name);   
 }
 
 

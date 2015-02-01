@@ -24,7 +24,7 @@
 # You can get the latest version of this file from:
 # http://ludovic.rousseau.free.fr/softwares/pcsc-tools/smartcard_list.txt
 #
-# $Id: smartcard_list.txt 7056 2014-12-30 21:36:17Z rousseau $
+# $Id: smartcard_list.txt 7083 2015-01-19 19:32:59Z rousseau $
 #
 
 # syntax:
@@ -253,6 +253,9 @@
 3B 16 94 D0 01 7B 2C 0E 00
 	SIM tunisiana
 
+3B 16 95 9B 00 07 01 18 03
+	Thai GSM UICC (Telecommunication)
+
 3B 16 95 D0 00 45 F7 01 00
 	Telefónica O2 Czech Republic, a.s. - O2 sim card - 173285 / SIM64ND.GO0
 	http://www.o2.cz
@@ -262,6 +265,10 @@
 
 3B 16 96 41 73 74 72 69 64 3B 02 14 50
 	Gemalto IDPrime v2+ .NET
+
+3B 16 96 77 00 06 01 04 03
+	AIS One-2-Call GSM UICC (Telecommunication)
+	http://www.ais.co.th
 
 3B 16 96 BA 00 0E 01 06 03
 	Vinaphone Vietnam SIM
@@ -1540,6 +1547,10 @@
 3B 6E 00 00 00 31 C0 65 F1 D5 02 01 09 71 D6 8C 61 33
 	HALIFAX (Bank)
 
+3B 6E 00 00 00 31 C0 65 F7 C6 02 00 06 71 D6 8C 61 39
+	"Ticket Restaurant" Edenred España S.A. (Bank)
+	http://www.edenred.es/ticket-restaurant/tarjeta-restaurante
+
 3B 6E 00 00 00 31 C0 65 F8 D6 02 01 07 71 D6 8C 61 33
 	Tesco Bank Credit Card (VISA) (Bank)
 
@@ -2465,6 +2476,10 @@
 3B 7F 13 00 00 80 31 C0 52 18 97 64 02 B3 02 37 83 83 90 00
 	tool-valley (vale-pedagio) from Bradesco
 
+3B 7F 13 00 00 80 31 C0 52 19 1B 64 02 B3 02 70 83 83 90 00
+	La Caixa Visa electron ATM Card (Bank)
+	https://portal3.lacaixa.es/apl/tarjetas/catalogo/catalogo.index_es.html?idImagen=1041,14&filtro=DE
+
 3B 7F 13 00 00 80 31 C0 52 1B F1 64 05 62 17 80 83 83 90 00
 	blueBBVA Visa (Bank)
 
@@ -2998,6 +3013,10 @@
 
 3B 8C 80 01 50 18 61 88 CE E1 F3 5E 11 77 81 C7 0E
 	French passport (2007-2008)
+
+3B 8C 80 01 50 38 0E B2 5B 00 00 00 00 B3 71 71 31
+	BIP (Biglietto Integrato Piemonte) Card, GTT (Gruppo Trasporti Torinese) (Transport)
+	http://bip.piemonte.it/
 
 3B 8C 80 01 50 64 E6 5B 00 00 00 00 00 00 81 80 85
 	Chicago CTA Ventra Transit card
@@ -3569,6 +3588,9 @@
 	runnig STARCOS 3.4 and prouced by Giesecke & Devrient GmbH
 	http://www.gi-de.com/deu/de/products_and_solutions/products/tachograph_cards/Fahrtenschreiberkarten-5890.jsp
 
+3B 9B 95 80 1F 43 80 31 A0 73 BE 21 00 53 34 50 01 19
+	True Move GSM UICC (Telecommunication)
+
 3B 9B 95 80 1F 47 80 31 A0 73 BE 21 00 53 27 11 02 4C
 	SIM TELE2 Sweden
 
@@ -3698,6 +3720,9 @@
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 00 28 24 01 00 0D
 	United Mobile SIM
 
+3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 00 2B 2D 02 00 04
+	KTF SHOW GE-B1400 WCDMA USIM (Telecommunication)
+
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 00 6C 0C 72 00 12
 	Orange Austria GSM/3G SIM: "Mobiles Internet"
 
@@ -3719,6 +3744,10 @@
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 01 77 97 0D 00 EC
 	SIM Free Mobile
 
+3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 01 7A 49 0D 00 3F
+	SUPER start package (Estonia, EMT, 4G) (Telecommunication)
+	https://www.super.ee/en/
+
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 01 7B 5C 0E 00 28
 	SIM card by German mobile phone provider E-Plus for Product "WhatsApp SIM" (Telecommunication)
 	https://www.eplus.de/whatsapp
@@ -3733,6 +3762,9 @@
 3B 9E 96 80 1F C7 80 31 E0 73 FE 21 1B 66 D0 01 91 88 0E 00 16
 	Lenovo SIM card (Telecommunication)
 
+3B 9E 96 80 3F C3 A0 80 31 E0 73 FE 21 1B 63 08 01 14 0F 90 00 D3
+	KT Olleh LTE Warp SA-L 1670 (Telecommunication)
+
 3B 9F .. 80 1F C3 00 68 1. 44 05 01 46 49 53 45 31 C8 .. 90 00 ..
 	Setec SetCOS 4.4.1
 
@@ -3741,6 +3773,9 @@
 
 3B 9F 11 40 60 49 52 44 45 54 4F 20 41 43 53 20 56 35 2E 37
 	dahlia Tv Italian Provider
+
+3B 9F 11 40 60 49 52 44 45 54 4F 20 41 43 53 20 56 35 2E 38 00
+	irdeto (Pay TV)
 
 3B 9F 11 40 60 49 52 44 45 54 4F 20 41 43 53 20 56 36 2E 30
 	skylink, Pay TV
@@ -3896,11 +3931,18 @@
 	sysmocom sysmoUSIM-GR1
 	http://sysmocom.de/
 
+3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 05 2C 32 34 00 BD
+	SoftBank (Black UICC) (Telecommunication)
+
 3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 05 2E 32 34 00
 	SIM card
 
 3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 05 2F 32 34 00 BE
 	T-Mobile (US) USIM
+
+3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 05 30 32 34 00 A1
+	H2O Wireless GSM UICC (Telecommunication)
+	http://www.h2owirelessnow.com
 
 3B 9F 95 80 1F C7 80 31 E0 73 FE 21 13 57 4A 33 0E 07 32 30 00 99
 	Bell Canada 3G SIM
@@ -4402,6 +4444,9 @@
 3B BE 18 00 00 41 05 10 00 00 00 00 00 00 00 00 00 90 00
 	ACS ACOS5 "ACOS5-32-G" dual card
 	http://www.acs.com.hk/acos5.asp
+
+3B BE 94 00 40 14 47 47 33 53 33 45 44 41 54 4C 36 30 31 30
+	SingTel hi! Prepaid GSM SIM UICC (Telecommunication)
 
 3B BE 94 00 40 14 47 47 33 53 33 45 48 41 54 4C 39 31 30 00
 	Latvian GSM operator TELE2
@@ -5242,6 +5287,10 @@
 3B F7 18 00 00 81 71 80 42 00 00 63 95 0A 01 90 00 B0
 	7-Eleven icash card, Taiwan
 
+3B F7 91 00 FF 91 81 71 FE 40 00 0A 02 60 CF 51 04 CB 7F
+	UK Metro Bank Mastercard Debit (Bank)
+	https://www.metrobankonline.co.uk/
+
 3B F7 91 00 FF 91 81 71 FE 40 00 41 20 00 11 77 81 80 40
 	Contactless Mifare DESFire
 
@@ -5498,7 +5547,7 @@
 	Yubikey Neo
 	http://www.yubico.com/products/yubikey-hardware/yubikey-neo/
 
-3B FC 18 00 00 81 31 80 45 90 67 46 4A 00 68 08 06 00 00 00 00 0C
+3B FC 18 00 00 81 31 80 45 90 67 46 4A 00 68 08 0. 00 00 00 00 0.
 	Feitian A22 JavaCard (150K) (JavaCard)
 	http://www.smartcardfocus.com/shop/ilp/id~712/javacos-a22-dual-interface-java-card-150k/p/index.shtml
 	Feitian A40 JavaCard (64K) (JavaCard)

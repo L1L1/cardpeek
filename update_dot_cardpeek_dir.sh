@@ -38,7 +38,7 @@ if [ -d "$DOT_CARDPEEK_SRC" ]; then
 
   echo "## Retrieving new files:"
   IFS=$'\t\n' 
-  for i in `find * \! -path replay/\* \! -path scripts.old\*`;
+  for i in `find * \! -path replay/\* \! -path scripts.old\* \! -name \\.\*`;
   do
      if [ -d "$i" ]; then
         if [ ! -e "$DOT_CARDPEEK_DST/$i" ]; then
@@ -100,6 +100,10 @@ __EOF
 
 #endif
 __EOF
+        if (echo "$OSTYPE"| grep -q "darwin"); then
+            echo "## Removing OS X annoying extended attributes."
+            find $DOT_CARDPEEK_DST -xattr -exec xattr -c {} \; 
+        fi 
      else
         echo "## No updates performed."
      fi

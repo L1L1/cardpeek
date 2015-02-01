@@ -208,6 +208,14 @@ function mifare_read_card(keys)
     local authenticated
     local key, current_key
     local errors = 0
+    local atr = card.last_atr()
+    local auth_status 
+
+    if atr[13]==0 and atr[14]==2 then
+        mfdata['last_sector'] = 63
+    else
+        mfdata['last_sector'] = 15
+    end
 
     sw, mfuid = mifare_read_uid()
     if sw~=0x9000 then
@@ -215,7 +223,7 @@ function mifare_read_card(keys)
         return nil, nil
     end
 
-    for sector=0,15 do
+    for sector=0,mfdata['last_sector'] do
 
         authenticated = false
 
@@ -226,7 +234,6 @@ function mifare_read_card(keys)
             for block = 0,3 do
                 if not authenticated then
                     for _, key in ipairs(keylist) do
-                        log.print(log.INFO,string.format("Authenticating sector %2i, block %i, with key %s=%s:",sector,block,key[1],key[2]))
                         if current_key==nil or key[2]~=current_key[2] or key[1]~=current_key[1] then
                             mifare_load_key(0x0, key[2])
                             current_key = key
@@ -237,14 +244,19 @@ function mifare_read_card(keys)
                             sw, resp = mifare_authenticate(sector*4,0x0,0x61)
                         end
                         if sw==0x9000 then
+                            auth_status = "OK"
                             authenticated = true
-                            log.print(log.INFO,"Authentication successful.")
+                        else
+                            auth_status = "FAIL"
+                            authenticated = false
+                        end
+                        log.print(log.INFO,string.format("Authenticating sector %2i, block %i, with key %s=%s: %s",sector,block,key[1],key[2],auth_status))
+                        if authenticated then
                             break
                         end
                     end
                 end--if           
 
-                log.print(log.INFO,current_key[2])
                 if authenticated then
                     log.print(log.INFO,string.format("Reading from sector %2i, Block %i:",sector,block))
                     sw, resp = mifare_read_binary(sector*4+block,16)
@@ -367,8 +379,7 @@ function mifare_display(root, mfdata, mfuid)
 
     root:append{ classname="block", label="UID", val=mfuid, alt=bytes.tonumber(mfuid) }
 	
-    
-	for sector=0,15 do
+	for sector=0,mfdata['last_sector'] do
         SECTOR = root:append{ classname="record", label="sector", id=sector }
         -- SECTOR:append{ classname="item", label="access key", val=bytes.new(8,key) }
         for block = 0,3 do
@@ -397,20 +408,30 @@ function mifare_display(root, mfdata, mfuid)
 	end
 end
 
+--
+-- START OF SCRIPT 
+--
+
 local resp = ui.question("Do you wish to use a key file or try default mifare keys?",
                         {"Use default keys", "Load keys from file"})
 local keys, mfdata, mfuid
 
+keys = nil
 if resp == 1 then
     keys = MIFARE_STD_KEYS
 elseif resp == 2 then 
-    -- Load key file
-else 
-    log.print(log.ERROR,"Aborted script: mifare key selection was cancelled.")
-    keys = nil
+    local fpath, fname = ui.select_file("Load mifare key file",nil,nil)
+    if fname then
+        keys = mifare_load_keys(fname)
+    end
 end
 
-if keys~=nil and card.connect() then
+if keys==nil then
+
+    log.print(log.ERROR,"Aborted script: mifare key selection was cancelled.")
+
+elseif card.connect() then
+
     CARD = card.tree_startup("Mifare")
 
     mfdata, mfuid = mifare_read_card(keys)

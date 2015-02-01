@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2013 by 'L1L1'
+-- Copyright 2009-2015 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -90,9 +90,106 @@ function GSM_tostring(data)
 		if v==0xFF then
 			return r
 		end
-		r = r .. GSM_DEFAULT_ALPHABET[v+1]	
+        if v<128 then
+		    r = r .. GSM_DEFAULT_ALPHABET[v+1]
+        else
+            r = r .. '█'
+        end
 	end	
 	return r
+end
+
+function GSM_decode_udh(data)
+    if data[0]==5 and data[1]==0 then
+        return string.format("(part %d/%d in %d)",data[5],data[4],data[3])
+    elseif data[0]==6 and data[1]==8 then
+        return string.format("(part %d/%d in %d)",data[6],data[5],data[3]*256+data[4]) 
+    else 
+        return "(undexpected UDH)"
+    end
+end
+
+function GSM_decode_default_alphabet(data,skip)
+	local text = ""
+	local char
+	local back_char = 0
+	local pos
+    local skip = skip or 0
+
+    if data==nil then
+        return ""
+    end
+
+	for pos = 0, #data-1 do
+		shifted = (pos%7)
+		
+		char = bit.AND(bit.SHL(data:get(pos),shifted),0x7F)+back_char
+		back_char = bit.SHR(data:get(pos),7-shifted)
+
+        if skip==0 then
+		    text = text..GSM_DEFAULT_ALPHABET[char+1]
+        else
+            skip = skip - 1
+        end
+
+		if shifted==6 then
+			if pos==#data-1 then
+				if back_char==0x0D then
+					break
+				end
+				-- This should not be done, as it may
+				-- accidentally cut trailing '@', but
+				-- most phones fill 7 spare bits by
+				-- zeroes instead of 0x0D and also cut
+				-- trailing '@'
+				if back_char==0x00 then
+					break
+				end
+			end
+            
+            if skip==0 then
+			    text = text..GSM_DEFAULT_ALPHABET[back_char+1]
+            else
+                skip = skip - 1
+            end
+
+			back_char = 0
+		end
+	end
+    return text
+end
+
+function GSM_decode_ucs2(data,skip)
+	local text = ""
+	local ucs2
+	local utf8 = "" 
+	local pos
+    local skip = skip or 0
+
+    if data==nil then
+        return ""
+    end
+
+    if skip>0 then
+        data = data:sub(skip)
+    end
+
+	for pos=0,(#data/2)-1 do
+		ucs2 = bit.SHL(data:get(pos*2),8) + data:get(pos*2+1)
+		if ucs2<0x80 then
+			utf8 = string.format('%c', ucs2)
+			end
+		if ucs2>=0x80 and ucs2<0x800 then
+			utf8 = string.format('%c%c', bit.OR(bit.SHR(ucs2,6),0xC0), bit.OR(bit.AND(ucs2,0x3F),0x80))
+			end
+		if ucs2>=0x800 and ucs2<0xFFFF then
+			if not(ucs2>=0xD800 and ucs2<=0xDFFF) then
+				  utf8 = string.format('%c%c%c', bit.OR(bit.SHR(ucs2,12),0xE0), bit.OR(bit.AND(bit.SHR(ucs2,6),0x3F),0x80), bit.OR(bit.AND(ucs2,0x3F),0x80))
+		    end
+		end
+		text = text..utf8
+	end
+    return text
 end
 
 -------------------------------------------------------------------------
@@ -114,8 +211,13 @@ end
 
 
 function GSM_ICCID(node,data)
-	return node:set_attribute("alt",GSM_bcd_swap(data))
+	return node:set_attribute("alt","(89)" .. GSM_bcd_swap(data):sub(3,-1))
 end
+
+function GSM_IMSI(node,data)
+	return node:set_attribute("alt",GSM_bcd_swap(data):sub(4,-1)) 
+end
+    
 
 function GSM_SPN(node,data)
 	return node:set_attribute("alt",GSM_tostring(bytes.sub(data,1)))
@@ -132,43 +234,6 @@ function GSM_ADN(node,data)
 	end
 	r = r .. ": " .. GSM_bcd_swap(bytes.sub(data,alpha_len+2,alpha_len+12)) 
 	return node:set_attribute("alt",r)
-end
-
-
-
-function GSM_SMS_decode_default_alphabet(node,data)
-	local text = ""
-	local char
-	local back_char = 0
-	local pos
-
-	for pos=0,#data-1 do
-		shifted = (pos%7)
-		-- dmy = bit.AND(data:get(pos),bit.SHR(0xFF,shifted+1))
-		
-		char = bit.AND(bit.SHL(data:get(pos),shifted),0x7F)+back_char
-		back_char = bit.SHR(data:get(pos),7-shifted)
-
-		text = text..GSM_DEFAULT_ALPHABET[char+1]
-		if shifted==6 then
-			if pos==#data-1 then
-				if back_char==0x0D then
-					break
-				end
-				-- This should not be done, as it may
-				-- accidentally cut trailing '@', but
-				-- most phones fill 7 spare bits by
-				-- zeroes instead of 0x0D and also cut
-				-- trailing '@'
-				if back_char==0x00 then
-					break
-				end
-			end
-			text = text..GSM_DEFAULT_ALPHABET[back_char+1]
-			back_char = 0
-		end
-	end
-	return node:set_attribute("alt",text)
 end
 
 function GSM_SMS_decode_ucs2(node,data)
@@ -224,6 +289,62 @@ function GSM_SMS_TPDCS(node,data)
 	end
 end
 
+TON = {
+    [0] = "Unknown",
+    [1] = "International number",
+    [2] = "National number",
+    [3] = "Network specific number",
+    [4] = "Subscriber number",
+    [5] = "Alphanumeric",
+    [6] = "Abbreviated number",
+    [7] = "Reserved for extension"
+}
+
+NPI = {
+    [0] = "Unknown",
+    [1] = "ISDN/telephone numbering plan (E.164/E.163)",
+    [3] = "Data numbering plan (X.121)",
+    [4] = "Telex numbering plan",
+    [5] = "Service Centre Specific plan",
+    [6] = "Service Centre Specific plan",
+    [8] = "National numbering plan",
+    [9] = "Private numbering plan",
+    [10] = "ERMES numbering plan (ETSI DE/PS 3 01 3)",
+    [15] = "Reserved for extension"
+}
+ 
+
+function GSM_type_of_address(node,data)
+    local b = data[0]
+    local r1 = TON[bit.AND(bit.SHR(b,4),7)]
+    local r2 = NPI[bit.AND(b,15)]
+    if r2~=nil then
+       r1 = r1 .. ", " .. r2
+    end
+    node:set_attribute("alt",r1)
+end
+
+function GSM_SMS_deliver_header(node,data)
+    local b = data[0]
+    local r = "SMS-DELIVER"
+    if bit.AND(b,4)==4 then
+        r = r .. ", TP-More-Message-to-Send"
+    end
+    if bit.AND(b,8)==8 then
+        r = r .. ", TP-Loop-Prevention" 
+    end
+     if bit.AND(b,32)==32 then
+        r = r .. ", TP-Status-Report-Indicator" 
+    end
+    if bit.AND(b,64)==64 then
+        r = r .. ", TP-User-Data-Header-Indicator"
+    end
+    if bit.AND(b,128)==128 then
+        r = r .. ", TP-Reply-Path"
+    end
+    node:set_attribute("alt",r)
+end
+
 function GSM_number(node,data)
 	local bcd=GSM_bcd_swap(data)
 	
@@ -268,10 +389,20 @@ function create_sub_node(node,data,label,pos,len,func)
 	local subnode
 	local edata = bytes.sub(data,pos,pos+len-1)
 
+    if edata==nil then
+        edata = bytes.new(8)
+    end
+
 	subnode = node:append{classname="item",label=label,size=#edata, val=edata}
 	if func then
 		func(subnode,edata)
 	end
+end
+
+function GSM_SMS_text(node,data,encoding,compressed,udhi)
+    local text
+    local real_len
+
 end
 
 function GSM_SMS(node,data)
@@ -280,6 +411,10 @@ function GSM_SMS(node,data)
 	local encoding = 0x100
 	local compressed = 0x100
 	local tpdcs
+    local udhi = false
+    local text
+    local text_encoded
+    local text_len
 
 	create_sub_node(node,data,"status",0,1)
 	pos = 1
@@ -288,10 +423,13 @@ function GSM_SMS(node,data)
 		create_sub_node(node,data,"Type of address",pos+1,1)
 		create_sub_node(node,data,"Service center number",pos+2,data:get(pos)-1,GSM_number)
 		pos = pos+data:get(pos) + 1
-		create_sub_node(node,data,"First octet SMS deliver message",pos,1,GSM_byte)
+		create_sub_node(node,data,"First octet SMS deliver message",pos,1,GSM_SMS_deliver_header)
+        if bit.AND(data:get(pos),64)==64 then
+            udhi = true
+        end
 		pos = pos + 1
 		create_sub_node(node,data,"Length of address",pos,1,GSM_byte)
-		create_sub_node(node,data,"Type of address",pos+1,1)
+		create_sub_node(node,data,"Type of address",pos+1,1,GSM_type_of_address)
 		create_sub_node(node,data,"Sender number".." "..tostring(data:get(pos)),pos+2,math.floor((data:get(pos)+1)/2),GSM_number)
 		pos = pos+math.floor((data:get(pos)+1)/2) + 2
 		create_sub_node(node,data,"TP-PID",pos,1)
@@ -304,13 +442,32 @@ function GSM_SMS(node,data)
 		create_sub_node(node,data,"TP-SCTS",pos+2,7,GSM_timestamp)
 		pos = pos + 9
 		create_sub_node(node,data,"Length of SMS",pos,1,GSM_byte)
-		if encoding==0 and compressed==0 then
-			create_sub_node(node,data,"Text of SMS",pos+1,math.floor(((data:get(pos))*7+7)/8),GSM_SMS_decode_default_alphabet)
-		elseif encoding==8 and compressed==0 then
-			create_sub_node(node,data,"Text of SMS",pos+1,data:get(pos),GSM_SMS_decode_ucs2)
-		else
-			create_sub_node(node,data,"Text of SMS",pos+1,data:get(pos))
-		end
+       
+        if encoding==0 and compressed==0 then
+            text_len = math.floor((data:get(pos)*7+7)/8)
+            text_encoded = data:sub(pos+1,pos+text_len)
+            if udhi then
+                text = GSM_decode_default_alphabet(text_encoded, math.floor(((text_encoded[0]+1)*8+6)/7)) 
+            else
+                text = GSM_decode_default_alphabet(text_encoded)
+            end 
+        elseif encoding==8 and compressed==0 then
+            text_len = data:get(pos)
+            text_encoded = data:sub(pos+1,pos+text_len)
+            if udhi then
+                text = GSM_decode_ucs2(text_encoded,text_encoded[0]+1)
+            else
+                text = GSM_decode_ucs2(text_encoded)
+            end
+        else
+            text_len = data:get(pos)
+            text_encoded = data:sub(pos+1,pos+text_len)
+            text = nil
+	    end
+        subnode = node:append{classname="item",label="Text of SMS",size=text_len,val=text_encoded,alt=text}
+        if udhi then
+            subnode:append{classname="item",label="Multipart SMS",val=text_encoded:sub(0,text_encoded[0]),alt=GSM_decode_udh(text_encoded)}
+        end
 	end
 end
 
@@ -368,7 +525,7 @@ GSM_MAP =
 		},
 		{ "folder", "7F20", "GSM", {
 				{ "file", "6F05", "Language indication", nil },
-				{ "file", "6F07", "IMSI", nil },
+				{ "file", "6F07", "IMSI", GSM_IMSI },
 				{ "file", "6F20", "Ciphering key Kc", nil },
 				{ "file", "6F30", "PLMN selector", nil },
 				{ "file", "6F31", "Higher priority PLMN search", nil },
@@ -479,8 +636,8 @@ function gsm_read_content_record(node,fsize,rec_len,alt)
 		return false
 	end
 	rec_count = fsize/rec_len
-
-	for rec_num=1,rec_count do
+	
+    for rec_num=1,rec_count do
 		sw, resp = card.read_record('.',rec_num,rec_len)
 		if sw~=0x9000 then
 			return false

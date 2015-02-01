@@ -313,9 +313,9 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
     }
     else
     {
-        log_printf(LOG_ERROR,"Transmited %i bytes to the card (T=%i), but recieved a response of length 0.",
+        log_printf(LOG_ERROR,"Transmited %i bytes to the card (%s), but recieved a response of length 0.",
                    bytestring_get_size(command),
-                   cr->protocol);
+                   pcsc_stringify_protocol(cr->protocol));
         return CARDPEEK_ERROR_SW;
     }
 

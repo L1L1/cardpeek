@@ -513,9 +513,9 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
             bitOffset, debitAmount, dr_ref = RavKav_parseBits(data, bitOffset, 16, EVENT_REC_REF, "Debit amount", en1545_NUMBER)
             if 0 < debitAmount and 6 ~= eventType and 0 < contractId and 9 > contractId then    --not a transit trip
                 if 21 > debitAmount then
-                    dr_ref:setAlt(string.format("%u trip(s)", debitAmount))
+                    dr_ref:set_attribute("alt",string.format("%u trip(s)", debitAmount))
                 else
-                    dr_ref:setAlt(string.format("NIS %0.2f", debitAmount / 100.0))
+                    dr_ref:set_attribute("alt",string.format("NIS %0.2f", debitAmount / 100.0))
                 end
             end
         end
@@ -628,7 +628,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
         else
             iDuration = iDuration * 30
         end
-        rd_ref:setAlt(string.format("%d minute(s)", iDuration))
+        rd_ref:set_attribute("alt",string.format("%d minute(s)", iDuration))
     end
 
     if 0 < bit.AND(validityBitmap,8) then   --validity end date

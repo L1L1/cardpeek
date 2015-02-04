@@ -899,6 +899,10 @@ gboolean dyntree_model_iter_attributes_get(DyntreeModel *ctm,
 
 /* TEXT Export */
 
+/* internal_node_to_text() is called by dyntree_model_iter_to_text() to do the
+   actual work of exporting part of the treeview in text format.
+ */
+
 static gboolean internal_node_to_text(a_string_t *res, DyntreeModel *store, GtkTreeIter *iter, unsigned depth, gboolean process_siblings)
 {
     unsigned i,j;
@@ -1021,44 +1025,11 @@ static gboolean internal_node_to_text(a_string_t *res, DyntreeModel *store, GtkT
                 }
             }
             a_strcat(res,"\n");
-            /*
-            a_strcat(res,"<node>\n");
-
-            for (attr_index=0; attr_index<store->n_columns && attr_index<node->max_attributes; attr_index++)
-            {
-                col_name = dyntree_model_column_index_to_name(store,attr_index);
-                if (node->attributes[attr_index].value && col_name[0]!='-')
-                {
-                    for(i=0; i<=depth; i++) a_strcat(res,"  ");
-                    a_strcat(res,"<attr name=\"");
-                    a_strcat(res,col_name);
-                    switch (node->attributes[attr_index].value[0])
-                    {
-                        case '8':
-                        case '4':
-                        case '2':
-                            a_strcat(res,"\" type=\"bytes\">");
-                            a_strcat(res,node->attributes[attr_index].value);
-                            break;
-                        default:
-                            a_strcat(res,"\">");
-                            esc_value = g_markup_escape_text(node->attributes[attr_index].value+2,-1);
-                            a_strcat(res,esc_value);
-                            g_free(esc_value);
-                    }
-                    a_strcat(res,"</attr>\n");
-                }
-            }
-            */
 
             if (gtk_tree_model_iter_children(GTK_TREE_MODEL(store),&child,iter))
             {
                 internal_node_to_text(res,store,&child,depth+1,TRUE);
             }
-            /*
-            for(i=0; i<depth; i++) a_strcat(res,"  ");
-            a_strcat(res,"</node>\n");
-            */
         }
     }
     while (process_siblings && gtk_tree_model_iter_next(GTK_TREE_MODEL(store),iter));
@@ -1087,6 +1058,10 @@ char* dyntree_model_iter_to_text(DyntreeModel *ctm, GtkTreeIter *root)
 }
 
 /* XML EXPORT */
+
+/* internal_node_to_xml() is called by dyntree_model_iter_to_xml() to do the
+   actual work of exporting part of the treeview in XML format.
+ */
 
 static gboolean internal_node_to_xml(a_string_t *res, DyntreeModel *store, GtkTreeIter *iter, int depth)
 {
@@ -1162,7 +1137,9 @@ char *dyntree_model_iter_to_xml(DyntreeModel *ct, GtkTreeIter *root, gboolean fu
         res = a_strnew("<?xml version=\"1.0\" type=\"UTF-8\"?>\n");
 
         a_strcat(res,"<cardpeek>\n");
-        a_strcat(res,"  <version>0.8.3</version>\n");
+        a_strcat(res,"  <version>");
+        a_strcat(res,VERSION);
+        a_strcat(res,"</version>\n");
         initial_depth = 1;
     }
     else

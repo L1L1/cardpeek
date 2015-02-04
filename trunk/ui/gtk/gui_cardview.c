@@ -221,9 +221,11 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
 /* Create a right click context menu */
 {
     GtkWidget *menu, *menuitem;
-    GtkWidget *menuitem_child;
     GtkTreeViewColumn *column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
     UNUSED(userdata);
+#if GTK_CHECK_VERSION(3,6,0)
+    GtkWidget *menuitem_child;
+#endif
 
     menu = gtk_menu_new();
 
@@ -231,8 +233,10 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
     menuitem = gtk_menu_item_new_with_label("Copy");
     g_signal_connect(menuitem, "activate",
                      (GCallback) menu_cardview_copy, treeview);
+#if GTK_CHECK_VERSION(3,6,0)
     menuitem_child = gtk_bin_get_child (GTK_BIN (menuitem));
     gtk_accel_label_set_accel (GTK_ACCEL_LABEL (menuitem_child), GDK_KEY_c, GDK_CONTROL_MASK);
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
     /* Menu Item */
@@ -254,8 +258,10 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
         g_signal_connect(menuitem, "activate",
                          (GCallback) menu_cardview_context_menu_change_value_type, treeview);
     }
+#if GTK_CHECK_VERSION(3,6,0)
     menuitem_child = gtk_bin_get_child (GTK_BIN (menuitem));
     gtk_accel_label_set_accel (GTK_ACCEL_LABEL (menuitem_child), GDK_KEY_r, GDK_CONTROL_MASK);
+#endif
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 
 
@@ -511,8 +517,9 @@ static GtkWidget *create_analyzer_menu(GtkAccelGroup *accel_group)
     gtk_menu_shell_append(GTK_MENU_SHELL(menu),menuitem);
 
     menuitem = gtk_menu_item_new_with_label("Load a script");
-    // FIXME:
-    // gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_icon_name("document-open",GTK_ICON_SIZE_MENU));
+    /* FIXME:
+        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),gtk_image_new_from_icon_name("document-open",GTK_ICON_SIZE_MENU));
+    */
     g_signal_connect(GTK_WIDGET(menuitem),"activate",G_CALLBACK(menu_cardview_analyzer_load_cb),NULL);
 
     gtk_widget_add_accelerator(menuitem, "activate", accel_group, GDK_KEY_l, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);

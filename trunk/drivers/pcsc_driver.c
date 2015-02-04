@@ -273,18 +273,18 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
     if (cr->protocol==SCARD_PROTOCOL_T0)
     {
         pcsc->status = SCardTransmit(pcsc->hcard,SCARD_PCI_T0,
-                                     bytestring_get_data(command),
-                                     bytestring_get_size(command),
-                                     SCARD_PCI_NULL,
-                                     REC_DAT,&REC_LEN);
+                bytestring_get_data(command),
+                bytestring_get_size(command),
+                SCARD_PCI_NULL,
+                REC_DAT,&REC_LEN);
     }
     else if (cr->protocol==SCARD_PROTOCOL_T1)
     {
         pcsc->status = SCardTransmit(pcsc->hcard,SCARD_PCI_T1,
-                                     bytestring_get_data(command),
-                                     bytestring_get_size(command),
-                                     SCARD_PCI_NULL,
-                                     REC_DAT,&REC_LEN);
+                bytestring_get_data(command),
+                bytestring_get_size(command),
+                SCARD_PCI_NULL,
+                REC_DAT,&REC_LEN);
 
     }
     else
@@ -296,8 +296,8 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
     if (pcsc->status!=SCARD_S_SUCCESS)
     {
         log_printf(LOG_ERROR,"Failed to transmit command to card: %s (error 0x%08x).",
-                   pcsc_stringify_error(pcsc->status),
-                   pcsc->status );
+                pcsc_stringify_error(pcsc->status),
+                pcsc->status );
         return CARDPEEK_ERROR_SW;
     }
 
@@ -313,9 +313,10 @@ static unsigned short pcsc_transmit(cardreader_t* cr,
     }
     else
     {
-        log_printf(LOG_ERROR,"Transmited %i bytes to the card (%s), but recieved a response of length 0.",
-                   bytestring_get_size(command),
-                   pcsc_stringify_protocol(cr->protocol));
+        log_printf(LOG_ERROR,"Transmited %i bytes to the card (%s), but recieved a response of length %i, without any status word included.",
+                bytestring_get_size(command),
+                pcsc_stringify_protocol(cr->protocol),
+                REC_LEN);
         return CARDPEEK_ERROR_SW;
     }
 

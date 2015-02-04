@@ -4,7 +4,10 @@
 AC_PREREQ([2.67])
 AC_INIT([cardpeek],[0.8.4],[L1L1@gmx.com])
 AM_INIT_AUTOMAKE
-AC_CONFIG_MACRO_DIR([m4])
+
+##AC_CONFIG_MACRO_DIR([m4])
+m4_include([m4/iconv.m4])
+m4_include([m4/ax_lib_readline.m4])
 
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
@@ -16,6 +19,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 
@@ -23,7 +27,7 @@ AC_CANONICAL_HOST
 
 PKG_CHECK_MODULES([GLIB],[glib-2.0 >= 2.32.0]) 
 
-PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.6])
+PKG_CHECK_MODULES([GTK],[gtk+-3.0 >= 3.4])
 
 case "${host}" in
   *-*-darwin*)
@@ -105,7 +109,7 @@ AC_MSG_ERROR([gdk-pixbuf-pixdata cannot be found in PATH.
 fi
 
 AX_LIB_READLINE
-if test "$ax_cv_lib_readline" == "no"; then
+if test -z "$ax_cv_lib_readline"; then
     AC_MSG_ERROR([Could not find readline library.
                   This program requires the readline dev. library.
                   Please install it first.])

@@ -222,10 +222,10 @@ static void menu_cardview_context_menu(GtkWidget *treeview, GdkEventButton *even
 {
     GtkWidget *menu, *menuitem;
     GtkTreeViewColumn *column2 = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),2);
-    UNUSED(userdata);
 #if GTK_CHECK_VERSION(3,6,0)
     GtkWidget *menuitem_child;
 #endif
+    UNUSED(userdata);
 
     menu = gtk_menu_new();
 

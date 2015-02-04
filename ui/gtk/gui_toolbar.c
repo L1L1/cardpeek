@@ -75,50 +75,43 @@ static void gui_widget_table_insert(const gchar *name, const GtkWidget *widget)
 GtkWidget *gui_toolbar_new(toolbar_item_t *tbitems)
 {
     GtkWidget   *icon;
-	GtkWidget	*toolbar;
-	GtkToolItem	*item;
-	int 		i;
+    GtkWidget	*toolbar;
+    GtkToolItem	*item;
+    int 		i;
 
-	toolbar = gtk_toolbar_new();
+    toolbar = gtk_toolbar_new();
 
-	gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL );
-	gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+    gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL );
+    gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
 
-	for (i=0; tbitems[i].icon!=NULL; i++)
-	{
-		if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_SEPARATOR)==0)
-		{
-			item = gtk_separator_tool_item_new();
-			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-			
-		}
-		else if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_EXPANDER)==0)
-		{
-			item = gtk_separator_tool_item_new();
-			gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM(item),FALSE);
-			gtk_tool_item_set_expand(GTK_TOOL_ITEM(item),TRUE);
-			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+    for (i=0; tbitems[i].icon!=NULL; i++)
+    {
+        if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_SEPARATOR)==0)
+        {
+            item = gtk_separator_tool_item_new();
+            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
 
-		}
-		else
-		{
+        }
+        else if (strcmp(tbitems[i].icon,TOOLBAR_ITEM_EXPANDER)==0)
+        {
+            item = gtk_separator_tool_item_new();
+            gtk_separator_tool_item_set_draw (GTK_SEPARATOR_TOOL_ITEM(item),FALSE);
+            gtk_tool_item_set_expand(GTK_TOOL_ITEM(item),TRUE);
+            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+
+        }
+        else
+        {
             icon = gtk_image_new_from_icon_name(tbitems[i].icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
-			//item = gtk_tool_button_new_from_stock (tbitems[i].icon);
             item = gtk_tool_button_new(icon, tbitems[i].text);
-			//if (tbitems[i].text) 
-			//	gtk_tool_button_set_label(GTK_TOOL_BUTTON(item),tbitems[i].text);
-			if (tbitems[i].callback)
-				g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(tbitems[i].callback),(gpointer)tbitems[i].callback_data);
-			if (tbitems[i].tooltip)
-				gtk_widget_set_tooltip_text(GTK_WIDGET(item),tbitems[i].tooltip);
-			gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
-		}
-		/*
-		if (tbitems[i].id)
-			gui_widget_table_insert(tbitems[i].id, GTK_WIDGET(item));
-		*/
-	}
-	return toolbar;
+            if (tbitems[i].callback)
+                g_signal_connect(G_OBJECT(item),"clicked",G_CALLBACK(tbitems[i].callback),(gpointer)tbitems[i].callback_data);
+            if (tbitems[i].tooltip)
+                gtk_widget_set_tooltip_text(GTK_WIDGET(item),tbitems[i].tooltip);
+            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(item),-1);
+        }
+    }
+    return toolbar;
 }
 
 void gui_toolbar_run_command_cb(GtkWidget *w, gconstpointer user_data)

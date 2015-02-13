@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE
 
 ##AC_CONFIG_MACRO_DIR([m4])
 m4_include([m4/iconv.m4])
+m4_include([m4/lib-ld.m4])
+m4_include([m4/lib-link.m4])
+m4_include([m4/lib-prefix.m4])
 m4_include([m4/ax_lib_readline.m4])
 
 AC_CONFIG_SRCDIR([main.c])

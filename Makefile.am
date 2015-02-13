@@ -57,9 +57,9 @@ dist_man_MANS=cardpeek.1
 DRIVERS=drivers/replay_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c 
 ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.png icons/cardpeek-smartcard.png icons/cardpeek-folder.png icons/cardpeek-logo.png icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz 
+CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz
 
-EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop
+EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop cardpeek.appdata.xml
 
 GLIB_COMPILE_RESOURCES=@GLIB_COMPILE_RESOURCES@
 
@@ -69,6 +69,8 @@ desktop_DATA = cardpeek.desktop
 iconsdir = $(datadir)/icons/hicolor/48x48/apps
 icons_DATA = icons/cardpeek-logo.png
 
+appdatadir = $(datadir)/appdata
+appdata_DATA = cardpeek.appdata.xml
 
 mostlyclean-local:
 			rm -rf .cardpeek

@@ -22,7 +22,7 @@ cardpeek_SOURCES = asn1.c asn1.h \
 				   lua_ext.c lua_ext.h \
 				   lua_log.c lua_log.h \
 				   lua_ui.c lua_ui.h \
-				   main.c \
+				   main.c main.h \
 				   misc.c misc.h \
 				   pathconfig.c pathconfig.h \
 				   smartcard.c smartcard.h \
@@ -45,6 +45,8 @@ cardpeek_SOURCES = asn1.c asn1.h \
 				   cardpeek_public_key.h \
 				   win32/config.h 
 
+EXTRA_cardpeek_SOURCES=cardpeek.c osx/cardpeek-osx.m
+
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
 cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@ @ICONV_LIBS@
@@ -52,14 +54,29 @@ cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @
 cardpeek_LDFLAGS=-g
 #cardpeek_LDFLAGS=-O2
 
+#
+# We add stuff needed for MacOSX (an obj-c file) or else the default (a c file)
+#
+if OSX_BUNDLE
+cardpeek_SOURCES+=osx/cardpeek-osx.m
+cardpeek_LDFLAGS+=-framework Cocoa
+else
+cardpeek_SOURCES += cardpeek.c
+endif
+
 dist_man_MANS=cardpeek.1
 
 DRIVERS=drivers/replay_driver.c  drivers/null_driver.c  drivers/pcsc_driver.c 
-ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.png icons/cardpeek-smartcard.png icons/cardpeek-folder.png icons/cardpeek-logo.png icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz
+ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.png icons/cardpeek-smartcard.png icons/cardpeek-folder.png icons/cardpeek-logo.png icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png icons/image-missing.png
 
-EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop cardpeek.appdata.xml
+OSX_ICONS=osx/cardpeek.iconset/icon_128x128.png osx/cardpeek.iconset/icon_16x16.png osx/cardpeek.iconset/icon_256x256.png osx/cardpeek.iconset/icon_32x32.png osx/cardpeek.iconset/icon_512x512.png osx/cardpeek.iconset/icon_64x64.png
+
+OSX_EXTRA=osx/cardpeek-launcher.sh osx/cardpeek.bundle osx/generate_bundle.sh osx/gtkrc osx/Info-cardpeek.plist.in
+
+CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz osx/cardpeek.icns
+
+EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop cardpeek.appdata.xml $(OSX_ICONS) INSTALL.FreeBSD
 
 GLIB_COMPILE_RESOURCES=@GLIB_COMPILE_RESOURCES@
 

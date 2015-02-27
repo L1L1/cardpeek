@@ -19,7 +19,6 @@
 *
 */
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -47,6 +46,7 @@
 #include "cardpeek_update.h"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include "main.h"
 
 static int update_cardpeek(void)
 {
@@ -355,7 +355,7 @@ static struct option long_options[] =
     {0,        	 	0,                 0,   0 }
 };
 
-int main(int argc, char **argv)
+int cardpeek_main(int argc, char **argv)
 {
     cardmanager_t* CTX;
     cardreader_t* READER;

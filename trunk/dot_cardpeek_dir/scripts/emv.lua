@@ -1,7 +1,7 @@
 --
 -- This file is part of Cardpeek, the smartcard reader utility.
 --
--- Copyright 2009-2013 by 'L1L1'
+-- Copyright 2009-2015 by 'L1L1'
 --
 -- Cardpeek is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -27,7 +27,8 @@
 -- Jan 23 2012: Added UK Post Office Card Account in AID list from Tyson Key.
 -- Mar 25 2012: Added a few AIDs
 -- Feb 21 2014: Better NFC compatibility by using current date in GPO.
--- @update: Nov 16 2014: Many improvements from Andrew Kozlic (Many new AIDs, parses AIP, GPO Format 1, AFLs, and more.)
+-- Nov 16 2014: Many improvements from Andrew Kozlic (Many new AIDs, parses AIP, GPO Format 1, AFLs, and more.)
+-- @update March 05 2014: Avoid error when card don't have tag 82 or 94 in GPO (issue 62)
 
 require('lib.tlv')
 require('lib.strict')
@@ -861,8 +862,12 @@ function emv_process_application(cardenv,aid)
 		    AFL = nodes.get_attribute(ref2, "val")
 		    AIP = bytes.sub(AFL,0,1)
 		    AFL = bytes.sub(AFL,2)
-		    tag_value_parse(ref2, 0x82, AIP, EMV_REFERENCE)
-		    tag_value_parse(ref2, 0x94, AFL, EMV_REFERENCE)
+            if nodes.find_first(GPO,{id="82"}) then 
+		        tag_value_parse(ref2, 0x82, AIP, EMV_REFERENCE)
+	        end
+	        if  nodes.find_first(GPO,{id="94"}) then 			
+		        tag_value_parse(ref2, 0x94, AFL, EMV_REFERENCE)
+	        end 
 	        else
 	            log.print(log.WARNING,
 		              "GPO Response message contains neither a Format 1 nor a Format 2 Data Field")

@@ -10,8 +10,11 @@ cardpeek \- A gui tool to explore the contents of ISO 7816 smart cards.
 .SH DESCRIPTION 
 .PP
 Cardpeek is a tool to read the contents of ISO7816 smart cards.
-It features a GTK GUI to represent card data is a tree view, and is
+It features a GTK+ GUI to represent card data is a tree view, and is
 extendable with a scripting language (LUA).
+.TP
+\fB\-c\fR, \fB\-\-console\fR
+Run Cardpeek in console mode, without the GTK+ GUI.
 .TP
 \fB\-r\fR, \fB\-\-reader\fR=\fIREADER\fR
 Connect to the reader identified by READER.
@@ -25,7 +28,45 @@ Print version info and list of detected smart card readers.
 The goal of this project is to allow smart card owners to be better
 informed about what type of personal information is stored in these
 devices.
+
+.PP
+This tool is capable of reading the contents of the following types of cards:
+.IP \[bu]
+EMV "chip and PIN" bank cards, including:
+.RS
+.IP \[bu]
+VISA, MasterCard, CB and UK Post Office Account contact cards;
+.IP \[bu]
+PayWave (VISA) and PayPass (MasterCard) contactless cards;
+.RE
+.IP \[bu]
+Electronic/Biometric passports, which have an embedded contactless chip;
+.IP \[bu]
+The Belgian eID card;
+.IP \[bu]
+Calypso transport cards including:
+.RS
+.IP \[bu]
+Navigo transport cards used in Paris;
+.IP \[bu]
+MOBIB cards used in Brussels;
+.IP \[bu]
+RavKav cards used in Israel;
+.IP \[bu]
+VIVA cards used in Lisbon;
+.RE
+.IP \[bu]
+GSM SIM cards (without USIM data used in recent cards);
+.IP \[bu]
+Vitale 2, the French health card.
+.IP \[bu]
+Moneo, the French electronic purse;
+.IP \[bu]
+Driver Tachograph cards;
+.IP \[bu]
+OpenPGP Cards (beta);
  
+.PP
 This is not a real man-page, for more detailed information see 
 included PDF documentation 
 .B cardpeek_ref.en.pdf
@@ -38,14 +79,17 @@ or in your in your system
 directory (e.g. /usr/share/doc/cardpeek).
 
 .SH COPYRIGHT 
-cardpeek is Copyright (c) 2009-2013 Alain Pannetrat.
+Cardpeek is Copyright (c) 2009-2015 Alain Pannetrat.
 
-cardpeek is free software: you can redistribute it and/or modify
+Cardpeek is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-cardpeek is distributed in the hope that it will be useful,
+As an exemption to the GNU General Public License, compiling, 
+linking, and/or using OpenSSL is allowed.
+
+Cardpeek is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

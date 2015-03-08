@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Cardpeek
+Comment=Tool to read the contents of smart cards
+Exec=cardpeek
+Icon=cardpeek-logo
+Terminal=false
+Type=Application
+Categories=GTK;System;Security;

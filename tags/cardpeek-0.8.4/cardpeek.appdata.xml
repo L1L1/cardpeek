@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2015 Alain Pannetrat <l1l1@gmx.com> -->
+<component type="desktop">
+ <id>cardpeek.desktop</id>
+ <metadata_license>CC-BY-SA-3.0</metadata_license>
+ <project_license>GPL-3.0+</project_license>
+ <name>Power Statistics</name>
+ <summary>Observe power management</summary>
+ <description>
+    <p>
+    Cardpeek is a cross-platform graphical tool to read the contents of smart cards, including:
+    <ul>
+        <li>Bank cards with a chip (EMV);</li>
+        <li>Electronic/biometric passports;</li>
+        <li>Transport cards from Paris (Navigo), Brussels (Mobib), Lisbon (VIVA) and Israel (RavKav);</li>
+        <li>GSM SIM cards;</li>
+        <li>Vitale 2, the French health card;</li>
+        <li>Moneo, the French electronic purse;</li>
+        <li>Driver Tachograph cards;</li>
+        <li>OpenPGP Cards (beta);</li>
+        <li>Mifare classic;</li>
+    </ul>
+    </p>
+    <p>
+    It features a GTK GUI to represent card data is a tree view, and is extensible with a scripting language (LUA).
+    </p>
+    <p>
+    The goal of this project is to allow smart card owners to be better informed about what type of personal information is stored in these devices.
+    </p>
+ </description>
+ <screenshots>
+  <screenshot type="default">
+   <image>http://cardpeek.googlecode.com/files/sample-emv.jpg</image>
+   <caption>Reading the content of a bank card.</caption>
+  </screenshot>
+ </screenshots>
+ <url type="homepage">http://pannetrat.com/Cardpeek/</url>
+ <updatecontact>l1l1_at_gmx.com</updatecontact>
+</component>

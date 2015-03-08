@@ -79,16 +79,7 @@ enum {
   LOG_WARNING,
   LOG_ERROR
 };
-/*
-extern const char ANSI_RESET[];
-extern const char ANSI_RED[];
-extern const char ANSI_GREEN[];
-extern const char ANSI_YELLOW[];
-extern const char ANSI_BLUE[];
-extern const char ANSI_MAGENTA[];
-extern const char ANSI_CYAN[];
-extern const char ANSI_WHITE[];
-*/
+
 /*****************************************************
  *
  *  String functions for hash maps 

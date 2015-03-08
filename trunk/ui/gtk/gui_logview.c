@@ -33,6 +33,9 @@ GtkTextBuffer* LOG_BUFFER=NULL;
 GtkWidget* LOG_WINDOW=NULL;
 GtkStatusbar *STATUS_BAR=NULL;
 guint STATUS_BAR_CONTEXT_ID=0;
+#ifdef CUSTOM_GTK_LOG
+guint CUSTOM_LOG_FUNCTION = 0;
+#endif
 
 /*********************************************************/
 /* LOG FUNCTIONS AND UI CALLBACKS ************************/
@@ -82,6 +85,33 @@ static void gui_logview_function(int log_level, const char* str)
   ui_update();
 }
 
+#ifdef CUSTOM_GTK_LOG
+static void custom_log_function(const char *domain, 
+        GLogLevelFlags log_level, 
+        const gchar *message,
+        gpointer user_data)
+{
+    switch (log_level) {
+        case G_LOG_LEVEL_ERROR:
+            log_printf(LOG_ERROR,"%s",message);
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            log_printf(LOG_ERROR,"(*critical*) %s",message);
+            break;
+        case G_LOG_LEVEL_WARNING:
+            log_printf(LOG_WARNING,"%s",message);
+            break;
+        case G_LOG_LEVEL_MESSAGE:
+            log_printf(LOG_INFO,"(*message*) %s",message);
+            break;
+        case G_LOG_LEVEL_INFO:
+            log_printf(LOG_INFO,"%s",message);
+            break;
+        default:
+            log_printf(LOG_DEBUG,"%s",message);
+    }
+}
+#endif
 GtkWidget *gui_logview_create_window(void)
 {
   GtkWidget *view;
@@ -122,6 +152,13 @@ GtkWidget *gui_logview_create_window(void)
 
   log_set_function(gui_logview_function);
 
+#ifdef CUSTOM_GTK_LOG
+  CUSTOM_LOG_FUNCTION = g_log_set_handler(NULL, 
+                                          G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, 
+                                          custom_log_function, 
+                                          NULL); 
+#endif
+
   return GTK_WIDGET(LOG_WINDOW);
 }
 
@@ -136,6 +173,9 @@ GtkWidget *gui_logview_create_status_bar(void)
 void gui_logview_cleanup(void)
 {
 	LOG_BUFFER = NULL;
+#ifdef CUSTOM_GTK_LOG
+    g_log_remove_handler(NULL,CUSTOM_LOG_FUNCTION);
+#endif
 	log_set_function(NULL);
 	LOG_WINDOW=NULL;
 	STATUS_BAR=NULL;

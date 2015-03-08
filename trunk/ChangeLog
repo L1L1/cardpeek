@@ -1,3 +1,13 @@
+cardpeek-0.8.4: Alain Pannetrat <L1L1@gmx.com>
+8 March 2015
+- Works with Homebrew on OS X out of the box on Yosemite.
+- Has now a 'console' mode, as an alternative to the GTK+ GUI.
+- New and improved mifare classic 1k/4k script.
+- EMV script enhancements (thanks to A. Kozlik) and some minor bug fixes.
+- Improvements in GSM script.
+- Enable minimal "app bundling" on Mac OSX.
+- Many bug fixes and improvements.
+
 cardpeek-0.8.3: Alain Pannetrat <L1L1@gmx.com>
 15 August 2014
 - Added initial OpenPGP card support (thanks to A. Heiduk)

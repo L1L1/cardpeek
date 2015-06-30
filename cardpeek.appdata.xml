@@ -5,7 +5,7 @@
  <metadata_license>CC-BY-SA-3.0</metadata_license>
  <project_license>GPL-3.0+</project_license>
  <name>Power Statistics</name>
- <summary>Observe power management</summary>
+ <summary>A tool to read the content of smart cards</summary>
  <description>
     <p>
     Cardpeek is a cross-platform graphical tool to read the contents of smart cards, including:

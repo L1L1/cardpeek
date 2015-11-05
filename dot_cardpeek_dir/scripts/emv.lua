@@ -910,7 +910,7 @@ function emv_process_application(cardenv,aid)
                      end
                      pin = ui.readline("Enter PIN for verification (or keep empty to avoid PIN verification)",8,"")
                      if pin ~= "" then
-                        sw,resp = card.verify(tostring(pin))
+                        sw,resp = card.verify(pin)
                         if sw == 0x9000 then
                            ui.question("PIN Verified",{"OK"})
                            count = 0

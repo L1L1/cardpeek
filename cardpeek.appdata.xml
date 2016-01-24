@@ -4,7 +4,7 @@
  <id>cardpeek.desktop</id>
  <metadata_license>CC-BY-SA-3.0</metadata_license>
  <project_license>GPL-3.0+</project_license>
- <name>Power Statistics</name>
+ <name>Cardpeek</name>
  <summary>A tool to read the content of smart cards</summary>
  <description>
     <p>

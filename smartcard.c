@@ -52,7 +52,9 @@ cardmanager_t *cardmanager_new(void)
   memset(cm,0,sizeof(cardmanager_t));
   cm->readers_count=0;
   cardmanager_search_pcsc_readers(cm);
-  cardmanager_search_usbserial_readers(cm);
+  #if defined(__unix__)
+    cardmanager_search_usbserial_readers(cm);
+  #endif
   cardmanager_search_replay_readers(cm);
   return cm;
 }

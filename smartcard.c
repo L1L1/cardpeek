@@ -404,7 +404,7 @@ int cardmanager_search_usbserial_readers(cardmanager_t *cm)
 /* this should not be here but in pcsc_driver.c */
 int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 {
-  DWORD dwReaders;
+  DWORD dwReaders = 0;
   char *p;
   LONG hcontext = 0;
   long status;

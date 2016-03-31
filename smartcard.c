@@ -357,7 +357,7 @@ static int cardmanager_check_pcscd_is_running(void)
 }
 
 
-/* this should not be here but in pcsc_driver.c */
+/* this should not be here but in usbserial_driver.c */
 int cardmanager_search_usbserial_readers(cardmanager_t *cm)
 {
   unsigned r;
@@ -390,7 +390,7 @@ int cardmanager_search_usbserial_readers(cardmanager_t *cm)
   }
   free(readers);
 
-  log_printf(LOG_DEBUG,"Found %i usbserial readers", usbserial_readers_count);
+  log_printf(LOG_DEBUG,"Found %i usbserial readers", usbserial_readers_count-2);
   log_printf(LOG_DEBUG,"Found %i readers",cm->readers_count);
 
   return cm->readers_count;

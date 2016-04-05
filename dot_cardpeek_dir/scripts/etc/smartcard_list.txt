@@ -2789,6 +2789,9 @@
 3B 88 80 01 00 00 00 00 77 83 95 00 00
 	MULTOS (PKI)
 
+3B 88 80 01 00 00 00 00 80 81 71 00 79
+	Apple Pay card - Usually EMV
+
 3B 88 80 01 00 00 00 00 B3 71 71 .0 .A
 	Public transportation card in Riga, Latvia, called "e-Talons"
 	http://etalons.rigassatiksme.lv/en/payments/activating_the_e-ticket/

@@ -565,8 +565,8 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     local lnBitsize = 0
     if 3 == issuerId then       --Egged
         bitOffset = 155
-        lnBitsize = 10
-        if 0 < bit.AND(locationBitmap, 8) then bitOffset = bitOffset + 12 end
+        lnBitsize = 8
+        if 0 < bit.AND(locationBitmap, 8) then bitOffset = bitOffset + 13 end --if Location[3] is set
     elseif 15 == issuerId then  --Metropoline
         bitOffset = 123
         lnBitsize = 32
@@ -693,7 +693,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
 
                 local NEW_REF = nodes.append(CONTRACT_REC_REF, {classname="item", label="Valid to", size=2})
                 nodes.set_attribute(NEW_REF,"val", bytes.new(8, string.format("%01X", validUntilOption)))
-                nodes.set_attribute(NEW_REF,"alt", "The end of the service")
+                nodes.set_attribute(NEW_REF,"alt", "The end of the service (04:30 of next day)")
 
                 if contractValid then
                     contractValid = validFromSeconds > os.time()

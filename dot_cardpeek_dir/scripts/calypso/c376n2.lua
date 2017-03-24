@@ -266,11 +266,18 @@ function RavKav_LINE_TYPE(source)
     return tostring(lineTypeId)
 end
 
-function RavKav_LOCATION(source)
-    local locationId = bytes.tonumber(source)
-    local location = RAVKAV_LOCATIONS[locationId]
-    if location then return location end
-    return tostring(locationId)
+function RavKav_RAIL_LOCATION(source)
+    local railLocationId = bytes.tonumber(source)
+    local railLocation = RAVKAV_RAIL_LOCATIONS[railLocationId]
+    if railLocation then return railLocation end
+    return tostring(railLocationId)
+end
+
+function RavKav_RAIL_LOCATION2(source)
+    local railLocation2Id = bytes.tonumber(source)
+    local railLocation2 = RAVKAV_RAIL_LOCATIONS2[railLocation2Id]
+    if railLocation2 then return railLocation2 end
+    return tostring(railLocation2Id)
 end
 
 function RavKav_BUS_LOCATION(source)
@@ -486,7 +493,7 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     bitOffset               = RavKav_parseBits(data, bitOffset,  4, EVENT_REC_REF, "Line type",                 RavKav_LINE_TYPE)
     bitOffset, eventType    = RavKav_parseBits(data, bitOffset,  4, EVENT_REC_REF, "Event type",                en1545_NUMBER)
     bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "Event time",                en1545_DATE_TIME)
-    bitOffset               = RavKav_parseBits(data, bitOffset,  1, EVENT_REC_REF, "Journey interchanges flag", en1545_NUMBER)      --includes switching/continuing beyond
+    bitOffset               = RavKav_parseBits(data, bitOffset,  1, EVENT_REC_REF, "Journey interchanges flag", en1545_NUMBER)      --includes switching/continuing beyond, TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
     bitOffset               = RavKav_parseBits(data, bitOffset, 30, EVENT_REC_REF, "First event time",          en1545_DATE_TIME)   --identical to 'Event time' otherwise aggregate value prevalidation time for Israel Railways
 
     local PRIORITIES_REF = nodes.append(EVENT_REC_REF, {classname="item", label="Best contract priorities"})
@@ -502,7 +509,7 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
 
     if 0 < bit.AND(locationBitmap, 1) then
         if 2 == issuerId then   --Israel Railways
-            bitOffset = RavKav_parseBits(data, bitOffset, 16, EVENT_REC_REF, "Location", RavKav_LOCATION)   --station
+            bitOffset = RavKav_parseBits(data, bitOffset, 16, EVENT_REC_REF, "Location", RavKav_RAIL_LOCATION)   --station
         else
             bitOffset = RavKav_parseBits(data, bitOffset, 16, EVENT_REC_REF, "Location ID (GTFS stops.txt)", RavKav_BUS_LOCATION)  --stop_code
         end
@@ -514,7 +521,7 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     end
 
     if 0 < bit.AND(locationBitmap, 4) then
-        bitOffset = RavKav_parseBits(data, bitOffset, 8, EVENT_REC_REF, "Stop en route", en1545_NUMBER)
+        bitOffset = RavKav_parseBits(data, bitOffset, 8, EVENT_REC_REF, "Stop en route", RavKav_RAIL_LOCATION2)
     end
 
     if 0 < bit.AND(locationBitmap, 8) then  --12 unknown bits
@@ -640,7 +647,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
     bitOffset                               = RavKav_parseBits(data, bitOffset, 14, CONTRACT_REC_REF, "Date of purchase",           en1545_DATE)    --sale date
     bitOffset                               = RavKav_parseBits(data, bitOffset, 12, CONTRACT_REC_REF, "Sale device",                en1545_NUMBER)  --serial number of device that made the sale
     bitOffset                               = RavKav_parseBits(data, bitOffset, 10, CONTRACT_REC_REF, "Sale number",                en1545_NUMBER)  --runnning sale number on the day of the sale
-    bitOffset                               = RavKav_parseBits(data, bitOffset,  1, CONTRACT_REC_REF, "Journey interchanges flag",  en1545_NUMBER)  --includes switching/continuing beyond
+    bitOffset                               = RavKav_parseBits(data, bitOffset,  1, CONTRACT_REC_REF, "Journey interchanges flag",  en1545_NUMBER)  --includes switching/continuing beyond, TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
 	bitOffset, text, ref, validityBitmap    = RavKav_parseBits(data, bitOffset,  9, CONTRACT_REC_REF, "Validity bitmap",            en1545_UNDEFINED)
 
     if 0 < bit.AND(validityBitmap, 1) then
@@ -649,18 +656,20 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
 
     local restrictionCode = 0
     if 0 < bit.AND(validityBitmap, 2) then
-        bitOffset, restrictionCode = RavKav_parseBits(data, bitOffset, 5, CONTRACT_REC_REF, "Restriction code", en1545_NUMBER)
+        bitOffset, restrictionCode = RavKav_parseBits(data, bitOffset, 5, CONTRACT_REC_REF, "Restriction code", en1545_NUMBER)          --TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
     end
 
     if 0 < bit.AND(validityBitmap, 4) then
         local iDuration, rd_ref
-        bitOffset, iDuration, rd_ref = RavKav_parseBits(data, bitOffset, 6, CONTRACT_REC_REF, "Restriction duration", en1545_NUMBER)
+        bitOffset, iDuration, rd_ref = RavKav_parseBits(data, bitOffset, 6, CONTRACT_REC_REF, "Restriction duration", en1545_NUMBER)    --TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
         if 16 == restrictionCode then
             iDuration = iDuration * 5
         else
             iDuration = iDuration * 30
         end
         rd_ref:set_attribute("alt",string.format("%d minute(s)", iDuration))
+
+        --add if restrictionCode 2 then set attribute %d trips, iTtrips
     end
 
     if 0 < bit.AND(validityBitmap,8) then   --validity end date
@@ -898,15 +907,19 @@ function RavKav_summariseEvent(EVENTS_REF, nRec, LT_REF)
     if RAVKAV_INTERCHANGE_AREAS[interchangesAreaId] then RavKav_addTextNode(EVSUM_REF, "Journey interchange area", RAVKAV_INTERCHANGE_AREAS[interchangesAreaId]) end
 
     if 2 == issuerId then   --Israel Railways
-         local locationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location", nil, RAVKAV_LOCATIONS)
-         if RAVKAV_LOCATIONS[locationId] then
-            RavKav_addTextNode(EVSUM_REF, "Station", RAVKAV_LOCATIONS[locationId]) --station
-        end
+         local railLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location", nil, RAVKAV_RAIL_LOCATIONS)
+         if RAVKAV_RAIL_LOCATIONS[railLocationId] then
+            RavKav_addTextNode(EVSUM_REF, "Station", RAVKAV_RAIL_LOCATIONS[railLocationId]) --station
+         end
+         local railLocation2Id = RavKav_getFieldAsNumber(EVENT_REC_REF, "Stop en route", nil, RAVKAV_RAIL_LOCATIONS2)
+         if RAVKAV_RAIL_LOCATIONS2[railLocation2Id] then
+            RavKav_addTextNode(EVSUM_REF, "Destination station", RAVKAV_RAIL_LOCATIONS2[railLocation2Id]) --destination station
+         end
     else
-        local busLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location ID (GTFS stops.txt)", nil, RAVKAV_BUS_LOCATIONS)
-        if RAVKAV_BUS_LOCATIONS[busLocationId] then
+         local busLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location ID (GTFS stops.txt)", nil, RAVKAV_BUS_LOCATIONS)
+         if RAVKAV_BUS_LOCATIONS[busLocationId] then
             RavKav_addTextNode(EVSUM_REF, "Stop ID (GTFS stops.txt)", RAVKAV_BUS_LOCATIONS[busLocationId]) --stop_code
-        end
+         end
     end
 
 
@@ -1039,11 +1052,11 @@ function RavKav_summariseContract(CONTRACTS_REF, nRec, VC_REF, IC_REF)
     RavKav_summariseIntegerArray(CONTRACT_REC_REF, "Tariff code", CTSUM_REF, "Tariff codes")
     RavKav_summariseTextArray(CONTRACT_REC_REF, "Contract type", RAVKAV_CONTRACT_TYPES, CTSUM_REF, "Contract types")
 
-    local journeyInterchangesFlag = 0 ~= RavKav_getFieldAsNumber(CONTRACT_REC_REF, "Journey interchanges flag")
+    local journeyInterchangesFlag = 0 ~= RavKav_getFieldAsNumber(CONTRACT_REC_REF, "Journey interchanges flag") --TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
     if journeyInterchangesFlag then RavKav_addTextNode(CTSUM_REF, "Journey interchanges", "Includes switching/resume") end
 
-    if 0 < RavKav_getFieldAsNumber(CONTRACT_REC_REF, "Restriction duration") then
-        RavKav_copyField(CONTRACT_REC_REF, CTSUM_REF, "Restriction duration")
+    if 0 < RavKav_getFieldAsNumber(CONTRACT_REC_REF, "Restriction duration") then         ----TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
+        RavKav_copyField(CONTRACT_REC_REF, CTSUM_REF, "Restriction duration")             ----TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
     end
 
     RavKav_copyField(CONTRACT_REC_REF, CTSUM_REF, "Balance")

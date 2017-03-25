@@ -493,12 +493,12 @@ RAVKAV_EVENT_TYPES = {
     [3]   = "Transit -",
     [4]   = "Prevalidate -",
     [5]   = "Inspection -",
-    [6]   = "Transit trip",
-    [7]   = "Exit from station",
-    [8]   = "Other usage",
+    [6]   = "Transit trip -",
+    [7]   = "Exit from station -",
+    [8]   = "Other usage -",
     [9]   = "Contract cancel -",
-    [12]  = "Loaded contract and used immediately for",
-    [13]  = "Loaded contract",
+    [12]  = "Loaded contract and used immediately for -",
+    [13]  = "Loaded contract -",
     [14]  = "Personalization / Card issuance",
     [15]  = "Card invalidation"
 }
@@ -847,9 +847,9 @@ RAVKAV_METROPOLIS = {
     [4]  = "Metropolis Be'er Sheva",
     [5]  = "Metropolis Haifa",
     [6]  = "Metropolis Jerusalem",
-    [7]  = "4",
-    [8]  = "5",
-    [9]  = "6",
+    [7]  = "7",
+    [8]  = "8",
+    [9]  = "9",
     [10] = "Outside of Metropolis"
 }
 

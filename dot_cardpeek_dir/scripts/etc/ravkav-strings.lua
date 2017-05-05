@@ -45,13 +45,13 @@ RAVKAV_ISSUERS = {
     [43] = "Jerusalem - Mahane Shuafat",
     [44] = "Jerusalem - Abu-Tor - Anata united",
     [45] = "Jerusalem - Alwest united",
-    [46] = "reserved",
+    [46] = "reserved 46",
     [47] = "Jerusalem - Mount of Olives",
-    [48] = "reserved",
-    [49] = "reserved",
+    [48] = "reserved 48",
+    [49] = "reserved 49",
     [50] = "South Jerusalem united",
     [51] = "Jerusalem - Sur Baher united",
-    [52] = "reserved",
+    [52] = "reserved 52",
     [53] = "Jerusalem - Isawiya",
 --  101-157 reserved
     [250] = "Israel Defence Forces"
@@ -236,7 +236,7 @@ RAVKAV_ROUTES = {
     [150] = "Hashmonaim",                           --18
     [151] = "Elad",                                 --4
     [152] = "Beitar Illit",                         --11, 18 (since July 1, 2012, merge of Illit with Kavim)
-    [153] = "Beitar Illit",                         --11
+    [153] = "Beitar Illit",                         --11, 18 (since July 1, 2012, merge of Illit with Kavim)
     [154] = "Modi'in",                              --17
     [155] = "Hadera - Netanya",                     --18
     [156] = "Hadera - Netanya (future)",            --18
@@ -265,7 +265,7 @@ RAVKAV_ROUTES = {
     [215] = "Metronit Haifa",                       --30
     [218] = "Fast line Tel-Aviv (BRT)",             --5
     [220] = "Tel-Aviv Light Rail",                  --?
-    [221] = "Direct Be'er Sheva - Tel-Aviv",         --4 (until October 2013)
+    [221] = "Direct Be'er Sheva - Tel-Aviv",        --4 (until October 2013)
     [222] = "Be'er Sheva - Tel-Aviv - Negev (including Arad, Yeruham, Mitzpe Ramon and Nitzana)", --15
 
 --Sherut Taxis
@@ -274,7 +274,7 @@ RAVKAV_ROUTES = {
 
 -- These are the station names from the Israel Rail website.
 -- However the IDs on the website do NOT match those used by RavKav and are incorrect,
--- except for the 56 that have been updated below (with original ID added as comment)
+-- except for the 63 that have been updated below (with original ID added as comment)
 RAVKAV_RAIL_LOCATIONS = {
 -- 2: Israel Railways:
     [1]  =     "[Ticketing Machine] Tel Aviv Center - Savidor",      --3700
@@ -333,6 +333,14 @@ RAVKAV_RAIL_LOCATIONS = {
     [54] =     "[Ticketing Machine] Rishon Le'Tziyon - Moshe Dayan", --9800
     [55] =     "[Ticketing Machine] Yavne West",                     --9000
     [56] =     "[Ticketing Machine] Sderot",                         --9600
+    [57] =     "[Ticketing Machine] Netivot",                        --9650
+    --check
+    [58] =     "[Ticketing Machine] Ofakim",                         --9700
+    [59] =     "[Ticketing Machine] ",                               --
+    [60] =     "[Ticketing Machine] Yokneam - Kfar Yehoshua",        --1240
+    [61] =     "[Ticketing Machine] ",                               --
+    [62] =     "[Ticketing Machine] ",                               --
+    [63] =     "[Ticketing Machine] ",                               --
 
     [7001] =   "Tel Aviv Center - Savidor",                          --3700
     [7002] =   "Herzliya",                                           --3500
@@ -390,14 +398,19 @@ RAVKAV_RAIL_LOCATIONS = {
     [7054] =   "Rishon Le'Tziyon - Moshe Dayan",                     --9800
     [7055] =   "Yavne West",                                         --9000
     [7056] =   "Sderot",                                             --9600
+    [7057] =   "Netivot",                                            --9650
+    --check
+    [7058] =   "Ofakim",                                             --9700
+    [7059] =   "",                                                   --
+    [7060] =   "Yokneam - Kfar Yehoshua",                            --1240
+    [7061] =   "",                                                   --
+    [7062] =   "",                                                   --
+    [7063] =   "",                                                   --
 
-    [1240] =   "Yokneam - Kfar Yehoshua",
     [1250] =   "Migdal HaEmek - Kfar Barukh",
     [1260] =   "Afula",
     [1280] =   "Beit She'an",
-    [3310] =   "Netanya Sapir",
-    [9650] =   "Netivot",
-    [9700] =   "Ofakim"
+    [3310] =   "Netanya Sapir"
 }
 
 RAVKAV_RAIL_LOCATIONS2 = {
@@ -457,7 +470,15 @@ RAVKAV_RAIL_LOCATIONS2 = {
     [53] =     "Bat Yam - Komemiyyut",           --4690
     [54] =     "Rishon Le'Tziyon - Moshe Dayan", --9800
     [55] =     "Yavne West",                     --9000
-    [56] =     "Sderot"                          --9600
+    [56] =     "Sderot",                         --9600
+    [57] =     "Netivot",                        --9650
+    --check
+    [58] =     "Ofakim",                         --9700
+    [59] =     "",                               --
+    [60] =     "Yokneam - Kfar Yehoshua",        --1240
+    [61] =     "",                               --
+    [62] =     "",                               --
+    [63] =     ""                                --
 }
 
 --Bus stops
@@ -493,12 +514,12 @@ RAVKAV_EVENT_TYPES = {
     [3]   = "Transit -",
     [4]   = "Prevalidate -",
     [5]   = "Inspection -",
-    [6]   = "Transit trip -",
+    [6]   = "Transit trip",
     [7]   = "Exit from station -",
     [8]   = "Other usage -",
     [9]   = "Contract cancel -",
-    [12]  = "Loaded contract and used immediately for -",
-    [13]  = "Loaded contract -",
+    [12]  = "Contract load and used immediately for -",
+    [13]  = "Contract load -",
     [14]  = "Personalization / Card issuance",
     [15]  = "Card invalidation"
 }
@@ -556,7 +577,7 @@ RAVKAV_VALIDITY_TYPES = {
     [0] = "Area",
     [1] = "Tariff",
     [2] = "2",
-    [3] = "3",
+    [3] = "Rail origin-destination",
     [4] = "4",
     [5] = "5",
     [6] = "6",
@@ -940,8 +961,8 @@ RAVKAV_CONTRACT_TYPES = {
     [39] = "Day pass: Lod <> Tel-Aviv / [Connex Veolia]",
     [41] = "Semester pass: Modi'in <> Tel-Aviv / [Connex Veolia] / (students only)",
     [42] = "Annual pass: Modi'in <> Tel-Aviv / [Connex Veolia] / (students only)",
-    [45] = "Month pass: Rahat urban / [Narcissus-Gal]",
-    [46] = "Month pass: Rahat extended / [Narcissus-Gal]",
+    [45] = "Month pass: Rahat urban / [Galim (Narkis Gal)]",
+    [46] = "Month pass: Rahat extended / [Galim (Narkis Gal)]",
     [51] = "Semester pass: Kiryat-Gat / [Egged Transport] / (students only)",
     [52] = "Annual pass: Kiryat-Gat / [Egged Transport] / (students only)",
     [53] = "Semester pass: Ashkelon <> Kiryat-Gat / [Egged Transport] / (students only)",
@@ -1018,7 +1039,7 @@ RAVKAV_CONTRACT_TYPES = {
     [174] = "Month/Week/Day pass: Metropolis Be'er Sheva: Be'er Sheva + South East - Ring 1, 2.1, 2.3, 3.2, 3.3, 3.4 / [Dan Be'er Sheva, Dan South, Egged, Egged Transport, Metrodan, Metropoline, Israel Railways]",
     [175] = "Month/Week/Day pass: Metropolis Be'er Sheva: West area + Negev - Ring 2.1, 2.2, 3.1, 3.2 / [Dan South, Egged, Egged Transport, Metropoline, Israel Railways]",
     [176] = "Month/Week/Day pass: Metropolis Be'er Sheva: Lehavim area + West area + Negev - Ring 2.1, 2.2, 3.2, 3.3, 3.4 / [Dan South, Egged, Egged Transport, Metropoline, Israel Railways]",
-    [177] = "Month/Week/Day pass: FULL Metropolis Be'er Sheva + Mitzpe Ramon area - Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + zone 811 / [Dan Be'er Sheva, Dan South, Egged, Egged Transport, Metropoline, Metrodan, Israel Railways]",
+    [177] = "Month/Week/Day pass: FULL Metropolis Be'er Sheva + Mitzpe Ramon area - Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + zone 811/901 / [Dan Be'er Sheva, Dan South, Egged, Egged Transport, Metropoline, Metrodan, Israel Railways]",
     [178] = "Month pass: FULL Metropolis Be'er Sheva + Ashkelon area - Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + zone 801, 802 / [Dan Be'er Sheva, Dan South, Egged, Egged Transport, Metropoline, Metrodan, Israel Railways]",
     [179] = "Month/Week/Day pass: FULL Metropolis Be'er Sheva + Ashkelon area - Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + zone 801, 802 / [Dan Be'er Sheva, Dan South, Egged, Egged Transport, Metropoline, Metrodan, Israel Railways]",
     [180] = "Month/Week/Day pass: Metropolis Be'er Sheva: Rahat + Lehavim area only - Ring 2.1 / [Dan South, Egged, Egged Transport, Metropoline, Israel Railways]",
@@ -1174,7 +1195,7 @@ RAVKAV_CONTRACT_TYPES = {
     [695] = "Month/Week/Day pass: Metropolis Jerusalem: Gush Etsion area only - Ring 2.3 / [Egged, Egged Transport]",
     [696] = "Month/Week/Day pass: Metropolis Jerusalem: Beit Shemesh area only - Ring 3.1 / [Egged, Kavim, Superbus, Afikim, Israel Railways]",
     [697] = "Month/Week/Day pass: Metropolis Jerusalem: Hebel Modi'in area only - Ring 3.2 / [Egged, Egged Transport, Kavim, Superbus, Israel Railways]",
-    [698] = "Month/Week/Day pass: Metropolis Jerusalem: Dead Sea area only - Ring 3.3 / [Egged, Egged Transport]",
+    [698] = "Month/Week/Day pass: Metropolis Jerusalem: Dead Sea Valley area only - Ring 3.3 / [Egged, Egged Transport]",
     [699] = "Month/Week/Day pass: Metropolis Jerusalem: Kiryat Arba area only - Ring 3.4 / [Egged, Egged Transport]",
     [701] = "Month pass: Ramla <> Lod / [Egged, Superbus, Kavim]",
     [702] = "Month pass: Be'er Ya'akov <> Ben-Gurion Airport / [Egged, Superbus, Connex]",
@@ -1203,7 +1224,7 @@ RAVKAV_CONTRACT_TYPES = {
     [753] = "Month/Week/Day pass: Dan Region - Samaria - Ring 3.4 / [Egged Transport, Afikim] / (including students)",
     [754] = "Month/Week/Day pass: Metropolis Jerusalem - Gush Shila - Ring 3.5 / [Egged Transport, Egged, Afikim]",
     [755] = "Month/Week/Day pass: Reform zone 701 - Harish <> Hadera / [Afikim, Kavim, Metropoline, Egged, Israel Railways]",
-    [756] = "Day pass: Metropolis Be'er Sheva: Eilat <> Arava <> Be'er Sheva - Ring 1, 2.2, 2.3, 3.2, 3.3, zone 811, 901, 902 / [Dan Be'er Sheva, Egged, Metropoline]",
+    [756] = "Day pass: Metropolis Be'er Sheva: Eilat <> Arava <> Be'er Sheva - Ring 1, 2.2, 2.3, 3.2, 3.3, zone 811/903, 901, 902 / [Dan Be'er Sheva, Egged, Metropoline]",
     [811] = "Semester pass: South / [Egged, Metrodan, Metropoline, Egged Transport] / (students only)",
     [812] = "Annual pass: South / [Egged, Metrodan, Metropoline, Egged Transport] / (students only)",
     [821] = "Amount of 2 rides - Tel-Aviv <> Be'er Sheva / [Metropoline, Egged Transport]",
@@ -1216,8 +1237,8 @@ RAVKAV_CONTRACT_TYPES = {
     [906] = "Month pass: Israel Rail + Dan Region - Extended - Ring 1, 2.1, 2.2, 2.3 - adult - reform / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
     [907] = "Month pass: Israel Rail + Dan Region - Ring 1 - senior citizen - special / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
     [908] = "Month pass: Israel Rail + Dan Region - Ring 1 - senior citizen - standard / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
-    [909] = "Month pass: Israel Rail + Dan Region extended - Ring 1, 2.1, 2.2, 2.3 - senior citizen - special / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
-    [910] = "Month pass: Israel Rail + Dan Region extended - Ring 1, 2.1, 2.2, 2.3 - senior citizen - standard / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
+    [909] = "Month pass: Israel Rail + Dan Region - Extended - Ring 1, 2.1, 2.2, 2.3 - senior citizen - special / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
+    [910] = "Month pass: Israel Rail + Dan Region - Extended - Ring 1, 2.1, 2.2, 2.3 - senior citizen - standard / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
     [911] = "Month pass: Israel Rail + Dan Region - Ring 1 - adult - special / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
     [912] = "Month pass: Israel Rail + Dan Region - Ring 1 - adult - standard / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",
     [913] = "Month pass: Israel Rail + Dan Region - Ring 1 - Ring 1, 2.1, 2.2, 2.3 - adult - special / [Israel Railways, Dan, Egged, Kavim, Metropoline] / (sold by Israel Railways)",

@@ -24,7 +24,7 @@
 -- Some minor alterations of the original file were performed for
 -- integration with calypso.lua
 --
--- Mar 2017:
+-- May 2017:
 -- Updated
 --
 --********************************************************************--
@@ -33,6 +33,7 @@ require('lib.apdu')
 require('lib.tlv')
 require('lib.en1545')
 require('lib.country_codes')
+require('lib.calypso_card_num')
 require('etc.ravkav-strings')
 
 --Classes
@@ -533,7 +534,7 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     end
 
     if 0 < bit.AND(locationBitmap, 0x20) then
-        bitOffset = RavKav_parseBits(data, bitOffset, 25, EVENT_REC_REF, "Driver", en1545_NUMBER)
+        bitOffset = RavKav_parseBits(data, bitOffset, 25, EVENT_REC_REF, "Unknown", en1545_NUMBER)
     end
 
     if 0 < bit.AND(locationBitmap, 0x40) then
@@ -572,8 +573,8 @@ function RavKav_parseEvent(EVENTS_REF, nRec)
     local lnBitsize = 0
     if 3 == issuerId then       --Egged
         bitOffset = 155
-        lnBitsize = 8
-        if 0 < bit.AND(locationBitmap, 8) then bitOffset = bitOffset + 13 end --if Location[3] is set
+        lnBitsize = 10
+        if 0 < bit.AND(locationBitmap, 8) then bitOffset = bitOffset + 12 end --if Location[3] is set
     elseif 15 == issuerId then  --Metropoline
         bitOffset = 123
         lnBitsize = 32
@@ -595,6 +596,138 @@ function RavKav_parseEventsLog(APP_REF)
         local nRec
         for nRec = 1, numRecords do
             RavKav_parseEvent(EVENTS_REF, nRec)
+        end
+    end
+end
+
+function RavKav_parseSpecialEvent(SPECIALEVENTS_REF, nRec)
+    local SPECIALEVENT_REC_REF = nodes.find_first(SPECIALEVENTS_REF, {label="record", id=nRec})
+    if nil == SPECIALEVENT_REC_REF then return end
+
+    local record = nodes.get_attribute(SPECIALEVENT_REC_REF,"val")
+    if nil == record then return end
+
+    local data = bytes.convert(record,1)
+
+	if bytes.is_all(data, 0) then return end
+
+    local bitOffset = 0
+
+    local text, ref, issuerId
+
+    bitOffset                       = RavKav_parseBits(data, bitOffset, 3, SPECIALEVENT_REC_REF, "Version number", en1545_NUMBER)
+    bitOffset, text, ref, issuerId  = RavKav_parseBits(data, bitOffset, 8, SPECIALEVENT_REC_REF, "Issuer",         RavKav_ISSUER)
+
+    if issuerId == 0 then return end
+
+    local contractId, eventType
+
+    bitOffset, contractId   = RavKav_parseBits(data, bitOffset,  4, SPECIALEVENT_REC_REF, "Contract ID",               en1545_NUMBER)
+    bitOffset               = RavKav_parseBits(data, bitOffset,  4, SPECIALEVENT_REC_REF, "Line type",                 RavKav_LINE_TYPE)
+    bitOffset, eventType    = RavKav_parseBits(data, bitOffset,  4, SPECIALEVENT_REC_REF, "Event type",                en1545_NUMBER)
+    bitOffset               = RavKav_parseBits(data, bitOffset, 30, SPECIALEVENT_REC_REF, "Event time",                en1545_DATE_TIME)
+    bitOffset               = RavKav_parseBits(data, bitOffset,  1, SPECIALEVENT_REC_REF, "Journey interchanges flag", en1545_NUMBER)      --includes switching/continuing beyond, TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
+    bitOffset               = RavKav_parseBits(data, bitOffset, 30, SPECIALEVENT_REC_REF, "First event time",          en1545_DATE_TIME)   --identical to 'Event time' otherwise aggregate value prevalidation time for Israel Railways
+
+    local PRIORITIES_REF = nodes.append(SPECIALEVENT_REC_REF, {classname="item", label="Best contract priorities"})
+    local nContract
+    for   nContract = 1, 8 do
+          bitOffset = RavKav_parseBits(data, bitOffset, 4, PRIORITIES_REF, "Contract", RavKav_PERCENT, nContract)
+    end
+
+    local locationBitmap
+    local ln_ref = nil
+
+	bitOffset, text, ref, locationBitmap = RavKav_parseBits(data, bitOffset, 7, SPECIALEVENT_REC_REF, "Location bitmap", en1545_UNDEFINED)    --defined per issuer
+
+    if 0 < bit.AND(locationBitmap, 1) then
+        if 2 == issuerId then   --Israel Railways
+            bitOffset = RavKav_parseBits(data, bitOffset, 16, SPECIALEVENT_REC_REF, "Location", RavKav_RAIL_LOCATION)   --station
+        else
+            bitOffset = RavKav_parseBits(data, bitOffset, 16, SPECIALEVENT_REC_REF, "Location ID (GTFS stops.txt)", RavKav_BUS_LOCATION)  --stop_code
+        end
+    end
+
+    if 0 < bit.AND(locationBitmap, 2) then
+        local lineNumber
+        bitOffset, lineNumber, ln_ref = RavKav_parseBits(data, bitOffset, 16, SPECIALEVENT_REC_REF, "Line number", en1545_NUMBER)  --number of line on route
+    end
+
+    if 0 < bit.AND(locationBitmap, 4) then
+        bitOffset = RavKav_parseBits(data, bitOffset, 8, SPECIALEVENT_REC_REF, "Stop en route", RavKav_RAIL_LOCATION2)
+    end
+
+    if 0 < bit.AND(locationBitmap, 8) then  --12 unknown bits
+        bitOffset = RavKav_parseBits(data, bitOffset, 12, SPECIALEVENT_REC_REF, "Location[3]", en1545_UNDEFINED)
+    end
+
+    if 0 < bit.AND(locationBitmap, 0x10) then
+        bitOffset = RavKav_parseBits(data, bitOffset, 14, SPECIALEVENT_REC_REF, "Vehicle", en1545_NUMBER)
+    end
+
+    if 0 < bit.AND(locationBitmap, 0x20) then
+        bitOffset = RavKav_parseBits(data, bitOffset, 25, SPECIALEVENT_REC_REF, "Unknown", en1545_NUMBER)
+    end
+
+    if 0 < bit.AND(locationBitmap, 0x40) then
+        local interchangesAreaId
+        bitOffset, interchangesAreaId = RavKav_parseBits(data, bitOffset, 8, SPECIALEVENT_REC_REF, "Journey interchange area", RavKav_INTERCHANGE_AREA)
+    end
+
+    if 0 == bit.AND(locationBitmap, 0x20) then
+        local eventExtension
+        bitOffset, text, ref, eventExtension = RavKav_parseBits(data, bitOffset, 3, SPECIALEVENT_REC_REF, "Event extension bitmap", en1545_UNDEFINED)
+
+        if 0 < bit.AND(eventExtension, 1) then
+            bitOffset = RavKav_parseBits(data, bitOffset, 10, SPECIALEVENT_REC_REF, "Route system",    RavKav_ROUTE)
+            bitOffset = RavKav_parseBits(data, bitOffset,  8, SPECIALEVENT_REC_REF, "Fare code",       en1545_NUMBER)
+            local debitAmount, dr_ref
+            bitOffset, debitAmount, dr_ref = RavKav_parseBits(data, bitOffset, 16, SPECIALEVENT_REC_REF, "Debit amount", en1545_NUMBER)
+            if 0 < debitAmount and 6 ~= eventType and 0 < contractId and 9 > contractId then    --not a transit trip
+                if 21 > debitAmount then
+                    dr_ref:set_attribute("alt",string.format("%u trip(s)", debitAmount))
+                else
+                    dr_ref:set_attribute("alt",string.format("NIS %0.2f", debitAmount / 100.0))
+                end
+            end
+        end
+
+        if 0 < bit.AND(eventExtension, 2) then
+            bitOffset = RavKav_parseBits(data, bitOffset, 32, SPECIALEVENT_REC_REF, "Event extension[2]", en1545_UNDEFINED)
+        end
+
+        if 0 < bit.AND(eventExtension, 4) then
+            bitOffset = RavKav_parseBits(data, bitOffset, 32, SPECIALEVENT_REC_REF, "Event extension[3]", en1545_UNDEFINED)
+        end
+    end
+
+    -- fix 'Line number' field
+    local lnBitsize = 0
+    if 3 == issuerId then       --Egged
+        bitOffset = 155
+        lnBitsize = 10
+        if 0 < bit.AND(locationBitmap, 8) then bitOffset = bitOffset + 12 end --if Location[3] is set
+    elseif 15 == issuerId then  --Metropoline
+        bitOffset = 123
+        lnBitsize = 32
+    elseif 2 ~= issuerId and 14 ~= issuerId and 16 ~= issuerId then --not Israel Railways, Nativ Express nor Superbus
+        bitOffset = 145
+        lnBitsize = 10
+    end
+    if 0 < lnBitsize then
+        if ln_ref then ln_ref:remove() end
+        RavKav_parseBits(data, bitOffset, lnBitsize, SPECIALEVENT_REC_REF, "Line number", en1545_NUMBER)
+    end
+end
+
+function RavKav_parseSpecialEventsLog(APP_REF)
+	log.print(log.DBG, "Parsing special events...")
+    local SPECIALEVENTS_REF = nodes.find_first(APP_REF, {label="Special events"} )
+    if SPECIALEVENTS_REF then
+        local numRecords = RavKav_getRecordInfo(SPECIALEVENTS_REF)
+        local nRec
+        for nRec = 1, numRecords do
+            RavKav_parseSpecialEvent(SPECIALEVENTS_REF, nRec)
         end
     end
 end
@@ -648,7 +781,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
     bitOffset                               = RavKav_parseBits(data, bitOffset, 12, CONTRACT_REC_REF, "Sale device",                en1545_NUMBER)  --serial number of device that made the sale
     bitOffset                               = RavKav_parseBits(data, bitOffset, 10, CONTRACT_REC_REF, "Sale number",                en1545_NUMBER)  --runnning sale number on the day of the sale
     bitOffset                               = RavKav_parseBits(data, bitOffset,  1, CONTRACT_REC_REF, "Journey interchanges flag",  en1545_NUMBER)  --includes switching/continuing beyond, TODO: migrate to RAVKAV_INTERCHANGE_RIGHTS
-	bitOffset, text, ref, validityBitmap    = RavKav_parseBits(data, bitOffset,  9, CONTRACT_REC_REF, "Validity bitmap",            en1545_UNDEFINED)
+    bitOffset, text, ref, validityBitmap    = RavKav_parseBits(data, bitOffset,  9, CONTRACT_REC_REF, "Validity bitmap",            en1545_UNDEFINED)
 
     if 0 < bit.AND(validityBitmap, 1) then
         bitOffset = RavKav_parseBits(data, bitOffset, 5, CONTRACT_REC_REF, "Validity[1]", en1545_UNDEFINED)
@@ -689,7 +822,7 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
                 validUntilOption = ValidUntilOption.Date
                 local validUntilSeconds = RavKav_calculateMonthEnd(validFromSeconds, validMonths - 1)   --month end date
 
-        	    local NEW_REF = nodes.append(CONTRACT_REC_REF, {classname="item", label="Valid to", size=14}) --month end date
+                local NEW_REF = nodes.append(CONTRACT_REC_REF, {classname="item", label="Valid to", size=14}) --month end date
                 nodes.set_attribute(NEW_REF,"val", bytes.new(8, string.format("%04X", validUntilSeconds)))
                 nodes.set_attribute(NEW_REF,"alt", os.date("%x", validUntilSeconds))
 
@@ -720,13 +853,12 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
         end
     end
 
-    local profileId
-
     if 0 < bit.AND(validityBitmap, 0x20) then
         bitOffset = RavKav_parseBits(data, bitOffset, 32, CONTRACT_REC_REF, "Validity[5]", en1545_UNDEFINED)
     end
 
     if 0 < bit.AND(validityBitmap, 0x40) then
+        local profileId
         bitOffset, text, ref, profileId    = RavKav_parseBits(data, bitOffset, 6, CONTRACT_REC_REF, "Contract profile", RavKav_PROFILE)
     end
 
@@ -735,7 +867,8 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
     end
 
     if 0 < bit.AND(validityBitmap, 0x100) then
-        bitOffset = RavKav_parseBits(data, bitOffset, 32, CONTRACT_REC_REF, "Validity[8]", en1545_UNDEFINED)
+        bitOffset = RavKav_parseBits(data, bitOffset, 16, CONTRACT_REC_REF, "Validity[8]", en1545_UNDEFINED)
+        bitOffset = RavKav_parseBits(data, bitOffset, 16, CONTRACT_REC_REF, "Validity[9]", en1545_UNDEFINED)
     end
 
     -- read validity locations
@@ -760,7 +893,9 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
             bitOffset                 = RavKav_parseBits(data, bitOffset, 10, LOC_REF, "Route ID",                     RavKav_ROUTE, validityType)
             bitOffset                 = RavKav_parseBits(data, bitOffset,  8, LOC_REF, "Tariff code",                  en1545_NUMBER, validityType)
         elseif 3 == validityType then
-            bitOffset                 = RavKav_parseBits(data, bitOffset, 32, LOC_REF, "Validity",                     en1545_UNDEFINED, validityType)
+            bitOffset                 = RavKav_parseBits(data, bitOffset, 16, LOC_REF, "Validity",                     en1545_NUMBER, validityType)
+            bitOffset                 = RavKav_parseBits(data, bitOffset,  8, LOC_REF, "Origin station",               RavKav_RAIL_LOCATION2, validityType)
+            bitOffset                 = RavKav_parseBits(data, bitOffset,  8, LOC_REF, "Destination station",          RavKav_RAIL_LOCATION2, validityType)
         elseif 7 == validityType then
             bitOffset                 = RavKav_parseBits(data, bitOffset, 10, LOC_REF, "Route ID",                     RavKav_ROUTE, validityType)
             bitOffset                 = RavKav_parseBits(data, bitOffset,  8, LOC_REF, "Tariff code",                  en1545_NUMBER, validityType)
@@ -821,11 +956,18 @@ function RavKav_summariseGeneralInfo(APP_REF, SUM_REF)
     if ENV_REF then
         local GI_REF = nodes.append(SUM_REF, {classname="file", label="General Information"})
 
-        RavKav_copyField(APP_REF, GI_REF, "Serial number")
+        RavKav_copyField(APP_REF, GI_REF, "card number")
         RavKav_copyField(ENV_REF, GI_REF, "Issuer", nil, RAVKAV_ISSUERS)
+        RavKav_copyField(ENV_REF, GI_REF, "Date of issue")
+        RavKav_copyField(ENV_REF, GI_REF, "End date")
+
         RavKav_copyField(ENV_REF, GI_REF, "Company", nil, RAVKAV_COMPANIES)
 
         local companyIdNumber = RavKav_getFieldAsNumber(ENV_REF, "Company ID")
+        if 0 == companyIdNumber then
+            local REF = nodes.append(GI_REF, {classname="item", label="Company ID", size=0})
+            nodes.set_attribute(REF,"alt", "Not set")
+        end
         local idNumber = RavKav_getFieldAsNumber(ENV_REF, "ID number")
         if 0 == idNumber then
             local REF = nodes.append(GI_REF, {classname="item", label="Identity number", size=0})
@@ -907,19 +1049,28 @@ function RavKav_summariseEvent(EVENTS_REF, nRec, LT_REF)
     if RAVKAV_INTERCHANGE_AREAS[interchangesAreaId] then RavKav_addTextNode(EVSUM_REF, "Journey interchange area", RAVKAV_INTERCHANGE_AREAS[interchangesAreaId]) end
 
     if 2 == issuerId then   --Israel Railways
-         local railLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location", nil, RAVKAV_RAIL_LOCATIONS)
-         if RAVKAV_RAIL_LOCATIONS[railLocationId] then
+        local railLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location", nil, RAVKAV_RAIL_LOCATIONS)
+        if RAVKAV_RAIL_LOCATIONS[railLocationId] then
             RavKav_addTextNode(EVSUM_REF, "Station", RAVKAV_RAIL_LOCATIONS[railLocationId]) --station
-         end
-         local railLocation2Id = RavKav_getFieldAsNumber(EVENT_REC_REF, "Stop en route", nil, RAVKAV_RAIL_LOCATIONS2)
-         if RAVKAV_RAIL_LOCATIONS2[railLocation2Id] then
+        else
+            local railLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location")
+            RavKav_addTextNode(EVSUM_REF, "Station", railLocationId)
+        end
+        local railLocation2Id = RavKav_getFieldAsNumber(EVENT_REC_REF, "Stop en route", nil, RAVKAV_RAIL_LOCATIONS2)
+        if RAVKAV_RAIL_LOCATIONS2[railLocation2Id] then
             RavKav_addTextNode(EVSUM_REF, "Destination station", RAVKAV_RAIL_LOCATIONS2[railLocation2Id]) --destination station
-         end
+        else
+            local railLocation2Id = RavKav_getFieldAsNumber(EVENT_REC_REF, "Stop en route")
+            RavKav_addTextNode(EVSUM_REF, "Destination station", railLocation2Id)
+        end
     else
-         local busLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location ID (GTFS stops.txt)", nil, RAVKAV_BUS_LOCATIONS)
-         if RAVKAV_BUS_LOCATIONS[busLocationId] then
+        local busLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location ID (GTFS stops.txt)", nil, RAVKAV_BUS_LOCATIONS)
+        if RAVKAV_BUS_LOCATIONS[busLocationId] then
             RavKav_addTextNode(EVSUM_REF, "Stop ID (GTFS stops.txt)", RAVKAV_BUS_LOCATIONS[busLocationId]) --stop_code
-         end
+        else
+            local busLocationId = RavKav_getFieldAsNumber(EVENT_REC_REF, "Location ID (GTFS stops.txt)")
+            RavKav_addTextNode(EVSUM_REF, "Stop ID (GTFS stops.txt)", busLocationId)
+        end
     end
 
 
@@ -981,6 +1132,151 @@ function RavKav_summariseLatestTravel(APP_REF, SUM_REF)
     end
 end
 
+function RavKav_summariseSpecialEvent(SPECIALEVENTS_REF, nRec, LT_REF)
+    local SPECIALEVENT_REC_REF = nodes.find_first(SPECIALEVENTS_REF, {label="record", id=nRec})
+    if nil == SPECIALEVENT_REC_REF then return end
+
+    local issuerId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Issuer", nil, RAVKAV_ISSUERS)
+    if 0 == issuerId then return end
+
+    local SP_EVSUM_REF = nodes.append(LT_REF, {classname="record", label="Special Event", id=nRec})
+
+
+    -- Description ---------------------------
+    local description = ""
+
+    if RAVKAV_ISSUERS[issuerId] then description = RAVKAV_ISSUERS[issuerId] end
+
+    local lineNumber = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Line number")
+    if 0 < lineNumber then
+        description = description.." line "
+        local routeSystemId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Route system", nil, RAVKAV_ROUTES)
+        local sLineNum = tostring(lineNumber)
+        if RAVKAV_ROUTES[routeSystemId] then
+            if 15 == issuerId then  --Metropoline
+                local sRouteSystemId = tostring(routeSystemId)
+                local posS, posE = string.find(sLineNum, sRouteSystemId)
+                if 1 == posS then                                       --Does "1234567..." start with "12"?
+                    sLineNum = string.sub(sLineNum, posE + 1, posE + 4) --"1234567..." -> "345"
+                end
+            end
+            description = description..sLineNum..", cluster "..RAVKAV_ROUTES[routeSystemId]
+        else
+            description = description..sLineNum
+        end
+    end
+
+    local lineType = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Line type")
+    if 0 < lineType then
+        description = description..""
+        local lineTypeId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Line type", nil, RAVKAV_LINE_TYPES)
+        local sLineType = tostring(lineType)
+        if RAVKAV_LINE_TYPES[lineTypeId] then
+            local sLineTypeId = tostring(lineTypeId)
+                local posS, posE = string.find(sLineType, sLineTypeId)
+                if 1 == posS then                                       --Does "1234567..." start with "12"?
+                    sLineType = string.sub(sLineType, posE + 1, posE + 4) --"1234567..." -> "345"
+                end
+            description = description..sLineType..", line type "..RAVKAV_LINE_TYPES[lineTypeId]
+        else
+            description = description..sLineType
+        end
+    end
+    if 0 < #description then RavKav_addTextNode(SP_EVSUM_REF, "Description", description) end
+    ------------------------------------------
+
+
+    if 0 < RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Event time") then
+        RavKav_copyField(SPECIALEVENT_REC_REF, SP_EVSUM_REF, "Event time")
+    end
+
+    local interchangesAreaId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Journey interchange area", nil, RAVKAV_INTERCHANGE_AREAS)
+    if RAVKAV_INTERCHANGE_AREAS[interchangesAreaId] then RavKav_addTextNode(SP_EVSUM_REF, "Journey interchange area", RAVKAV_INTERCHANGE_AREAS[interchangesAreaId]) end
+
+    if 2 == issuerId then   --Israel Railways
+        local railLocationId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Location", nil, RAVKAV_RAIL_LOCATIONS)
+        if RAVKAV_RAIL_LOCATIONS[railLocationId] then
+            RavKav_addTextNode(SP_EVSUM_REF, "Station", RAVKAV_RAIL_LOCATIONS[railLocationId]) --station
+        else
+            local railLocationId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Location")
+            RavKav_addTextNode(SP_EVSUM_REF, "Station", railLocationId)
+        end
+        local railLocation2Id = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Stop en route", nil, RAVKAV_RAIL_LOCATIONS2)
+        if RAVKAV_RAIL_LOCATIONS2[railLocation2Id] then
+            RavKav_addTextNode(SP_EVSUM_REFF, "Destination station", RAVKAV_RAIL_LOCATIONS2[railLocation2Id]) --destination station
+        else
+            local railLocation2Id = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Stop en route")
+            RavKav_addTextNode(SP_EVSUM_REF, "Destination station", railLocation2Id)
+        end
+    else
+        local busLocationId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Location ID (GTFS stops.txt)", nil, RAVKAV_BUS_LOCATIONS)
+        if RAVKAV_BUS_LOCATIONS[busLocationId] then
+            RavKav_addTextNode(SP_EVSUM_REF, "Stop ID (GTFS stops.txt)", RAVKAV_BUS_LOCATIONS[busLocationId]) --stop_code
+        else
+            local busLocationId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Location ID (GTFS stops.txt)")
+            RavKav_addTextNode(SP_EVSUM_REF, "Stop ID (GTFS stops.txt)", busLocationId)
+        end
+    end
+
+
+    -- Details -------------------------------
+    details = ""
+    local eventType = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Event type")
+    local contractId = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Contract ID")
+    if 4 == eventType and 0 < contractId and 9 > contractId then    --is prevalidation
+        local REF, data, debitedText = RavKav_getField(SPECIALEVENT_REC_REF, "Debit amount")
+        local debitAmount = 0
+        if data then debitAmount = bytes.tonumber(data) end
+        if 0 < debitAmount then
+            if 1 ~= eventType then  --not an exit event
+                details = RAVKAV_EVENT_TYPES[eventType]
+            end
+            details = details.." contract "..tostring(contractId).." prevalidated "..debitedText
+        else
+            details = RAVKAV_EVENT_TYPES[eventType].." contract "..tostring(contractId)
+        end
+
+        local fareCode = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Fare code")
+        if 0 < fareCode then
+            details = details.." (code "..tostring(fareCode)..")"
+        end
+    elseif 6 ~= eventType and 0 < contractId and 9 > contractId then     --not a transit trip
+        local REF, data, debitedText = RavKav_getField(SPECIALEVENT_REC_REF, "Debit amount")
+        local debitAmount = 0
+        if data then debitAmount = bytes.tonumber(data) end
+        if 0 < debitAmount then
+            if 1 ~= eventType then  --not an exit event
+            details = RAVKAV_EVENT_TYPES[eventType]
+            end
+            details = details.." contract "..tostring(contractId).." charged "..debitedText
+        else
+            details = RAVKAV_EVENT_TYPES[eventType].." contract "..tostring(contractId)
+        end
+
+        local fareCode = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Fare code")
+        if 0 < fareCode then
+            details = details.." (code "..tostring(fareCode)..")"
+        end
+    else
+        details = RAVKAV_EVENT_TYPES[eventType]
+    end
+    if 0 < #details then RavKav_addTextNode(SP_EVSUM_REF, "Details", details) end
+    ------------------------------------------
+end
+
+function RavKav_summariseSpecialEvents(APP_REF, SUM_REF)
+	log.print(log.DBG, "Summarising special events...")
+    local SPECIALEVENTS_REF = nodes.find_first(APP_REF, {label="Special events"})
+    if SPECIALEVENTS_REF then
+        local LT_REF = nodes.append(SUM_REF, {classname="file", label="Special events"})
+        local numRecords = RavKav_getRecordInfo(SPECIALEVENTS_REF)
+        local nRec
+        for nRec = 1, numRecords do
+            RavKav_summariseSpecialEvent(SPECIALEVENTS_REF, nRec, LT_REF)
+        end
+    end
+end
+
 function RavKav_summariseTextArray(REC_REF, itmLabel, lookupAry, SM_REF, sumLabel)
     local summary = ""
     local ary = RavKav_getFieldsAsNumberAry(REC_REF, itmLabel)
@@ -1036,6 +1332,8 @@ function RavKav_summariseContract(CONTRACTS_REF, nRec, VC_REF, IC_REF)
     ------------------------------------------
 
     RavKav_summariseTextArray(CONTRACT_REC_REF, "Route ID", RAVKAV_ROUTES, CTSUM_REF, "Clusters")
+    RavKav_summariseTextArray(CONTRACT_REC_REF, "Origin station", RAVKAV_RAIL_LOCATIONS2, CTSUM_REF, "Origin station")
+    RavKav_summariseTextArray(CONTRACT_REC_REF, "Destination station", RAVKAV_RAIL_LOCATIONS2, CTSUM_REF, "Destination station")
 
     -- Type of contract ----------------------
     if 0 < etta then
@@ -1092,7 +1390,7 @@ function RavKav_readFiles(APP_REF)
 	local lid_index
 	local lid_desc
 	for lid_index, lid_desc in ipairs(LID_LIST) do
-		RavKav_readFile(APP_REF, lid_desc[1], lid_desc[2], lid_desc[3])
+		RavKav_readFile(APP_REF, lid_desc[1], lid_desc[2], lid_desc[3], lid_desc[4], lid_desc[5], lid_desc[6])
 	end
 end
 
@@ -1100,6 +1398,7 @@ function RavKav_parseRecords(APP_REF)
     RavKav_parseGeneralInfo(APP_REF)
     local cntrAry = RavKav_parseCounters(APP_REF)
     RavKav_parseEventsLog(APP_REF)
+    RavKav_parseSpecialEventsLog(APP_REF)
     RavKav_parseContracts(APP_REF, cntrAry)
 end
 
@@ -1107,6 +1406,7 @@ function RavKav_summariseRecords(APP_REF, root)
     local SUM_REF = nodes.append(root, {classname="block", label="Summary"})
     RavKav_summariseGeneralInfo(APP_REF, SUM_REF)
     RavKav_summariseLatestTravel(APP_REF, SUM_REF)
+    RavKav_summariseSpecialEvents(APP_REF, SUM_REF)
     RavKav_summariseContracts(APP_REF, SUM_REF)
 end
 
@@ -1121,7 +1421,7 @@ function RavKav_parseAnswerToSelect(ctx)
 end
 
 
+calypso_card_num()
 RavKav_parseAnswerToSelect(CARD)
 RavKav_parseRecords(CARD)
 RavKav_summariseRecords(CARD, CARD)
-

@@ -825,6 +825,8 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
         local vtd_ref
         bitOffset, text, vtd_ref = RavKav_parseBits(data, bitOffset, 14, CONTRACT_REC_REF, "Valid until", en1545_DATE)
         if contractValid then
+            contractValid = nil
+        else
             contractValid = RavKav_rkDaysToSeconds(vtd_ref:val()) > os.time()
         end
     end

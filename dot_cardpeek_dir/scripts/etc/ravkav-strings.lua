@@ -504,7 +504,8 @@ RAVKAV_LINE_TYPES = {
      [2] = "Regional",
      [3] = "Intercity",
      [4] = "Light Rail",
-     [5] = "Intercity Rail"
+     [5] = "Intercity Rail",
+     [15] = "Transport method"
 }
 
 RAVKAV_EVENT_TYPES = {

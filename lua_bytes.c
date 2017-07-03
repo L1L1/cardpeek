@@ -116,7 +116,7 @@ static bytestring_t* x_bytes_create(lua_State *L, unsigned width, int start, int
 
 static int subr_bytes_new(lua_State *L) 
 {
-  int width = luaL_checkint(L, 1);
+  int width = luaL_checkinteger(L, 1);
   int n = lua_gettop(L);
   bytestring_t *bs;
 
@@ -259,7 +259,7 @@ static int subr_bytes_get(lua_State *L)
 	b_index = 0;
   else
   {
-	b_index=luaL_checkint(L,2);
+	b_index=luaL_checkinteger(L,2);
 	if (b_index<0) b_index = 0;
   }
 
@@ -267,7 +267,7 @@ static int subr_bytes_get(lua_State *L)
 	e_index = b_index;
   else
   {
-	e_index=luaL_checkint(L,2);
+	e_index=luaL_checkinteger(L,2);
 	if (e_index>=(int)bytestring_get_size(bs)) e_index = bytestring_get_size(bs)-1;
   }
 
@@ -293,13 +293,13 @@ static int subr_bytes_set(lua_State *L)
   unsigned i;
   unsigned char c;
 
-  b_index=(unsigned)luaL_checkint(L,2);
+  b_index=(unsigned)luaL_checkinteger(L,2);
 
   e_index = b_index + lua_gettop(L)-3;
 
   for (i=b_index;i<=e_index;i++)
   {
-	  c = (unsigned char)luaL_checkint(L,i-b_index+3);
+	  c = (unsigned char)luaL_checkinteger(L,i-b_index+3);
 	  if (i<bytestring_get_size(bs))
 	  {
 		  bytestring_set_element(bs,i,c);
@@ -324,8 +324,8 @@ static int subr_bytes_set(lua_State *L)
 static int subr_bytes_pad_left(lua_State *L)
 {
   bytestring_t *bs = bytestring_duplicate(luaL_check_bytestring(L, 1));
-  unsigned pad_length = luaL_checkint(L,2);
-  unsigned pad_value =  luaL_checkint(L,3);
+  unsigned pad_length = luaL_checkinteger(L,2);
+  unsigned pad_value =  luaL_checkinteger(L,3);
   if (bytestring_pad_left(bs,pad_length,pad_value)!=BYTESTRING_OK)
   {
 	bytestring_free(bs);
@@ -340,8 +340,8 @@ static int subr_bytes_pad_left(lua_State *L)
 static int subr_bytes_pad_right(lua_State *L)
 {
   bytestring_t *bs = bytestring_duplicate(luaL_check_bytestring(L, 1));
-  unsigned pad_length = luaL_checkint(L,2);
-  unsigned pad_value =  luaL_checkint(L,3);
+  unsigned pad_length = luaL_checkinteger(L,2);
+  unsigned pad_value =  luaL_checkinteger(L,3);
   if (bytestring_pad_right(bs,pad_length,pad_value)!=BYTESTRING_OK)
   {
 	bytestring_free(bs);
@@ -376,12 +376,12 @@ static int subr_bytes_clone(lua_State *L)
 static int subr_bytes_sub(lua_State *L)
 {
   bytestring_t *bs = luaL_check_bytestring(L, 1);
-  int start=luaL_checkint(L,2);
+  int start=luaL_checkinteger(L,2);
   int end=-1;
   bytestring_t *ret;
 
   if (lua_gettop(L)>2)
-    end=luaL_checkint(L,3);
+    end=luaL_checkinteger(L,3);
   if (start<0)
     start=bytestring_get_size(bs)+start;
   if (end<0)
@@ -431,13 +431,13 @@ static int subr_bytes_convert(lua_State *L)
                                  "\tchange bytes.convert(A,B) to bytes.convert(B,A)\n"
                                  "\tThis warning will only appear once.");
       }
-      width=luaL_checkint(L,1);
+      width=luaL_checkinteger(L,1);
       bs = luaL_check_bytestring(L, 2);
   } 
   else
   {
       bs = luaL_check_bytestring(L, 1);
-      width=luaL_checkint(L,2);
+      width=luaL_checkinteger(L,2);
   }
 
   if (width!=8 && width!=4 && width!=1)

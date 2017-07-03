@@ -2,7 +2,7 @@
 #define WIN32_CONFIG_H
 #ifdef _WIN32
 
-#define VERSION "0.8.4-win32"
+#define VERSION "0.8.5-win64"
 
 #define ICONV_CONST
 

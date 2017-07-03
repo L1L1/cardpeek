@@ -50,6 +50,7 @@ int http_download(const char *src_url, const char *dst_filename)
     curl_easy_setopt(curl,CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION, progress_download);
     curl_easy_setopt(curl,CURLOPT_PROGRESSDATA, progress);
+    curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION, 1L); 
 
     res = curl_easy_perform(curl);
 

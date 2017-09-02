@@ -511,6 +511,14 @@ function ui_parse_biometry(node,data)
 	return true
 end
 
+function ui_parse_signature(node,data)
+	nodes.set_attribute(node,"val", data)
+	if bytes.sub(data,1,2) == bytes.new(8,"D8 FF") then
+		nodes.set_attribute(node,"mime-type","image/jpeg")
+	end
+	return true
+end
+
 
 AID_MRTD = "#A0000002471001"
 
@@ -520,6 +528,7 @@ MRP_REFERENCE = {
    ['5F1F']   = { "MRZ data elements", ui_parse_printable },
    ['5F2E']   = { "Biometric data block", ui_parse_biometry },
    ['5F36']   = { "Unicode Version number", ui_parse_version },
+   ['5F43']   = { "Displayed signature or mark", ui_parse_signature },
    ['60']     = { "Common Data Elements" },
    ['61']     = { "Template for MRZ Data Group" },
    ['63']     = { "Template for finger biometric Data Group" },

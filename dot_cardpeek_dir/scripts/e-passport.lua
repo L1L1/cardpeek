@@ -27,6 +27,35 @@ local KS_ENC
 local KS_MAC
 local TEST=false
 
+function epass_check_digit(s, n)
+    --The check digit calculation is as follows: each position is assigned a
+    --value; for the digits 0 to 9 this is the value of the digits, for the
+    --letters A to Z this is 10 to 35, for the filler < this is 0. The value of
+    --each position is then multiplied by its weight; the weight of the first
+    --position is 7, of the second it is 3, and of the third it is 1, and after
+    --that the weights repeat 7, 3, 1, and so on. All values are added together
+    --and the remainder of the final value divided by 10 is the check digit.
+    local c = string.sub(s, n)
+    local b = string.byte(c)
+    local weights = {7, 3, 1}
+    local weight = weights[(n-1) % 3 + 1]
+    if (c == "<") then return 0 end
+    if (b <= 58) then return (b - 48) * weight end
+    return (b - 65) * weight
+end
+
+function epass_check_digits(s)
+    local i = #s
+    local cd = 0
+    while i > 0 do
+        cd = cd + epass_check_digit(s, i)
+        --log.print(log.INFO,"Check digits after "..s.."["..i.."]: "..cd)
+        i = i - 1
+    end
+    --log.print(log.INFO,"Check digits for "..s..": "..(cd%10))
+    return cd % 10
+end
+
 function epass_inc_SSC()
 	local i=7
 	local e
@@ -53,11 +82,7 @@ function epass_key_derivation(seed)
         return bytes.sub(Kenc,0,15),bytes.sub(Kmac,0,15)
 end
 
-function epass_create_master_keys(mrz)
-	local pass_no = string.sub(mrz,1,10)
-	local pass_bd = string.sub(mrz,14,20)
-	local pass_ed = string.sub(mrz,22,28)
-	local mrz_info = pass_no..pass_bd..pass_ed;
+function epass_create_master_keys(mrz_info)
 	local hash
 	local SHA1
 
@@ -576,17 +601,19 @@ FILES = {
 
 local MRZ_DATA=""
 
-repeat
-	MRZ_DATA = ui.readline("Enter the code from the lower MRZ data (printed inside the passport)",44,MRZ_DATA)
-	if MRZ_DATA==nil then
-		break
-	end
-	if #MRZ_DATA<28 then
-		ui.question("You must enter at least 28 characters",{"OK"})
-	end
-until #MRZ_DATA>=28
+local pass_no = ui.readline("Enter document id/passport number",10,MRZ_DATA)
+pass_no = string.upper(pass_no)
+while (#pass_no < 9) do pass_no = pass_no .. "<" end
+if (#pass_no == 9) then pass_no = pass_no .. epass_check_digits(pass_no) end
+local pass_bd = ui.readline("Enter birth day YYMMDD",6,MRZ_DATA)
+pass_bd = pass_bd .. epass_check_digits(pass_bd)
+local pass_ed = ui.readline("Enter expiration date YYMMDD",6,MRZ_DATA)
+pass_ed = pass_ed .. epass_check_digits(pass_ed)
 
-if MRZ_DATA then
+MRZ_DATA = pass_no..pass_bd..pass_ed
+log.print(log.INFO,"MRZ data: " .. MRZ_DATA)
+
+if (#MRZ_DATA == 24) then
   if card.connect() then
     local ke,km,i,v,r
   
@@ -637,6 +664,6 @@ if MRZ_DATA then
     ui.question("No passport detected in proximity of the reader",{"OK"})
   end
 else
-  log.print(log.ERROR,"Aborted by the user.")
+  ui.question("Length of supplied data is incorrect.",{"OK"})
 end
 

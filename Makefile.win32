@@ -11,21 +11,21 @@ OBJECTS = asn1.o bytestring.o ui/gtk/gui_flexi_cell_renderer.o dyntree_model.o \
 	  ui/gtk/gui_core.o ui/console/console_core.o \
 	  ui/console/console_about.o ui/console/console_inprogress.o \
 	  lua_iconv.o win32/win32compat.o win32/resource.o \
-	  cardpeek_resources.o cardpeek_update.o 
+	  cardpeek_resources.o cardpeek_update.o cardpeek.o 
 
 ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.png \
       icons/cardpeek-smartcard.png icons/cardpeek-folder.png icons/cardpeek-logo.png \
       icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png \
       icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv -lreadline -lpdcurses
+LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv -lreadline -lncurses
 
-CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -I . -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
+CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -D__USE_MINGW_ANSI_STDIO -I . -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
 
 all:		cardpeek
 
 cardpeek:	$(OBJECTS) win32/libwinscard.a
-		$(CC) -mwindows -o cardpeek $(OBJECTS) $(LIBS)
+		$(CC) -Wl,-subsystem,windows $(OBJECTS) $(LIBS) -o cardpeek
 
 dot_cardpeek.tar.gz:    dot_cardpeek_dir	
 			@echo "  TAR      $<"

@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2014 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2017 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,26 @@ static int update_cardpeek(void)
     if (cardpeek_update_check())
         return cardpeek_update_perform();
     return 0;
+}
+
+static void check_cardpeek_dir_exists(void)
+{
+    const char* cardpeek_dir = path_config_get_string(PATH_CONFIG_FOLDER_CARDPEEK);
+    a_string_t* astr;
+    GStatBuf sbuf;
+
+    if (g_stat(cardpeek_dir,&sbuf)==0)
+    {
+	log_printf(LOG_DEBUG,"Found directory '%s'",cardpeek_dir);
+    }
+    else
+    {
+        astr = a_strnew(NULL);
+        a_sprintf(astr,"Could not find the directory '%s'.\nCardpeek is not correctly installed on your system.", cardpeek_dir);
+        log_printf(LOG_ERROR,"Cardpeek is not correctly installed: could not find '%s'.", cardpeek_dir);
+        ui_question(a_strval(astr),"OK",NULL);
+	a_strfree(astr);
+    }
 }
 
 static int install_dot_file(void)
@@ -321,7 +341,7 @@ static void display_help(char *progname)
 }
 
 #ifdef _WIN32
-#define _WIN32_WINNT 0x0501
+/* #define _WIN32_WINNT 0x0501 */
 #include <windows.h>
 void init_console(int detach)
 {
@@ -352,6 +372,7 @@ static struct option long_options[] =
     {"help", 		no_argument, 	   0,  'h' },
     {"console",         no_argument,       0,  'c' },
     {"detach",		no_argument,	   0,  'D' },
+    {"generate-dot-cardpeek",		no_argument,	   0,  'G' },
     {0,        	 	0,                 0,   0 }
 };
 
@@ -364,7 +385,8 @@ int cardpeek_main(int argc, char **argv)
     char* reader_name = NULL;
     char* exec_command = NULL;
     ui_driver_t *ui_driver = ui_driver_for_gtk();
-    int detach = 0;
+    int detach_flag = 0;
+    int generate_dot_cardpeek_flag = 0;
    
 
 #if !GLIB_CHECK_VERSION(2,36,0)
@@ -387,7 +409,7 @@ int cardpeek_main(int argc, char **argv)
                 exec_command = optarg;
                 break;
             case 'v':
-		init_console(detach);
+		init_console(detach_flag);
                 display_readers_and_version();
                 path_config_release();
                 exit(0);
@@ -396,17 +418,20 @@ int cardpeek_main(int argc, char **argv)
                 ui_driver = ui_driver_for_console();
                 break;
 	    case 'D':
-		detach =1 ;
+		detach_flag = 1;
+		break;
+	    case 'G':
+		generate_dot_cardpeek_flag = 1;
 		break;
             default:
-		init_console(detach);
+		init_console(detach_flag);
                 display_help(argv[0]);
                 path_config_release();
                 exit(1);
         }
     }
 
-    init_console(detach);
+    init_console(detach_flag);
 
     signal(SIGSEGV, save_what_can_be_saved);
 
@@ -420,6 +445,11 @@ int cardpeek_main(int argc, char **argv)
 
 #ifndef _WIN32
     install_dot_file();
+#else
+    if (generate_dot_cardpeek_flag)
+        install_dot_file();
+    else
+        check_cardpeek_dir_exists();
 #endif
 
     if (reader_name == NULL)

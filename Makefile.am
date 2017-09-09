@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = gnu subdir-objects
 
-AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GLIB_CFLAGS@ @GTK_CFLAGS@ @CURL_CFLAGS@ 
+AM_CFLAGS=-Wall -pedantic -Wno-overlength-strings @LUA_CFLAGS@ @PCSC_CFLAGS@ @GLIB_CFLAGS@ @GTK_CFLAGS@ @CURL_CFLAGS@ @OPENSSL_INCLUDES@ 
 
 bin_PROGRAMS= cardpeek
 
@@ -49,7 +49,7 @@ EXTRA_cardpeek_SOURCES=cardpeek.c osx/cardpeek-osx.m
 
 doc_DATA=doc/cardpeek_ref.en.pdf 
 
-cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@ @ICONV_LIBS@
+cardpeek_LDADD=cardpeek_resources.$(OBJEXT) @LUA_LIBS@ @PCSC_LIBS@ @GLIB_LIBS@ @GTK_LIBS@ @CURL_LIBS@ @ICONV_LIBS@ @OPENSSL_LIBS@ @OPENSSL_LDFLAGS@ 
 
 cardpeek_LDFLAGS=-g
 #cardpeek_LDFLAGS=-O2
@@ -89,7 +89,7 @@ icons_DATA = icons/cardpeek-logo.png
 appdatadir = $(datadir)/appdata
 appdata_DATA = cardpeek.appdata.xml
 
-mostlyclean-local:
+mostlyclean-local @OPENSSL_LIBS@ :
 			rm -rf .cardpeek
 
 dist-hook:

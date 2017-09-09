@@ -2,7 +2,7 @@
 *
 * This file is part of Cardpeek, the smart card reader utility.
 *
-* Copyright 2009-2013 by Alain Pannetrat <L1L1@gmx.com>
+* Copyright 2009-2017 by Alain Pannetrat <L1L1@gmx.com>
 *
 * Cardpeek is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -189,7 +189,7 @@ unsigned a_strlen(const a_string_t* cs)
 
 int a_sprintf(a_string_t* cs, const char *format, ...)
 {
-  unsigned reclen;
+  int reclen;
   va_list al;
 
   va_start(al,format);

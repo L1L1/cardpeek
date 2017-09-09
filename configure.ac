@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([cardpeek],[0.8.4],[L1L1@gmx.com])
+AC_INIT([cardpeek],[0.8.5],[L1L1@gmx.com])
 AM_INIT_AUTOMAKE
 
 #
@@ -16,6 +16,7 @@ m4_include([m4/lib-ld.m4])
 m4_include([m4/lib-link.m4])
 m4_include([m4/lib-prefix.m4])
 m4_include([m4/ax_lib_readline.m4])
+m4_include([m4/ax_check_openssl.m4])
 
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
@@ -107,15 +108,45 @@ PKG_CHECK_MODULES([CURL],[libcurl],,[
 # Check for OPENSSL
 #
 
-AC_CHECK_LIB([ssl],[SSL_free],,
-	     AC_MSG_ERROR([Could not find openssl-dev.
-                       This program requires the openssl dev. library.
-                       Please install it first.]))
+AX_CHECK_OPENSSL([],
+                 if test "$HOST_TYPE" = "darwin"; then
+                     AC_MSG_ERROR([
 
-AC_CHECK_LIB([crypto],[CRYPTO_free],,
-	     AC_MSG_ERROR([Could not find openssl-dev.
-                       This program requires the openssl dev. library.
-                       Please install it first.]))
+OpenSSL headers cannot be located. Consider using the --with-openssl option to specify an appropriate path.
+
+Note: 
+
+OpenSSL has been removed on newer versions of Mac OS X. 
+You may need to install your own version of OpenSSL and then specify the root of the OpenSSL directory with the option --with-openssl=...
+
+For example if you are using howebrew:
+
+    brew install openssl
+    ./configure --with-openssl=/usr/local/opt/openssl
+
+                     ])
+                 else
+                     AC_MSG_ERROR([
+
+OpenSSL headers cannot be located. Consider using the --with-openssl option to specify an appropriate path.
+                     
+                     ])
+                 fi)
+
+#AC_CHECK_LIB([ssl],[SSL_free],,
+#	     AC_MSG_ERROR([Could not find openssl-dev.
+#                       This program requires the openssl dev. library.
+#                       Please install it first.]))
+#
+#AC_CHECK_LIB([crypto],[CRYPTO_free],,
+#	     AC_MSG_ERROR([Could not find openssl-dev.
+#                       This program requires the openssl dev. library.
+#                       Please install it first.]))
+
+#old_CPPFLAGS="$CPPFLAGS"
+#CPPFLAGS="$OPENSSL_INCLUDES"
+#AC_CHECK_HEADERS([openssl/des.h openssl/sha.h openssl/err.h openssl/ssl.h],[],[AC_MSG_ERROR([OpenSSL headers cannot be located. Consider using the --with-openssl option to specify an appropriate path.])])
+#CPPFLAGS="$old_CPPFLAGS"
 
 #
 # Check for BACKTRACE lib (optional)

@@ -33,7 +33,11 @@ function format_name(node)
 end
 
 function format_address(node)
-	local labels = { "House Number", "Village Number (Mu Ban)", "Lane (Trok/Soi)", "Road (Thanon)", nil, "Tambon/Khwaeng", "Amphur/Khet", "Province" }
+	local labels = {
+		"House Number", "Village Number (Mu Ban)",
+		"Lane (Trok/Soi)", "Road (Thanon)", nil, "Tambon/Khwaeng",
+		"Amphur/Khet", "Province"
+	}
 	format_splithash(node, labels)
 end
 
@@ -55,6 +59,8 @@ end
 
 -- Convert Buddhist calendar date to Gregorian
 -- Expiration date of 9999-99-99 means no expiration
+-- Note that some people may only have a birth year, with no birth month
+-- or day. In that case, the month and day will be "00".
 function format_date(node)
 	local s = format_string(node)
 	local m, d, y

@@ -693,6 +693,20 @@ function pin_wrap(pin)
 	return r
 end
 
+function read_ki_string()
+	local sw,resp
+	local KI = ui.readline("Enter Authentication key (Ki)",16,"1111111111111111")
+	if KI ~= "" then
+		sw,resp = card.send(bytes.new(8,"A0 88 00 00 10",KI))
+		if sw ~= 0x9000 then
+			log.print(log.ERROR,"Ki Verification failed")
+			ui.question("Ki string Verfication failed, halting.",{"OK"})
+			return false
+		end
+	end
+	return true
+end
+
 local PIN,KI
 local sw,resp
 
@@ -704,15 +718,7 @@ if card.connect() then
    	PIN=pin_wrap(PIN)
    	sw, resp = card.send(bytes.new(8,"A0 20 00 01 08",PIN)) -- unblock pin = XXXX
 	if sw == 0x9000 then
-		KI = ui.readline("Enter Authentication key (Ki)",16,"0000")
-		if KI ~= "" then
-			sw,resp = card.send(bytes.new(8,"A0 88 00 00 10",KI))
-			if sw == 0x9000 then
-				gsm_map(CARD,GSM_MAP)
-			else
-				log.print(log.ERROR,"Ki Verification failed")
-			end
-		end
+		gsm_map(CARD,GSM_MAP)
 	elseif bit.AND(sw,0xFF00) == 0x9800 then 
 		log.print(log.ERROR,"PIN Verification failed")
 		ui.question("PIN Verfication failed, halting.",{"OK"})
@@ -720,6 +726,7 @@ if card.connect() then
 		ui.question("This does not seem to be a GSM SIM card, halting.",{"OK"})
    	end
    else
+		 read_ki_string()
 	gsm_map(CARD,GSM_MAP)
    end
 

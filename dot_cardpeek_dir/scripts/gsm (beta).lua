@@ -695,7 +695,7 @@ end
 
 function read_ki_string()
 	local sw,resp
-	local KI = ui.readline("Enter Authentication key (Ki)",16,"1111111111111111")
+	local KI = ui.readline("Enter Authentication key (Ki)",256,"1111111111111111")
 	if KI ~= "" then
 		sw,resp = card.send(bytes.new(8,"A0 88 00 00 10",KI))
 		if sw ~= 0x9000 then
@@ -707,7 +707,7 @@ function read_ki_string()
 	return true
 end
 
-local PIN,KI
+local PIN
 local sw,resp
 
 if card.connect() then
@@ -726,8 +726,9 @@ if card.connect() then
 		ui.question("This does not seem to be a GSM SIM card, halting.",{"OK"})
    	end
    else
-		 read_ki_string()
-	gsm_map(CARD,GSM_MAP)
+		 if read_ki_string() then 
+			 gsm_map(CARD,GSM_MAP)
+		 end
    end
 
    card.disconnect()

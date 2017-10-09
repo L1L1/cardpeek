@@ -698,6 +698,7 @@ function read_ki_string()
 	local KI = ui.readline("Enter Authentication key (Ki)",256,"1111111111111111")
 	if KI ~= "" then
 		sw,resp = card.send(bytes.new(8,"A0 88 00 00 10",KI))
+		log.print(log.DEBUG,string.len(KI).." sw:"..sw.." resp:"..resp)
 		if sw ~= 0x9000 then
 			log.print(log.ERROR,"Ki Verification failed")
 			ui.question("Ki string Verfication failed, halting.",{"OK"})

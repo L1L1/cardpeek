@@ -30,7 +30,7 @@
 -- and which does not return a FCI.
 -- This induced a change in RavKav_getRecordInfo()
 --
--- May 2017:
+-- 2017:
 -- Updated
 -- c376n3.lua moved to c376.lua to improve recognizability. All RavKav
 -- cards are interoperable across all c376 networks. Issuers except n2
@@ -53,7 +53,7 @@ ISO_CLS_PRO9    = 0x90  --As for ISO_CLS_STD but the coding and meaning of comma
 ISO_CLS_SM_PRO  = 0x04  --Proprietary secure messaging format
 
 --Application ID
-AID_RavKav = "#315449432e494341"    --"1TIC.ICA"
+AID_RavKav = "#315449432e494341"    --"1TIC.ICA" / RID 315449432e49, PIX 4341
 
 --LIDs
 CALYPSO_LID_ENVIRONMENT    = "2001"    --SFI=0x07, linear, 1 record
@@ -420,7 +420,7 @@ function RavKav_parseEnvironment(ENV_REF, nRec)
     bitOffset = RavKav_parseBits(data, bitOffset,  3, ENV_REC_REF, "Version number",        en1545_NUMBER)
     bitOffset = RavKav_parseBits(data, bitOffset, 12, ENV_REC_REF, "Country",               RavKav_COUNTRY)
     bitOffset = RavKav_parseBits(data, bitOffset,  8, ENV_REC_REF, "Issuer",                RavKav_ISSUER)
-    bitOffset = RavKav_parseBits(data, bitOffset, 26, ENV_REC_REF, "Application number",    en1545_NUMBER)
+    bitOffset = RavKav_parseBits(data, bitOffset, 26, ENV_REC_REF, "Issuance number",       en1545_NUMBER)
     bitOffset = RavKav_parseBits(data, bitOffset, 14, ENV_REC_REF, "Date of issue",         en1545_DATE)
     bitOffset = RavKav_parseBits(data, bitOffset, 14, ENV_REC_REF, "End date",              en1545_DATE)
     bitOffset = RavKav_parseBits(data, bitOffset,  3, ENV_REC_REF, "Pay method",            en1545_NUMBER)
@@ -826,8 +826,6 @@ function RavKav_parseContract(CONTRACTS_REF, nRec, counter)
         bitOffset, text, vtd_ref = RavKav_parseBits(data, bitOffset, 14, CONTRACT_REC_REF, "Valid until", en1545_DATE)
         if contractValid then
             contractValid = nil
-        else
-            contractValid = RavKav_rkDaysToSeconds(vtd_ref:val()) > os.time()
         end
     end
 
@@ -976,6 +974,7 @@ function RavKav_summariseGeneralInfo(APP_REF, SUM_REF)
 
         RavKav_copyField(APP_REF, GI_REF, "card number")
         RavKav_copyField(ENV_REF, GI_REF, "Issuer", nil, RAVKAV_ISSUERS)
+        RavKav_copyField(ENV_REF, GI_REF, "Issuance number")
         RavKav_copyField(ENV_REF, GI_REF, "Date of issue")
         RavKav_copyField(ENV_REF, GI_REF, "End date")
 

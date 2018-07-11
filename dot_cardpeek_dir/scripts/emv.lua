@@ -313,13 +313,17 @@ CVM_REFERENCE_BYTE2 = {
 AIP_REFERENCE = {
   [1] = { -- Byte 1
     [1] = "CDA supported",
+    [2] = "On device cardholder verification is supported",
     [3] = "Issuer authentication is supported",
     [4] = "Terminal risk management is to be performed",
     [5] = "Cardholder verification is supported",
     [6] = "DDA supported",
-    [7] = "SDA supported"
+    [7] = "SDA supported",
+    [8] = "RFU"
   },
   [2] = { -- Byte 2
+    [1] = "Relay resistance protocol is supported",
+    [8] = "EMV mode is supported"
   }
 }
 

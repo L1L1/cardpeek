@@ -90,6 +90,19 @@ function card.get_data(data)
         return card.send(command)
 end
 
+-- override card.verify() for EMV plaintext PIN
+function card.verify(pin)
+        -- use 4 bit nibbles
+        local block = bytes.new(4, "00 20 00 80 08")
+        block = block .. 0x2 .. #pin .. bytes.new(4, pin)
+        while #block < 26 do
+            block = block .. 0xf
+        end
+        -- convert to 8 bit for APDU processing
+        local command = bytes.new(8, tostring(block))
+        return card.send(command)
+end
+
 
 -- ------------------------------------------------------------------------
 -- EMV 
@@ -879,6 +892,44 @@ function emv_process_application(cardenv,aid)
 	--extra = nodes.append(APP,{classname="block",label="extra emv data"})
 	for j=1,#EXTRA_DATA do
 	    sw,resp = card.get_data(EXTRA_DATA[j])
+            -- if PIN retry count > 0 ask if we want to verify PIN
+            if EXTRA_DATA[j] == 0x9F17 and string.sub(tostring(resp),1,4) == "9F17" then
+               local d = tostring(resp)
+               local pin
+               local count = tonumber(string.sub(d, #d - 1, #d))
+               while count ~= 0 and pin ~= "" do
+                  query = "Verify PIN (" .. count .. " retries left)?"
+                  if ui.question(query,{"Yes","No"})==1 then
+                     log.print(log.INFO,"Attempting PIN verify")
+                     -- must re-issue GPO to ensure we are auth'd
+                     log.print(log.INFO,"Attempting GPO for PIN verify")
+                     sw,resp = card.get_processing_options(pdol)
+                     -- and again to clear error after failed PIN check
+                     if sw == 0x6985 then
+                        card.get_processing_options(pdol)
+                     end
+                     pin = ui.readline("Enter PIN for verification (or keep empty to avoid PIN verification)",8,"")
+                     if pin ~= "" then
+                        sw,resp = card.verify(pin)
+                        if sw == 0x9000 then
+                           ui.question("PIN Verified",{"OK"})
+                           count = 0
+                        elseif sw == 0x6983 or sw == 0x6984 then
+                           ui.question("PIN Blocked",{"OK"})
+                        elseif bit.SHR(sw, 8) == 0x63 then
+                           count= bit.AND(sw, 0x0F)
+                           ui.question("Wrong PIN",{"OK"})
+                        elseif sw == 0x6985 then
+                           ui.question("Conditions of use not satisfied!",{"OK"})
+                        else
+                           ui.question("Unknown error! Check log for details",{"OK"})
+                        end
+                     end
+                  else
+                     count = 0
+                  end
+               end
+            end
 	    if sw == 0x9000 then
 	       emv_parse(APP,resp):set_attribute("classname","block")
 	    end

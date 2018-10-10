@@ -315,7 +315,7 @@ function RavKav_INTERCHANGE_AREA(source)
     local interchangesAreaId = bytes.tonumber(source)
     local interchangesArea = RAVKAV_INTERCHANGE_AREAS[interchangesAreaId]
     if interchangesArea then return interchangesArea end
-    return tostring(interchangesArea)
+    return tostring(interchangesAreaId)
 end
 
 --Predefined contract IDs

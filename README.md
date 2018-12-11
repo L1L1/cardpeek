@@ -1,7 +1,9 @@
-**The cardpeek homepage is located at http://pannetrat.com/Cardpeek/**
+Cardpeek
+========
 
-About Cardpeek
-==============
+## About
+
+_([Version française](README.fr.md))_
 
 Cardpeek is a Linux/Windows/Mac OS X tool to read the contents of ISO7816 smart cards. It features a GTK GUI to represent card data is a tree view, and is extendable with a scripting language (LUA).
 
@@ -24,26 +26,15 @@ It can also read the following cards with limited interpretation of data:
 
 More info here: http://pannetrat.com/Cardpeek/
 
-A propos de Cardpeek
-====================
+## Build
 
-Cardpeek est un outil de lecture de carte à puce avec une interface graphique basée sur GTK, fonctionnant sous GNU Linux/Windows/Mac OS X et extensible par le langage de programmation LUA.
+- [Build instructions for Debian](INSTALL.Debian.md), either for the local Debian host, or for cross-compilation to Windows using mingw-w64.
+- [Specific instructions for FreeBSD](INSTALL.FreeBSD.md) in case of errors.
 
-Cardpeek est un outil qui a pour objectif de vous permettre d’accéder aux informations personnelles qui sont stockées dans vos carte à puce. Vous pouvez ainsi être mieux informé des données qui sont collectées sur vous.
+## Usage
 
-Dans cette version, l’application est capable de lire le contenu des cartes suivantes :
+The [Reference Manual](doc/cardpeek_ref.en.pdf) provides detailed usage instructions.
 
-* Les cartes à puce bancaires EMV, dont les cartes NFC.
-* Les cartes de transport d'île de France Navigo, ainsi que MOBIB(Belgique) et RavKav?(Israel).
-* Les cartes Monéo
-* Les cartes Vitales 2
-* Les passports électroniques/biométriques avec une sécurité BAC.
-* La carte d'identité belge (eID).
-* Les cartes SIM GSM (beta).
-* Les cartes Mifare (beta).
-* Les cartes conducteur tachygraphes.
-* Les cartes OpenPGP (beta);
+## Authors
 
-Plus de détails ici : http://pannetrat.com/Cardpeek/
-
-
+Written initially by Alain Pannetrat under the [GNU General Public License, version 3](COPYING), with the additional exemption that compiling, linking, and/or using OpenSSL is allowed.

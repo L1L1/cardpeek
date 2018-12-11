@@ -125,7 +125,10 @@ void log_open_file(void)
 {
   time_t now = time(NULL);
   
-  LOGFILE = g_fopen(path_config_get_string(PATH_CONFIG_FILE_CARDPEEK_LOG),"w+");
+  // changed mode from "w+"" to "w" (LOGFILE is never read, and "w+" is buggy
+  // on mingw glib2 versions 2.44.1-2 to 2.58.1-1 (at least) due to patch
+  // "0001-Use-CreateFile-on-Win32-to-make-sure-g_unlink-always.patch")
+  LOGFILE = g_fopen(path_config_get_string(PATH_CONFIG_FILE_CARDPEEK_LOG),"w");
 
   if (LOGFILE)
     fprintf(LOGFILE,"cardpeek log start: %s",ctime(&now));

@@ -250,6 +250,21 @@ function ui_parse_cstring(node,data)
 	end
 end
 
+function ui_parse_utf8(node,data)
+	nodes.set_attribute(node,"val",data)
+
+	if #data==0 then
+		return false
+	end
+
+	local alt = bytes.format(data,"%C")
+	if not bytes.is_printable(data) then
+		alt = bytes.format(data,"%C (%D)")
+	end
+        nodes.set_attribute(node,"alt",alt)
+	return true
+end
+
 BL_FAC_RECORD_HEADER = { 
 	{ "Format Identifier", 4, ui_parse_cstring },
 	{ "Format Version", 4, ui_parse_cstring }, 
@@ -536,15 +551,51 @@ function ui_parse_biometry(node,data)
 	return true
 end
 
+function ui_parse_jpeg(node,data)
+	nodes.set_attribute(node,"val", data)
+	if bytes.sub(data,1,2) == bytes.new(8,"D8 FF") then
+		nodes.set_attribute(node,"mime-type","image/jpeg")
+	end
+	return true
+end
+
 
 AID_MRTD = "#A0000002471001"
 
 MRP_REFERENCE = {
    ['5F01']   = { "LDS Version Number", ui_parse_version },
    ['5F08']   = { "Date of birth (truncated)" },
+   ['5F0E']   = { "Full name, in national characters", ui_parse_utf8 },
+   ['5F0F']   = { "Other names", ui_parse_printable },
+   ['5F10']   = { "Personal Number", ui_parse_printable },
+   ['5F11']   = { "Place of birth", ui_parse_utf8 },
+   ['5F12']   = { "Telephone", ui_parse_printable },
+   ['5F13']   = { "Profession", ui_parse_printable },
+   ['5F14']   = { "Title", ui_parse_printable },
+   ['5F15']   = { "Personal Summary", ui_parse_printable },
+   ['5F16']   = { "Proof of citizenship (10918 image)", ui_parse_jpeg },
+   ['5F17']   = { "Other valid TD Numbers" },
+   ['5F18']   = { "Custody information", ui_parse_printable },
+   ['5F19']   = { "Issuing Authority", ui_parse_utf8 },
+   ['5F1A']   = { "Other people on document" },
+   ['5F1B']   = { "Endorsement/Observations", ui_parse_printable },
+   ['5F1C']   = { "Tax/Exit requirements", ui_parse_printable },
+   ['5F1D']   = { "Image of document front", ui_parse_jpeg },
+   ['5F1E']   = { "Image of document rear", ui_parse_jpeg },
    ['5F1F']   = { "MRZ data elements", ui_parse_printable },
+   ['5F26']   = { "Date of Issue" },
+   ['5F2B']   = { "Date of birth (8 digit)" },
    ['5F2E']   = { "Biometric data block", ui_parse_biometry },
    ['5F36']   = { "Unicode Version number", ui_parse_version },
+   ['5F40']   = { "Compressed image template", ui_parse_jpeg },
+   ['5F42']   = { "Address", ui_parse_printable },
+   ['5F43']   = { "Compressed image template", ui_parse_jpeg },
+   ['5F50']   = { "Date data recorded" },
+   ['5F51']   = { "Name of person", ui_parse_utf8 },
+   ['5F52']   = { "Telephone", ui_parse_printable },
+   ['5F53']   = { "Address", ui_parse_printable },
+   ['5F55']   = { "Date and time document personalized" },
+   ['5F56']   = { "Serial number of personalization system" },
    ['60']     = { "Common Data Elements" },
    ['61']     = { "Template for MRZ Data Group" },
    ['63']     = { "Template for finger biometric Data Group" },

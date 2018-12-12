@@ -1,5 +1,5 @@
 DEPS = /mingw32
-TARGET = build/win32
+TARGET = /C/Program Files (x86)/Cardpeek
 MPLATFORM = mingw32
 
 CC = $(CCPRE)gcc 
@@ -54,59 +54,62 @@ win32/resource.o:	win32/resource.rc
 clean:			
 			rm -f $(OBJECTS) cardpeek.exe win32/libwinscard.a dot_cardpeek.tar.gz *~ cardpeek_resources.c
 
-install:
-	mkdir -p $(TARGET)
-	cp -u cardpeek.exe $(TARGET)/
+install: cardpeek.exe
+	mkdir -p "$(TARGET)"
+	cp -u cardpeek.exe "$(TARGET)/"
 ifeq (mingw64, $(MPLATFORM))
-	cp -u $(DEPS)/bin/libgcc_s_seh-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libcrypto-1_1-x64.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libssl-1_1-x64.dll $(TARGET)/
+	cp -u $(DEPS)/bin/libgcc_s_seh-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcrypto-1_1-x64.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libssl-1_1-x64.dll "$(TARGET)/"
 else
-	cp -u $(DEPS)/bin/libgcc_s_sjlj-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgcc_s_dw2-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libcrypto-1_1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libssl-1_1.dll $(TARGET)/
+  ifneq (/mingw32, $(DEPS))
+	# not needed from msys2 - TODO: eliminate from debian too ()
+	cp -u $(DEPS)/bin/libgcc_s_sjlj-1.dll "$(TARGET)/"
+  endif
+	cp -u $(DEPS)/bin/libgcc_s_dw2-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcrypto-1_1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libssl-1_1.dll "$(TARGET)/"
 endif
-	cp -u $(DEPS)/bin/libstdc++-6.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libatk-1.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libbrotlidec.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libbrotlicommon.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libbz2-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libcairo-2.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libcairo-gobject-2.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libcurl-4.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libdatrie-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libepoxy-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libexpat-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libffi-6.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libfontconfig-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libfreetype-6.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libfribidi-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgdk-3-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgdk_pixbuf-2.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgio-2.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libglib-2.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgmodule-2.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgobject-2.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgraphite2.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libgtk-3-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libharfbuzz-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libiconv-2.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libidn2-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libintl-8.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libnghttp2-14.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpango-1.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpangocairo-1.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpangoft2-1.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpangowin32-1.0-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpcre-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpixman-1-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpng16-16.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libpsl-5.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libreadline7.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libtermcap-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libthai-0.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libunistring-2.dll $(TARGET)/
-	cp -u $(DEPS)/bin/libwinpthread-1.dll $(TARGET)/
-	cp -u $(DEPS)/bin/lua53.dll $(TARGET)/
-	cp -u $(DEPS)/bin/zlib1.dll $(TARGET)/
+	cp -u $(DEPS)/bin/libstdc++-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libatk-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbrotlidec.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbrotlicommon.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbz2-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcairo-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcairo-gobject-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcurl-4.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libdatrie-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libepoxy-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libexpat-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libffi-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfontconfig-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfreetype-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfribidi-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgdk-3-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgdk_pixbuf-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgio-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libglib-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgmodule-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgobject-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgraphite2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgtk-3-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libharfbuzz-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libiconv-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libidn2-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libintl-8.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libnghttp2-14.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpango-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangocairo-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangoft2-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangowin32-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpcre-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpixman-1-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpng16-16.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpsl-5.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libreadline7.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libtermcap-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libthai-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libunistring-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libwinpthread-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/lua53.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/zlib1.dll "$(TARGET)/"

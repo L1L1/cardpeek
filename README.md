@@ -28,7 +28,10 @@ More info here: http://pannetrat.com/Cardpeek/
 
 ## Build
 
+**Produced binaries do not run yet - See issue ipamo/cardweek#1**
+
 - [Build instructions for Debian](INSTALL.Debian.md), either for the local Debian host, or for cross-compilation to Windows using mingw-w64.
+- [Build instructions for Windows](INSTALL.Windows.md), using msys2.
 - [Specific instructions for FreeBSD](INSTALL.FreeBSD.md) in case of errors.
 
 ## Usage

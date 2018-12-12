@@ -1,6 +1,8 @@
 Build instructions for Debian 9 (Stretch)
 =========================================
 
+**Produced binaries do not run yet - See issue ipamo/cardweek#1**
+
 ## For local Debian host
 
 Required libraries:
@@ -31,11 +33,11 @@ unpack the packages and merge them into a new directory called `deps/win32` (whi
 
 Build:
 
-    make -f Makefile.win32 CCPRE=i686-w64-mingw32- DEPS=deps/win32
+    make -f Makefile.win32 CCPRE=i686-w64-mingw32- DEPS=deps/win32 TARGET=/opt/cardpeek-win32
 
 Install:
 
-    make install -f Makefile.win32 CCPRE=i686-w64-mingw32- DEPS=deps/win32
+    make install -f Makefile.win32 CCPRE=i686-w64-mingw32- DEPS=deps/win32 TARGET=/opt/cardpeek-win32
 
 Run:
 
@@ -48,5 +50,5 @@ Adapt previous commands as follow
 
     ./clean.sh
     PLATFORM=win64 ./deps-win32.sh
-    make -f Makefile.win32 CCPRE=x86_64-w64-mingw32- DEPS=deps/win64 MPLATFORM=mingw64 TARGET=build/win64
-    make install -f Makefile.win32 CCPRE=x86_64-w64-mingw32- DEPS=deps/win64 MPLATFORM=mingw64 TARGET=build/win64
+    make -f Makefile.win32 CCPRE=x86_64-w64-mingw32- DEPS=deps/win64 MPLATFORM=mingw64 TARGET=/opt/cardpeek-win64
+    make install -f Makefile.win32 CCPRE=x86_64-w64-mingw32- DEPS=deps/win64 MPLATFORM=mingw64 TARGET=/opt/cardpeek-win64

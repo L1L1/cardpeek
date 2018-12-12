@@ -1,10 +1,18 @@
 #!/bin/bash
+#
+# Download and extract dependencies for cross-compilation from Debian for Windows.
+# See INSTALL.Debian.md
+#
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 PLATFORM=${PLATFORM=-win32}
 DEPS=deps/$PLATFORM
+if [[ `uname -s` == MINGW* ]] || [[ `uname -s` == MSYS* ]]; then
+    echo -e "${RED}This script should not be run from msys${NC}"
+    exit 1
+fi
 
 function import_signing_key {
     #

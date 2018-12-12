@@ -1,6 +1,6 @@
 # How can I read the contents of my EMV bank card? #
 
-![http://cardpeek.googlecode.com/files/sample-emv.jpg](http://cardpeek.googlecode.com/files/sample-emv.jpg)
+![sample-emv.jpg](sample-emv.jpg)
 
 The « emv » script in **cardpeek** provides an analysis of EMV banking cards used across the
 world.

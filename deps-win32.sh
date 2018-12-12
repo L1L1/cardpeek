@@ -136,22 +136,14 @@ for name in "${packages[@]}"; do
 done
 
 # ----- Get local files ------
-if [ "$PLATFORM" == "win32" ] && [ -f /c/Windows/SysWOW64/WinSCard.dll ]; then
-    # We're compiling for a 32-bit Windows from a 64-bit Windows (using MSys2): let's use the 32-bit emulation library
-    cp -u /c/Windows/SysWOW64/WinSCard.dll $DEPS/
-elif [ -f /c/Windows/System32/WinSCard.dll ]; then
-    # We're compiling for a same-bitness Windows (using MSys2)
-    cp -u /c/Windows/System32/WinSCard.dll $DEPS/
-elif [ "$PLATFORM" == "win32" ]; then
+if [ "$PLATFORM" == "win32" ]; then
     # We're cross-compiling for 32-bit Windows from Linux
-    cp -u /usr/lib/i386-linux-gnu/wine/fakedlls/winscard.dll $DEPS/
     get_package mingw-w64-cross-gcc-7.3.0-2-i686.pkg # necessary to get libgcc_s_dw2-1.dll
     cp -u $DEPS/opt/lib/gcc/i686-w64-mingw32/7.3.0/libgcc_s_dw2-1.dll $DEPS/bin/
     cp -u /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll $DEPS/bin/
     cp -u /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll $DEPS/bin/
 else
     # We're cross-compiling for 64-bit Windows from Linux
-    cp -u /usr/lib/x86_64-linux-gnu/wine/fakedlls/winscard.dll $DEPS/
     cp -u /usr/lib/gcc/x86_64-w64-mingw32/6.3-win32/libgcc_s_seh-1.dll $DEPS/bin/
     cp -u /usr/lib/gcc/x86_64-w64-mingw32/6.3-win32/libstdc++-6.dll $DEPS/bin/
 fi

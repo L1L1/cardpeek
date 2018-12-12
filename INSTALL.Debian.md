@@ -1,7 +1,7 @@
 Build instructions for Debian 9 (Stretch)
 =========================================
 
-**!!! Produced binaries do not run yet - See issue ipamo/cardpeek#1 !!!**
+**!!! Produced binaries do not run yet - See [issue #1](https://github.com/ipamo/cardpeek/issues/1) !!!**
 
 ## For local Debian host
 

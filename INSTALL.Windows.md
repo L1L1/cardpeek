@@ -1,7 +1,7 @@
 Build on Windows
 ================
 
-**Produced binaries do not run yet - See issue ipamo/cardweek#1**
+**!!! Produced binaries do not run yet - See issue ipamo/cardpeek#1 !!!**
 
 ## Pre-requisites
 

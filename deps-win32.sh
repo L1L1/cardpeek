@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Download and extract dependencies for cross-compilation from Debian for Windows.
-# See INSTALL.Debian.md
+# See doc/build-debian.md
 #
 RED='\033[0;31m'
 YELLOW='\033[0;33m'

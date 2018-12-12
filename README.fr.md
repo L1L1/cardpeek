@@ -9,15 +9,13 @@ Cardpeek est un outil qui a pour objectif de vous permettre d’accéder aux inf
 
 Dans cette version, l’application est capable de lire le contenu des cartes suivantes :
 
-* Les cartes à puce bancaires EMV, dont les cartes NFC.
-* Les cartes de transport d'île de France Navigo, ainsi que MOBIB(Belgique) et RavKav?(Israel).
+* Les cartes à puce bancaires [EMV](doc/emv.fr.md), dont les cartes NFC - _[capture d'écran](doc/sample-emv.jpg)_
+* Les cartes de transport de Paris / Île de France [Navigo](doc/navigo.fr.md), ainsi que MOBIB (Belgique) et RavKav (Israel) -  _[capture d'écran](doc/sample-navigo.jpg)_
 * Les cartes Monéo
 * Les cartes Vitales 2
 * Les passports électroniques/biométriques avec une sécurité BAC.
-* La carte d'identité belge (eID).
-* Les cartes SIM GSM (beta).
-* Les cartes Mifare (beta).
-* Les cartes conducteur tachygraphes.
-* Les cartes OpenPGP (beta);
-
-Plus de détails ici : http://pannetrat.com/Cardpeek/
+* La carte d'identité belge (eID)
+* Les cartes SIM GSM (beta)
+* Les cartes Mifare (beta)
+* Les cartes conducteur tachygraphes
+* Les cartes OpenPGP (beta)

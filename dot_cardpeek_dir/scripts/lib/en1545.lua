@@ -20,11 +20,12 @@
 require('lib.strict')
 require('lib.country_codes')
 
-EPOCH = os.time({hour=0, min=0, year=1997, month=1, sec=0, day=1})
---EPOCH = 852073200
-date_days = 0
+EPOCH = os.time({hour=0, min=0, year=1997, month=1, sec=0, day=1}) -- (localized)
+local EPOCH_GMT = 852076800 -- (GMT)
+local TIMEZONE_DELAY = EPOCH - EPOCH_GMT
+
 function en1545_DATE(source)
-        date_days = EPOCH+bytes.tonumber(source)*24*3600
+        local date_days = EPOCH+bytes.tonumber(source)*24*3600
         return os.date("%a %x",date_days)
 end
 
@@ -32,8 +33,7 @@ function en1545_TIME(source)
         local date_minutes
         local part = bytes.sub(source, 0, 10) -- 11 bits
         part = bytes.pad_left(part,32,0)
-        date_minutes = date_days + bytes.tonumber(part)*60
-        date_days = 0
+        date_minutes = TIMEZONE_DELAY + bytes.tonumber(part)*60
         return os.date("%X",date_minutes)
 end
 

@@ -24,22 +24,71 @@ EPOCH = os.time({hour=0, min=0, year=1997, month=1, sec=0, day=1}) -- (localized
 local EPOCH_GMT = 852076800 -- (GMT)
 local TIMEZONE_DELAY = EPOCH - EPOCH_GMT
 
-function en1545_DATE(source)
-        local date_days = EPOCH+bytes.tonumber(source)*24*3600
-        return os.date("%a %x",date_days)
+local _l = {} -- Local functions
+
+function en1545_DATE(source, ref_date)
+    --[[
+    @param source Number of days (in a bytes object).
+    @param ref_date Refererence date for @source, expressed as a number of days since EPOCH in local time.
+    If nil, 1997-01-01 is used.
+    If negative, @source is a number of days UNTIL -ref_date.
+    ]]
+    ref_date = ref_date or EPOCH
+    local date_days
+    if (ref_date < 0)
+        date_days = (-ref_date) - bytes.tonumber(source) * 24 * 3600
+    else
+        date_days = ref_date + bytes.tonumber(source) * 24 * 3600
+    end
+    return os.date("%a %x", date_days)
 end
 
 function en1545_TIME(source)
-        local date_minutes
-        local part = bytes.sub(source, 0, 10) -- 11 bits
-        part = bytes.pad_left(part,32,0)
-        date_minutes = TIMEZONE_DELAY + bytes.tonumber(part)*60
-        return os.date("%X",date_minutes)
+    --[[
+    @param source Number of minutes (11 first bits of a bytes object).
+    ]]
+    local date_minutes
+    local part = bytes.sub(source, 0, 10)
+    part = bytes.pad_left(part, 32, 0)
+    date_minutes = TIMEZONE_DELAY + bytes.tonumber(part) * 60
+    return os.date("%H:%M", date_minutes)
 end
 
-function en1545_DATE_TIME(source)
-    local dtSeconds = EPOCH + bytes.tonumber(source)
-    return os.date("%c", dtSeconds)
+function en1545_QUARTERS(source)
+    --[[
+    @param source Number of quarters (7 first bits of a bytes object).
+    Special values:
+    - 96 (coding 24h00): end of service
+    - 127 (all bits to 1): not significant
+    ]]
+    local date_quarters
+    local part = bytes.sub(source, 0, 6)
+    part = bytes.pad_left(part, 32, 0)
+    date_quarters = TIMEZONE_DELAY + bytes.tonumber(part) * 60 * 15
+    if date_quarters == 96
+        return "End of service"
+    elseif date_quarters == 127
+        return "Not significant"
+    else
+        return os.date("%H:%M", date_quarters)
+    end
+end
+
+function en1545_DATE_TIME(source, ref_date)
+    --[[
+    @param source Number of seconds (in a bytes object).
+    @param ref_date Refererence date for @source, expressed as a number of days since EPOCH in local time.
+    If nil, 1997-01-01 is used.
+    If negative, @source is a number of days UNTIL -ref_date.
+    ]]
+    ref_date = ref_date or EPOCH
+    local date_seconds
+    if (ref_date < 0)
+        date_seconds = (-ref_date) - bytes.tonumber(source)
+    else
+        date_seconds = ref_date + bytes.tonumber(source)
+    end
+    return os.date("%c", date_seconds)
 end
 
 function en1545_BCD_DATE(source)
@@ -57,37 +106,37 @@ ALPHA = { "-","A","B","C","D","E","F","G",
           "X","Y","Z","?","?","?","?"," " }
 
 function en1545_ALPHA(source)
-        local i
-        local c
-        local str = {""}
+    local i
+    local c
+    local str = {""}
 
-        for i=0,#source-4,5 do
-                c=bytes.tonumber(bytes.sub(source,i,i+4))
-                table.insert(str,ALPHA[c+1])
-        end
-        return table.concat(str)
+    for i=0,#source-4,5 do
+        c=bytes.tonumber(bytes.sub(source,i,i+4))
+        table.insert(str,ALPHA[c+1])
+    end
+    return table.concat(str)
 end
 
 function en1545_NETWORKID(source)
-        local country = bytes.sub(source, 0, 11)
-        local region  = bytes.sub(source, 12, 23)
-        local country_code
-        local region_code
+    local country = bytes.sub(source, 0, 11)
+    local region  = bytes.sub(source, 12, 23)
+    local country_code
+    local region_code
 
-        country_code = iso_country_code_name(tonumber(country:convert(4):format("%D")))
-        region_code  = tonumber(region:convert(4):format("%D"))
-        if region_code then
-          return "country "..country_code.." / network "..region_code
-        end
-        return "country "..country_code
+    country_code = iso_country_code_name(tonumber(country:convert(4):format("%D")))
+    region_code  = tonumber(region:convert(4):format("%D"))
+    if region_code then
+        return "country "..country_code.." / network "..region_code
+    end
+    return "country "..country_code
 end
 
 function en1545_NUMBER(source)
-        return bytes.tonumber(source)
+    return bytes.tonumber(source)
 end
 
 function en1545_AMOUNT(source)
-        return string.format("%.2f€",bytes.tonumber(source)/100)
+    return string.format("%.2f€",bytes.tonumber(source)/100)
 end
 
 function en1545_ZONES(source)
@@ -111,130 +160,142 @@ function en1545_ZONES(source)
 end
 
 function en1545_UNDEFINED(source)
-        local hex_info = source:convert(8)
-        return hex_info:format("0x%D")
+    local hex_info = source:convert(8)
+    return hex_info:format("0x%D")
 end
 
 
 en1545_BITMAP = 1
 en1545_REPEAT = 2
 
---[[ 
-	in en1545_parse_item, the "format" parameter is a table with entries containing 3 or 4 elements:
+function _l.parse_item(ctx, format, data, position, reference_index)
+    --[[ 
+	@param format Table with entries containing 3 or 4 elements:
 	 - format[1]: the type of the entry, which is either
 			a) en1545_BITMAP: indicates a bitmap field (1 => field is present)
 			b) en1545_REPEAT: indicates the field is repeated n times.
 			c) en1545_XXXXXX: a function to call on the data for further processing.
 	- format[2]: the length of the entry in bits.
 	- format[3]: the name of the entry
-	- format[4]: used only for en1545_BITMAP, points to a sub-table of entries.
+    - format[4]:
+        - for en1545_BITMAP: points to a sub-table of entries.
+        - for en1545_REPEAT: the sub-table to repeat.
+        - for en1545_XXXXXX: optional argument for the callback function (in addition to the "source" argument).
+    --]]
 
---]]
+    local parsed = 0
+    local index, item_node, bitmap_node, bitmap_size, item, alt
 
-function en1545_parse_item(ctx, format, data, position, reference_index)
-        local parsed = 0
-        local index, item_node, bitmap_node, bitmap_size, item, alt
+    if format == nil then
+        return 0
+    end
 
-        if format == nil then
-           return 0
+    parsed = format[2] -- entry length
+
+    item = bytes.sub(data,position,position+parsed-1)
+
+    if item == nil then
+        return 0
+    end
+
+    item_node = ctx:append{ classname="item", 
+            label=format[3], 
+            --[[ id=reference_index --]] }
+
+    if format[1] == en1545_BITMAP then -- entry type is bitmap 
+
+        bitmap_size = parsed
+        parsed = bitmap_size
+        item_node:append{ classname="item", 
+                label="("..format[3].."Bitmap)", 
+                val=item }
+
+        -- go through bit table in reverse order, since lsb=first bit 
+        for index,bit in item:reverse():ipairs() do
+            if bit==1 then
+                parsed = parsed + _l.parse_item(item_node, format[4][index], data, position+parsed, index)
+            end
         end
 
-        parsed = format[2] -- entry length
+    elseif format[1] == en1545_REPEAT then -- entry type is repeat
 
-        item = bytes.sub(data,position,position+parsed-1)
+        item_node:set_attribute("val",item)
+        item_node:set_attribute("alt",bytes.tonumber(item))
 
-        if item == nil then
-            return 0
+        for index=1,bytes.tonumber(item) do
+            parsed = parsed + _l.parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
         end
 
-        item_node = ctx:append{ classname="item", 
-				label=format[3], 
-				--[[ id=reference_index --]] }
+    else -- entry type is item
 
-        if format[1] == en1545_BITMAP then -- entry type is bitmap 
-
-           bitmap_size = parsed
-           parsed = bitmap_size
-           item_node:append{ classname="item", 
-			     label="("..format[3].."Bitmap)", 
-			     val=item }
-
-	   -- go through bit table in reverse order, since lsb=first bit 
-           for index,bit in item:reverse():ipairs() do
-               if bit==1 then
-                  parsed = parsed + en1545_parse_item(item_node, format[4][index], data, position+parsed, index)
-               end
-           end
-
-        elseif format[1] == en1545_REPEAT then -- entry type is repeat
-
-           item_node:set_attribute("val",item)
-           item_node:set_attribute("alt",bytes.tonumber(item))
-
-           for index=1,bytes.tonumber(item) do
-               parsed = parsed + en1545_parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
-           end
-
-        else -- entry type is item
-           
-           alt = format[1](item)
-           if alt==nil then
-              item_node:remove()
-           else
-              item_node:set_attribute("val",item)
-              item_node:set_attribute("size",#item)
-              item_node:set_attribute("alt",alt)
-           end
-
+        -- call the callback function with the optional additional arguments
+        if format[4] then
+            if type(format[4]) == 'table' then
+                alt = format[1](item, unpack(format[4]))
+            else
+                alt = format[1](item, format[4])
+            end
+        else
+            alt = format[1](item)
         end
-        return parsed
+
+        -- update node
+        if alt == nil then
+            item_node:remove()
+        else
+            item_node:set_attribute("val",item)
+            item_node:set_attribute("size",#item)
+            item_node:set_attribute("alt",alt)
+        end
+
+    end
+    return parsed
 end
 
-function en1545_parse(ctx, format, data)
-        local index
-        local parsed = 0
+function _l.parse(ctx, format, data)
+    local index
+    local parsed = 0
 
-        for index=0,#format do
-            parsed = parsed + en1545_parse_item(ctx,format[index],data,parsed,index)
-        end
-        return parsed
+    for index=0,#format do
+        parsed = parsed + _l.parse_item(ctx,format[index],data,parsed,index)
+    end
+    return parsed
 end
 
-function en1545_unparsed(ctx, data)
-        if data and bytes.tonumber(data)>0 then
-		    ctx:append{ classname="item", 
-			            label="(remaining unparsed data)", 
-			            val=data,
-                        alt="(binary data)" }
-        end
+function _l.unparsed(ctx, data)
+    if data and bytes.tonumber(data)>0 then
+        ctx:append{ classname="item", 
+                    label="(remaining unparsed data)", 
+                    val=data,
+                    alt="(binary data)" }
+    end
 end
 
 function en1545_map(cardenv, data_type, ...)
-        local record_node
-        local bits
-        local i
-        local parsed
-        local block
+    local record_node
+    local bits
+    local i
+    local parsed
+    local block
 
 	for file in cardenv:find({label=data_type}) do
-                for record_node in file:find({label="record"}) do
+        for record_node in file:find({label="record"}) do
+            if record_node==nil then
+                break
+            end
 
-                        if record_node==nil then break end
-
-                        bits = record_node:get_attribute("val"):convert(1)
-                        parsed = 0
-                        for i,template in ipairs({...}) do
-                                block = bytes.sub(bits,parsed)
-                                if bytes.is_all(block,0)==false then
-                                        parsed = parsed + en1545_parse(record_node,template,block)
-                                end
-                        end
-                        
-                        en1545_unparsed(record_node,bytes.sub(bits,parsed)) 
+            bits = record_node:get_attribute("val"):convert(1)
+            parsed = 0
+            for i,template in ipairs({...}) do
+                block = bytes.sub(bits,parsed)
+                if bytes.is_all(block,0)==false then
+                    parsed = parsed + _l.parse(record_node,template,block)
                 end
+            end
+            
+            _l.unparsed(record_node,bytes.sub(bits,parsed)) 
+        end
 
 		file:set_attribute("parsed","true")
 	end
 end
-
-

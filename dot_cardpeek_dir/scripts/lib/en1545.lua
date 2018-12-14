@@ -356,15 +356,31 @@ function _l.unparsed(ctx, data)
     end
 end
 
-function en1545_map(cardenv, data_type, ...)
+function en1545_map(cardenv, condition, ...)
+	--[[
+	Map card records to en1545 items (as defined in _l.parse_item() function).
+	@param condition:
+		- If condition is a string, all records under the file having label "condition" will be mapped.
+		- If condition is an array, records with find(condition.records) under files with find(condition.file) will be mapped.
+	]]
     local record_node
     local bits
     local i
     local parsed
     local block
 
-	for file in cardenv:find({label=data_type}) do
-        for record_node in file:find({label="record"}) do
+	local file_condition
+	local record_condition
+	if type(condition) == "string" then
+		file_condition = { label = condition }
+		record_condition = { label = "record" }
+	else
+		file_condition = condition.file
+		record_condition = condition.record
+	end
+
+	for file in cardenv:find(file_condition) do
+        for record_node in file:find(record_condition) do
             if record_node==nil then
                 break
             end

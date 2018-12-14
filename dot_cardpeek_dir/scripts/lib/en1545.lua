@@ -244,6 +244,7 @@ function _l.parse_item(ctx, format, data, position)
 
     item_node = ctx:append{ classname="item", label=format[3] }
 
+    -- ------------------------------------------------------------------------
     if format[1] == en1545_BITMAP or format[1] == en1545_BITMAP_BE then -- entry type is bitmap 
 
         bitmap_size = parsed
@@ -290,6 +291,7 @@ function _l.parse_item(ctx, format, data, position)
             end
         end
 
+    -- ------------------------------------------------------------------------
     elseif format[1] == en1545_REPEAT then -- entry type is repeat
         if item == nil then
             log.print(log.WARNING,"item is empty for repeat entry "..format[3])
@@ -297,12 +299,14 @@ function _l.parse_item(ctx, format, data, position)
         end
 
         item_node:set_attribute("val",item)
+        item_node:set_attribute("size",#item)
         item_node:set_attribute("alt",bytes.tonumber(item))
 
         for index=1,bytes.tonumber(item) do
-            parsed = parsed + _l.parse_item(ctx, format[4][0], data, position + parsed)
+            parsed = parsed + _l.parse_item(item_node, format[4][0], data, position + parsed)
         end
 
+    -- ------------------------------------------------------------------------
     else -- entry type is item
         if item == nil then
             log.print(log.WARNING,"item is empty for entry "..format[3])

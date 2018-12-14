@@ -164,23 +164,71 @@ function en1545_UNDEFINED(source)
     return hex_info:format("0x%D")
 end
 
+function _l.split_bitmap_subtable(subtable, bitmap_size, subtable_name)
+    --[[
+    Split sub-table according to the size of the bitmap.
+    @return 2 arrays.
+        a) head: part of subtable considered "always present". It is applicable (non empty) only if the size of subtable is greater than the size of bitmap.
+        b) tail: part of subtable on which the bitmap applies. It has the same size as the bitmap.
+    ]]
+    subtable_name = subtable_name or ""
+
+    -- List and sort all keys in the subtable
+    local total_count = 0
+    local keys = {}
+    for key in pairs(subtable) do
+            table.insert(keys, key)
+            total_count = total_count + 1
+    end
+    table.sort(keys)
+
+    -- Do the split
+    local head_subtable = {}
+    local bitmap_subtable = {}
+    
+    if total_count > bitmap_size then
+        local head_size = total_count - bitmap_size
+        local count = 0
+        for _, key in ipairs(keys) do
+            local value = subtable[key]
+            count = count + 1
+            if count <= head_size then
+                head_subtable[count] = value
+            else
+                bitmap_subtable[count - head_size - 1] = value -- Bitmap subtable indices must start with 0
+            end
+        end
+        if count ~= total_count then
+            error("subtable "..subtable_name.." contains "..total_count.." elements, but only "..count.." where iterated using ipairs: please ensure subtable keys are successive integers");
+        end
+    else
+        bitmap_subtable = subtable
+    end
+    
+    return head_subtable, bitmap_subtable
+end
+
 
 en1545_BITMAP = 1
 en1545_REPEAT = 2
+en1545_BITMAP_BE = 3
 
-function _l.parse_item(ctx, format, data, position, reference_index)
+function _l.parse_item(ctx, format, data, position)
     --[[ 
 	@param format Table with entries containing 3 or 4 elements:
 	 - format[1]: the type of the entry, which is either
-			a) en1545_BITMAP: indicates a bitmap field (1 => field is present)
-			b) en1545_REPEAT: indicates the field is repeated n times.
-			c) en1545_XXXXXX: a function to call on the data for further processing.
-	- format[2]: the length of the entry in bits.
+        a) en1545_BITMAP: indicates a bitmap field (1 => field is present) in little-endian order (lowest bit byte = first bit)
+        b) en1545_BITMAP_BE : same as en1545_BITMAP but in big-endian order (lowest significant bit = last bit)
+        c) en1545_REPEAT: indicates the field is repeated n times.
+        d) en1545_XXXXXX: a function to call on the data for further processing.
+    - format[2]:
+        * for en1545_BITMAP, en1545_BITMAP_BE or en1545_XXXXXX: the length of the entry in bits.
+        * for en1545_REPEAT: not used.
 	- format[3]: the name of the entry
     - format[4]:
-        - for en1545_BITMAP: points to a sub-table of entries.
-        - for en1545_REPEAT: the sub-table to repeat.
-        - for en1545_XXXXXX: optional argument for the callback function (in addition to the "source" argument).
+        * for en1545_BITMAP or en1545_BITMAP_BE: points to a sub-table of entries.
+        * for en1545_REPEAT: the sub-table to repeat.
+        * for en1545_XXXXXX: optional argument for the callback function (in addition to the "source" argument).
     --]]
 
     local parsed = 0
@@ -192,41 +240,74 @@ function _l.parse_item(ctx, format, data, position, reference_index)
 
     parsed = format[2] -- entry length
 
-    item = bytes.sub(data,position,position+parsed-1)
+    item = bytes.sub(data, position, position + parsed - 1)
 
-    if item == nil then
-        return 0
-    end
+    item_node = ctx:append{ classname="item", label=format[3] }
 
-    item_node = ctx:append{ classname="item", 
-            label=format[3], 
-            --[[ id=reference_index --]] }
-
-    if format[1] == en1545_BITMAP then -- entry type is bitmap 
+    if format[1] == en1545_BITMAP or format[1] == en1545_BITMAP_BE then -- entry type is bitmap 
 
         bitmap_size = parsed
         parsed = bitmap_size
-        item_node:append{ classname="item", 
-                label="("..format[3].."Bitmap)", 
-                val=item }
 
-        -- go through bit table in reverse order, since lsb=first bit 
-        for index,bit in item:reverse():ipairs() do
-            if bit==1 then
-                parsed = parsed + _l.parse_item(item_node, format[4][index], data, position+parsed, index)
+        if bitmap_size > 0 then
+            -- Bitmap is not empty
+
+            if item == nil then
+				log.print(log.WARNING,"item is empty for non-empty bitmap "..format[3])
+                return 0
+            end
+
+            item_node:append{ classname = "item", 
+                    label = "("..format[3].."Bitmap)", 
+                    size = #item,
+                    val = item }
+
+            local head_subtable
+            local bitmap_subtable
+            head_subtable, bitmap_subtable = _l.split_bitmap_subtable(format[4], bitmap_size, format[3].."Bitmap")
+
+            for index, sub in pairs(head_subtable) do
+                    parsed = parsed + _l.parse_item(item_node, sub, data, position + parsed)
+            end
+
+            local bitmap_ordered
+            if format[1] == en1545_BITMAP_BE then
+                bitmap_ordered = item
+            else
+                -- go through bit table in reverse order
+                bitmap_ordered = item:reverse()
+            end
+
+            for index,bit in bitmap_ordered:ipairs() do
+                if bit==1 then
+                    parsed = parsed + _l.parse_item(item_node, bitmap_subtable[index], data, position + parsed)
+                end
+            end
+        else
+            -- Bitmap is empty: all fields are considered as accepted
+            for index, sub in pairs(format[4]) do
+                parsed = parsed + _l.parse_item(item_node, sub, data, position + parsed)
             end
         end
 
     elseif format[1] == en1545_REPEAT then -- entry type is repeat
+        if item == nil then
+            log.print(log.WARNING,"item is empty for repeat entry "..format[3])
+            return 0
+        end
 
         item_node:set_attribute("val",item)
         item_node:set_attribute("alt",bytes.tonumber(item))
 
         for index=1,bytes.tonumber(item) do
-            parsed = parsed + _l.parse_item(ctx, format[4][0], data, position+parsed, reference_index+index)
+            parsed = parsed + _l.parse_item(ctx, format[4][0], data, position + parsed)
         end
 
     else -- entry type is item
+        if item == nil then
+            log.print(log.WARNING,"item is empty for entry "..format[3])
+            return 0
+        end
 
         -- call the callback function with the optional additional arguments
         if format[4] then
@@ -257,7 +338,7 @@ function _l.parse(ctx, format, data)
     local parsed = 0
 
     for index=0,#format do
-        parsed = parsed + _l.parse_item(ctx,format[index],data,parsed,index)
+        parsed = parsed + _l.parse_item(ctx, format[index], data, parsed)
     end
     return parsed
 end

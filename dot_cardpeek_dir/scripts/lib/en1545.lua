@@ -35,7 +35,7 @@ function en1545_DATE(source, ref_date)
     ]]
     ref_date = ref_date or EPOCH
     local date_days
-    if (ref_date < 0)
+    if ref_date < 0 then
         date_days = (-ref_date) - bytes.tonumber(source) * 24 * 3600
     else
         date_days = ref_date + bytes.tonumber(source) * 24 * 3600
@@ -47,11 +47,11 @@ function en1545_TIME(source)
     --[[
     @param source Number of minutes (11 first bits of a bytes object).
     ]]
-    local date_minutes
     local part = bytes.sub(source, 0, 10)
     part = bytes.pad_left(part, 32, 0)
-    date_minutes = TIMEZONE_DELAY + bytes.tonumber(part) * 60
-    return os.date("%H:%M", date_minutes)
+
+    local date_seconds = TIMEZONE_DELAY + bytes.tonumber(part) * 60
+    return os.date("%H:%M", date_seconds)
 end
 
 function en1545_QUARTERS(source)
@@ -61,17 +61,16 @@ function en1545_QUARTERS(source)
     - 96 (coding 24h00): end of service
     - 127 (all bits to 1): not significant
     ]]
-    local date_quarters
     local part = bytes.sub(source, 0, 6)
     part = bytes.pad_left(part, 32, 0)
-    date_quarters = TIMEZONE_DELAY + bytes.tonumber(part) * 60 * 15
-    if date_quarters == 96
+    if part == 96 then
         return "End of service"
-    elseif date_quarters == 127
+    elseif part == 127 then
         return "Not significant"
-    else
-        return os.date("%H:%M", date_quarters)
     end
+
+    local date_seconds = TIMEZONE_DELAY + bytes.tonumber(part) * 60 * 15
+    return os.date("%H:%M", date_seconds)
 end
 
 function en1545_DATE_TIME(source, ref_date)
@@ -83,7 +82,7 @@ function en1545_DATE_TIME(source, ref_date)
     ]]
     ref_date = ref_date or EPOCH
     local date_seconds
-    if (ref_date < 0)
+    if ref_date < 0 then
         date_seconds = (-ref_date) - bytes.tonumber(source)
     else
         date_seconds = ref_date + bytes.tonumber(source)

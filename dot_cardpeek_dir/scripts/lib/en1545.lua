@@ -19,6 +19,7 @@
 
 require('lib.strict')
 require('lib.country_codes')
+require('lib.network_codes')
 
 EPOCH = os.time({hour=0, min=0, year=1997, month=1, sec=0, day=1}) -- (localized)
 local EPOCH_GMT = 852076800 -- (GMT)
@@ -119,15 +120,15 @@ end
 function en1545_NETWORKID(source)
     local country = bytes.sub(source, 0, 11)
     local region  = bytes.sub(source, 12, 23)
-    local country_code
-    local region_code
+    local country_code = tonumber(country:convert(4):format("%D"))
+    local region_code = tonumber(region:convert(4):format("%D"))
 
-    country_code = iso_country_code_name(tonumber(country:convert(4):format("%D")))
-    region_code  = tonumber(region:convert(4):format("%D"))
+    local country_name = iso_country_code_name(country_code)
     if region_code then
-        return "country "..country_code.." / network "..region_code
+        local region_name = network_code_name(country_code, region_code)
+        return "country "..country_name.." / network "..region_name
     end
-    return "country "..country_code
+    return "country "..country_name
 end
 
 function en1545_NUMBER(source)

@@ -363,7 +363,7 @@ RAVKAV_RAIL_LOCATIONS = {
     [67] =     "[Ticketing Machine] Ra\'anana South",                --2960
     [68] =     "[Ticketing Machine] Kiryat Malakhi - Yoav",          --6150
     [69] =     "[Ticketing Machine] Jerusalem - Yitshak Navon",      --680
-    [70] =     "[Ticketing Machine] 70",                             --
+    [70] =     "[Ticketing Machine] Mazkeret Batya",                 --6900
 
     [7001] =   "Tel Aviv Center - Savidor",                          --3700
     [7002] =   "Herzliya",                                           --3500
@@ -434,9 +434,9 @@ RAVKAV_RAIL_LOCATIONS = {
     [7067] =   "Ra\'anana South",                                    --2960
     [7068] =   "Kiryat Malakhi - Yoav",                              --6150
     [7069] =   "Jerusalem - Yitshak Navon",                          --680
-    [7070] =   "7070"                                                --
+    [7070] =   "Mazkeret Batya"                                      --6900
 
- --   [7070] =   "Mazkeret Batya"                                    --
+ --   [7071] =   "7071"                                              --
 }
 
 RAVKAV_RAIL_LOCATIONS2 = {
@@ -510,7 +510,7 @@ RAVKAV_RAIL_LOCATIONS2 = {
     [67] =     "Ra\'anana South",                  --2960
     [68] =     "Kiryat Malakhi - Yoav",            --6150
     [69] =     "Jerusalem - Yitshak Navon",        --680
-    [70] =     "70"                                --
+    [70] =     "Mazkeret Batya"                    --6900
 }
 
 --Bus stops
@@ -948,8 +948,8 @@ RAVKAV_CONTRACT_DESCRIPTIONS = {
             [3] = "Aggregate value / Value 4 / Payment of NIS 150",
             [4] = "Aggregate value / Value 5 / Payment of NIS 200",
             [5] = "Aggregate value / Flexible aggregate value",
-            [6] = "Aggregate value / Payment of NIS 5 + 13.20",
-            [7] = "Aggregate value / Payment of NIS 5 + 20.80"
+            [6] = "Aggregate value / Payment of NIS 11.80",
+            [7] = "Aggregate value / Payment of NIS 18.60"
           },
     [7] = { [0] = "Amount of rides / Ticket for 4 trips",
             [1] = "Amount of rides / Ticket for 6 trips",
@@ -1070,7 +1070,7 @@ RAVKAV_CONTRACT_TYPES = {
     [123] = "Dan Region - Amount of rides - code 43 / [Dan, Egged, Kavim, Metropoline] / (ring 2, zone 21 only) (interchange areas 43)",
     [124] = "Dan Region - Amount of rides - code 44 / [Dan, Egged, Kavim, Metropoline] / (extended)",
     [135] = "(obsolete) Day pass: Dan Region - Ring 1 / [Dan, Egged, Kavim, Metropoline] / (interchange areas 42)",
-    [137] = "Month pass: Dan Region - Gray - Bnei Brak / [Dan]",
+    [137] = "Month pass: Dan Region - Gray - Bnei Brak / [Dan, Afikim]",
     [141] = "Month/Week/Day pass: Dan Region - Ring 1 / [Dan, Egged, Kavim, Metropoline, Afikim, Nativ Express, Israel Railways] / (standard, standard student, extended student)",
     [142] = "Month/Week/Day pass: Dan Region - Extended - Ring 1, 2.1, 2.2, 2.3 / [Dan, Egged, Egged Transport, Kavim, Metropoline, Afikim, Nativ Express, Israel Railways] / (standard, standard student, extended student)",
     [143] = "Month/Week/Day pass: Dan Region + North - Ring 1, 2.1, 2.2, 3.1, 3.4 / [Dan, Egged, Egged Transport, Kavim, Metropoline, Afikim, Nativ Express, Israel Railways] / (standard, standard student, extended student)",
@@ -1232,7 +1232,7 @@ RAVKAV_CONTRACT_TYPES = {
     [547] = "(obsolete) Amount of rides - code 7 / [Egged, Nativ Express]",
     [548] = "(obsolete) Amount of rides - code 8 / [Egged, Nativ Express]",
     [549] = "(obsolete) Amount of rides - code 9 / [Egged, Nativ Express]",
-    [550] = "(obsolete) Month pass: Krayot area / [Egged, Dan North] / (interchange area 52)",
+    [550] = "Month pass: Krayot area / [Egged, Dan North] / (interchange area 52)",
     [551] = "(obsolete) Month pass: Nahariya <> Akko / [Egged, Nativ Express]",
     [552] = "(obsolete) Month pass: Nahariya <> Kiryat Ata Junction / [Egged, Nativ Express]",
     [553] = "(obsolete) Month pass: Nahariya <> Akko <> Haifa / [Egged, Dan North, Nativ Express] / (interchange areas 51, 56, 57, 58, 59)",
@@ -1241,7 +1241,7 @@ RAVKAV_CONTRACT_TYPES = {
     [556] = "(obsolete) Month pass: Shefa-\'Amr <> Haifa / [Egged, Dan North, Nativ Express] / (interchange areas 51, 52, 56, 57, 58, 59)",
     [557] = "(obsolete) Month pass: Akko <> Kiryat Ata Junction / [Egged, Dan North]",
     [558] = "(obsolete) Month pass: Akko <> Haifa / [Egged, Dan North] / (interchange areas 51, 52, 56, 57, 58, 59)",
-    [559] = "(obsolete) Month pass: Akko / [Egged, Nativ Express]",
+    [559] = "Month pass: Akko / [Egged, Nativ Express, Dan North]",
     [560] = "Month/Week/Day pass: Metropolis Haifa: Akko area only - Ring 2.1 / [Egged, Nativ Express, NTT (Nazareth Travel & Tourism), Israel Railways] / (standard, standard student, extended student)",
     [561] = "Month/Week/Day pass: Metropolis Haifa: Yokneam - Tiv\'on area only - Ring 2.2 / [Egged, Nativ Express, Kavim, Superbus, NTT (Nazareth Travel & Tourism), Israel Railways] / (standard, standard student, extended student)",
     [562] = "Month/Week/Day pass: Metropolis Haifa: Nahariya area only - Ring 3.1 / [Egged, Nativ Express, Superbus, Israel Railways] / (standard, standard student, extended student)",
@@ -1492,7 +1492,7 @@ RAVKAV_CONTRACT_TYPES = {
     [939] = "(obsolete) 30 days: Binyamina / [Israel Railways, Kavim] / (any profile)",
     [940] = "Single ticket: Israel Rail + Samaria lines / [Israel Railways, Afikim] / (sold by Israel Railways)",
     [941] = "(obsolete) 30 days: Binyamina + Dan Region / [Israel Railways, Dan Region operators, Kavim] / (any profile)",
-    [942] = "(obsolete) 30 days: Binyamina + Dan Region extended / [Israel Dan Region operators, Kavim] / (any profile)",
+    [942] = "(obsolete) 30 days: Binyamina + Dan Region extended / [Israel Railways, Dan Region operators, Kavim] / (any profile)",
     [943] = "(obsolete) 30 days: Sderot / [Israel Railways, Egged Transport] / (sold by Israel Railways)",
     [944] = "(obsolete) 30 days: Netivot / [Israel Railways, Egged Transport] / (sold by Israel Railways)",
     [950] = "Month/Day pass: Entire country except Arava and Eilat - Dan Region: Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + Metropolis Be\'er Sheva: Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4 + Metropolis Haifa: Ring 1, 2.1, 2.2, 3.1, 3.2, 3.3, 3.4 + Metropolis Jerusalem: Ring 1, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.5 + zone 501, 502, 601, 602, 701, 702, 801, 802, 811/903 / [Dan, Dan North, Dan South, Dan Be\'er Sheva, Egged, Egged Transport, Kavim, Metropoline, Afikim, Superbus, CityPass, Golan Regional Council, Galim (Narkis Gal), GB Tours, Illit, Nativ Express, NTT (United Bus Services Nazareth), NTT (Nazareth Travel & Tourism), Israel Railways]",

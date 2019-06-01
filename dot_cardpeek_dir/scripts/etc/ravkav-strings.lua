@@ -1525,5 +1525,6 @@ RAVKAV_CONTRACT_TYPES = {
     [1067] = "Month/Day pass: Rehovot, Ekron and Mazkeret Batya / [Egged] / (standard, standard student, extended student)",
     [1072] = "Month/Day pass: Rehovot, Rishon Le\'Tziyon and Nes Tsiyona / [Egged] / (standard, standard student, extended student)",
     [1074] = "Month/Day pass: Nes Tsiyona urban / [Egged] / (standard, standard student, extended student)",
-    [1085] = "Month/Day pass: Eilat / [Egged] / (standard, standard student, extended student)"
+    [1085] = "Month/Day pass: Eilat / [Egged] / (standard, standard student, extended student)",
+    [1852] = "Six days pass: Eilat / [Egged] / (standard, standard student, extended student)"
 }

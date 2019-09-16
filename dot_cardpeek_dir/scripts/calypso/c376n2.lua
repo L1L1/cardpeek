@@ -1204,7 +1204,7 @@ function RavKav_summariseSpecialEvent(SPECIALEVENTS_REF, nRec, LT_REF)
         end
         local railLocation2Id = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Stop en route", nil, RAVKAV_RAIL_LOCATIONS2)
         if RAVKAV_RAIL_LOCATIONS2[railLocation2Id] then
-            RavKav_addTextNode(SP_EVSUM_REFF, "Destination station", RAVKAV_RAIL_LOCATIONS2[railLocation2Id]) --destination station
+            RavKav_addTextNode(SP_EVSUM_REF, "Destination station", RAVKAV_RAIL_LOCATIONS2[railLocation2Id]) --destination station
         else
             local railLocation2Id = RavKav_getFieldAsNumber(SPECIALEVENT_REC_REF, "Stop en route")
             RavKav_addTextNode(SP_EVSUM_REF, "Destination station", railLocation2Id)

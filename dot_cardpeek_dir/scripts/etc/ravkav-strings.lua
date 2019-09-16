@@ -53,6 +53,8 @@ RAVKAV_ISSUERS = {
     [51] = "Jerusalem - Sur Baher united",
     [52] = "(obsolete) Ras-al Amud Izriya - Abu-Dis",
     [53] = "(obsolete) Jerusalem - A. Swahra united",
+
+    [98] = "Tel Aviv Service Taxi Lines 4, 2 and 5",
 --  101-157 reserved
     [240] = "[Technical] Service Center - Contract restores",
     [250] = "Israel Defence Forces"

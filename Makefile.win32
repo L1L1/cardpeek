@@ -1,4 +1,8 @@
-CC = gcc 
+DEPS = /mingw32
+TARGET = /C/Program Files (x86)/Cardpeek
+MPLATFORM = mingw32
+
+CC = $(CCPRE)gcc 
 GLIB_COMPILE_RESOURCES = glib-compile-resources 
 
 OBJECTS = asn1.o bytestring.o ui/gtk/gui_flexi_cell_renderer.o dyntree_model.o \
@@ -18,14 +22,18 @@ ICONS=icons/cardpeek-analyzer.png icons/cardpeek-item.png icons/cardpeek-record.
       icons/cardpeek-application.png icons/cardpeek-file.png icons/cardpeek-block.png \
       icons/cardpeek-atr.png icons/cardpeek-header.png icons/cardpeek-body.png
 
-LIBS = `pkg-config --libs gtk+-3.0` -L/usr/local/lib -lcurl -L/usr/lib -lssl -lcrypto -llua -L./win32/ -lwinscard -liconv -lreadline -lncurses
+export PKG_CONFIG_PATH=$(DEPS)/lib/pkgconfig
+PKG_LIST = gtk+-3.0 lua openssl iconv libcurl
+PKG_CFLAGS = `$(CCPRE)pkg-config --cflags $(PKG_LIST) | sed "s:-I/$(MPLATFORM):-I$(DEPS):g"`
+PKG_LIBS = `$(CCPRE)pkg-config --libs $(PKG_LIST) | sed "s:-L/$(MPLATFORM):-L$(DEPS):g"`
 
-CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -D__USE_MINGW_ANSI_STDIO -I . -I /usr/include -I ./win32/ `pkg-config --cflags gtk+-3.0`
+CFLAGS = -Wall -pedantic -Wno-overlength-strings -Wno-long-long -DCURL_STATICLIB -D__USE_MINGW_ANSI_STDIO -I . -I $(DEPS)/include -I ./win32/ $(PKG_CFLAGS)
+LIBS = $(PKG_LIBS) -L$(DEPS)/bin -L./win32/ -lwinscard -lreadline -lncurses
 
-all:		cardpeek
+build:		cardpeek.exe
 
-cardpeek:	$(OBJECTS) win32/libwinscard.a
-		$(CC) -Wl,-subsystem,windows $(OBJECTS) $(LIBS) -o cardpeek
+cardpeek.exe:	$(OBJECTS) #win32/libwinscard.a
+		$(CC) -Wl,-subsystem,windows $(OBJECTS) $(LIBS) -o cardpeek.exe
 
 dot_cardpeek.tar.gz:    dot_cardpeek_dir	
 			@echo "  TAR      $<"
@@ -37,11 +45,71 @@ cardpeek_resources.o:	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_reso
 			@echo "COMPILED RESOURCES"
 
 win32/resource.o:	win32/resource.rc
-			windres win32/resource.rc -O coff -o win32/resource.o
+			$(CCPRE)windres win32/resource.rc -O coff -o win32/resource.o
 
-win32/libwinscard.a:	win32/winscard.def win32/winscard.h
-			dlltool.exe -k -d win32/winscard.def -l win32/libwinscard.a c:/WINDOWS/system32/winscard.dll
+#TODO: shouldn't be needed. To be confirmed. (It seems at least that it's not needed to compile)
+#win32/libwinscard.a:	win32/winscard.def win32/winscard.h
+#			$(CCPRE)dlltool -k -d win32/winscard.def -l win32/libwinscard.a win32/winscard.dll
 
 clean:			
 			rm -f $(OBJECTS) cardpeek.exe win32/libwinscard.a dot_cardpeek.tar.gz *~ cardpeek_resources.c
 
+install: cardpeek.exe
+	mkdir -p "$(TARGET)"
+	cp -u cardpeek.exe "$(TARGET)/"
+ifeq (mingw64, $(MPLATFORM))
+	cp -u $(DEPS)/bin/libgcc_s_seh-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcrypto-1_1-x64.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libssl-1_1-x64.dll "$(TARGET)/"
+else
+  ifneq (/mingw32, $(DEPS))
+	# not needed from msys2 - TODO: eliminate from debian too ()
+	cp -u $(DEPS)/bin/libgcc_s_sjlj-1.dll "$(TARGET)/"
+  endif
+	cp -u $(DEPS)/bin/libgcc_s_dw2-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcrypto-1_1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libssl-1_1.dll "$(TARGET)/"
+endif
+	cp -u $(DEPS)/bin/libstdc++-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libatk-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbrotlidec.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbrotlicommon.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libbz2-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcairo-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcairo-gobject-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libcurl-4.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libdatrie-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libepoxy-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libexpat-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libffi-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfontconfig-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfreetype-6.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libfribidi-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgdk-3-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgdk_pixbuf-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgio-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libglib-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgmodule-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgobject-2.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgraphite2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libgtk-3-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libharfbuzz-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libiconv-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libidn2-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libintl-8.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libnghttp2-14.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpango-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangocairo-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangoft2-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpangowin32-1.0-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpcre-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpixman-1-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpng16-16.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libpsl-5.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libreadline7.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libtermcap-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libthai-0.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libunistring-2.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/libwinpthread-1.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/lua53.dll "$(TARGET)/"
+	cp -u $(DEPS)/bin/zlib1.dll "$(TARGET)/"

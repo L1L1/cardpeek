@@ -149,6 +149,13 @@ function viva_PERIOD_UNITS(source)
 	return PERIOD_UNITS[units]
 end
 
+local date_days
+-- Same as en1545_DATE, but the number of days is kept and reused in viva_VALIDITY
+function viva_DATE(source)
+	date_days = EPOCH+bytes.tonumber(source)*24*3600
+	return os.date("%a %x",date_days)
+end
+
 function viva_VALIDITY(source)
 	local validity = source:tonumber()
 	local end_time
@@ -256,8 +263,8 @@ viva_Environment = {
 	[0] = { viva_HIDDEN, 30, "unknown" },
 	[1] = { viva_OPERATOR, 8, "issuer" },
 	[2] = { viva_CARD_NUM, 24, "LV card number" },
-	[3] = { en1545_DATE, 14, "issued" },
-	[4] = { en1545_DATE, 14, "valid until" },
+	[3] = { viva_DATE, 14, "issued" },
+	[4] = { viva_DATE, 14, "valid until" },
 	[5] = { viva_HIDDEN, 15, "unknown" },
 	[6] = { en1545_BCD_DATE, 32, "holder birthdate" }
 }
@@ -283,11 +290,11 @@ viva_Contract = {
 	[0] = { viva_OPERATOR, 7, "operator" },
 	[1] = { viva_PRODUCT, 16, "product" },
 	[2] = { viva_HIDDEN, 2, "unknown" },
-	[3] = { en1545_DATE, 14, "start date" },
+	[3] = { viva_DATE, 14, "start date" },
 	[4] = { viva_SALES_POINT, 5, "sales point" },
 	[5] = { viva_HIDDEN, 19, "sales information" },
 	[6] = { viva_PERIOD_UNITS, 16, "period units" },
-	[7] = { en1545_DATE, 14, "start/end date" },
+	[7] = { viva_DATE, 14, "start/end date" },
 	[8] = { viva_VALIDITY, 7, "validity period" },
 	[9] = { viva_HIDDEN, 3, "unknown" },
 	[10] = { viva_OPERATOR1, 5, "operator 1" },

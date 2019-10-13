@@ -27,6 +27,35 @@ local KS_ENC
 local KS_MAC
 local TEST=false
 
+function epass_check_digit(s, n)
+    --The check digit calculation is as follows: each position is assigned a
+    --value; for the digits 0 to 9 this is the value of the digits, for the
+    --letters A to Z this is 10 to 35, for the filler < this is 0. The value of
+    --each position is then multiplied by its weight; the weight of the first
+    --position is 7, of the second it is 3, and of the third it is 1, and after
+    --that the weights repeat 7, 3, 1, and so on. All values are added together
+    --and the remainder of the final value divided by 10 is the check digit.
+    local c = string.sub(s, n)
+    local b = string.byte(c)
+    local weights = {7, 3, 1}
+    local weight = weights[(n-1) % 3 + 1]
+    if (c == "<") then return 0 end
+    if (b <= 58) then return (b - 48) * weight end
+    return (b - 65) * weight
+end
+
+function epass_check_digits(s)
+    local i = #s
+    local cd = 0
+    while i > 0 do
+        cd = cd + epass_check_digit(s, i)
+        --log.print(log.INFO,"Check digits after "..s.."["..i.."]: "..cd)
+        i = i - 1
+    end
+    --log.print(log.INFO,"Check digits for "..s..": "..(cd%10))
+    return cd % 10
+end
+
 function epass_inc_SSC()
 	local i=7
 	local e
@@ -53,11 +82,7 @@ function epass_key_derivation(seed)
         return bytes.sub(Kenc,0,15),bytes.sub(Kmac,0,15)
 end
 
-function epass_create_master_keys(mrz)
-	local pass_no = string.sub(mrz,1,10)
-	local pass_bd = string.sub(mrz,14,20)
-	local pass_ed = string.sub(mrz,22,28)
-	local mrz_info = pass_no..pass_bd..pass_ed;
+function epass_create_master_keys(mrz_info)
 	local hash
 	local SHA1
 
@@ -223,6 +248,21 @@ function ui_parse_cstring(node,data)
 	if #data>1 then
         	nodes.set_attribute(node,"alt",bytes.format(bytes.sub(data,0,#data-2),"%P"))
 	end
+end
+
+function ui_parse_utf8(node,data)
+	nodes.set_attribute(node,"val",data)
+
+	if #data==0 then
+		return false
+	end
+
+	local alt = bytes.format(data,"%C")
+	if not bytes.is_printable(data) then
+		alt = bytes.format(data,"%C (%D)")
+	end
+        nodes.set_attribute(node,"alt",alt)
+	return true
 end
 
 BL_FAC_RECORD_HEADER = { 
@@ -511,15 +551,51 @@ function ui_parse_biometry(node,data)
 	return true
 end
 
+function ui_parse_jpeg(node,data)
+	nodes.set_attribute(node,"val", data)
+	if bytes.sub(data,1,2) == bytes.new(8,"D8 FF") then
+		nodes.set_attribute(node,"mime-type","image/jpeg")
+	end
+	return true
+end
+
 
 AID_MRTD = "#A0000002471001"
 
 MRP_REFERENCE = {
    ['5F01']   = { "LDS Version Number", ui_parse_version },
    ['5F08']   = { "Date of birth (truncated)" },
+   ['5F0E']   = { "Full name, in national characters", ui_parse_utf8 },
+   ['5F0F']   = { "Other names", ui_parse_printable },
+   ['5F10']   = { "Personal Number", ui_parse_printable },
+   ['5F11']   = { "Place of birth", ui_parse_utf8 },
+   ['5F12']   = { "Telephone", ui_parse_printable },
+   ['5F13']   = { "Profession", ui_parse_printable },
+   ['5F14']   = { "Title", ui_parse_printable },
+   ['5F15']   = { "Personal Summary", ui_parse_printable },
+   ['5F16']   = { "Proof of citizenship (10918 image)", ui_parse_jpeg },
+   ['5F17']   = { "Other valid TD Numbers" },
+   ['5F18']   = { "Custody information", ui_parse_printable },
+   ['5F19']   = { "Issuing Authority", ui_parse_utf8 },
+   ['5F1A']   = { "Other people on document" },
+   ['5F1B']   = { "Endorsement/Observations", ui_parse_printable },
+   ['5F1C']   = { "Tax/Exit requirements", ui_parse_printable },
+   ['5F1D']   = { "Image of document front", ui_parse_jpeg },
+   ['5F1E']   = { "Image of document rear", ui_parse_jpeg },
    ['5F1F']   = { "MRZ data elements", ui_parse_printable },
+   ['5F26']   = { "Date of Issue" },
+   ['5F2B']   = { "Date of birth (8 digit)" },
    ['5F2E']   = { "Biometric data block", ui_parse_biometry },
    ['5F36']   = { "Unicode Version number", ui_parse_version },
+   ['5F40']   = { "Compressed image template", ui_parse_jpeg },
+   ['5F42']   = { "Address", ui_parse_printable },
+   ['5F43']   = { "Compressed image template", ui_parse_jpeg },
+   ['5F50']   = { "Date data recorded" },
+   ['5F51']   = { "Name of person", ui_parse_utf8 },
+   ['5F52']   = { "Telephone", ui_parse_printable },
+   ['5F53']   = { "Address", ui_parse_printable },
+   ['5F55']   = { "Date and time document personalized" },
+   ['5F56']   = { "Serial number of personalization system" },
    ['60']     = { "Common Data Elements" },
    ['61']     = { "Template for MRZ Data Group" },
    ['63']     = { "Template for finger biometric Data Group" },
@@ -576,17 +652,19 @@ FILES = {
 
 local MRZ_DATA=""
 
-repeat
-	MRZ_DATA = ui.readline("Enter the code from the lower MRZ data (printed inside the passport)",44,MRZ_DATA)
-	if MRZ_DATA==nil then
-		break
-	end
-	if #MRZ_DATA<28 then
-		ui.question("You must enter at least 28 characters",{"OK"})
-	end
-until #MRZ_DATA>=28
+local pass_no = ui.readline("Enter document id/passport number",10,MRZ_DATA)
+pass_no = string.upper(pass_no)
+while (#pass_no < 9) do pass_no = pass_no .. "<" end
+if (#pass_no == 9) then pass_no = pass_no .. epass_check_digits(pass_no) end
+local pass_bd = ui.readline("Enter birth day YYMMDD",6,MRZ_DATA)
+pass_bd = pass_bd .. epass_check_digits(pass_bd)
+local pass_ed = ui.readline("Enter expiration date YYMMDD",6,MRZ_DATA)
+pass_ed = pass_ed .. epass_check_digits(pass_ed)
 
-if MRZ_DATA then
+MRZ_DATA = pass_no..pass_bd..pass_ed
+log.print(log.INFO,"MRZ data: " .. MRZ_DATA)
+
+if (#MRZ_DATA == 24) then
   if card.connect() then
     local ke,km,i,v,r
   
@@ -637,6 +715,6 @@ if MRZ_DATA then
     ui.question("No passport detected in proximity of the reader",{"OK"})
   end
 else
-  log.print(log.ERROR,"Aborted by the user.")
+  ui.question("Length of supplied data is incorrect.",{"OK"})
 end
 

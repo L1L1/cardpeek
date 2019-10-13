@@ -783,7 +783,7 @@ if card.connect() then
     local export_signed
     local export_ddd
 
-    answer = ui.question("Do you whish to export content of this card in an ESM file\n(also called DDD or C1B)?", 
+    answer = ui.question("Do you wish to export content of this card in an ESM file\n(also called DDD or C1B)?", 
                          {"Export signed data file", "Export unsigned data file", "No, don't export"})
 
     if answer==1 then

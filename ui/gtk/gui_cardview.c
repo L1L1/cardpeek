@@ -431,7 +431,7 @@ static GtkWidget *script_info_add(const char *path, const char *fname)
         si = (ScriptInfo *)g_malloc0(sizeof(ScriptInfo));
         si->script_file = strdup(fname);
 
-        rtrim(line);
+        //rtrim(line); uninitialized yet
 
         for (i=0; i<30; i++)
         {

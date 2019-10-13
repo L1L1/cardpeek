@@ -500,7 +500,16 @@ local TACHO_MAP =
     { { "cardCertificate", "item", 194, 0 
     } },
     ["EF_CA_Certificate"] = 
-    { { "memberStateCertificate", "item", 194, 0 
+    { { "memberStateCertificate", "item", 194, 0
+    } },
+    ["EF_Card_Certificate_GOST"] = 
+    { { "cardCertificateGost", "item", 1000, 0
+    } },
+    ["EF_Key_Identificators"] = 
+    { { "keyIdentificators", "item", 16, 0
+    } },
+    ["EF_CA_Certificate_GOST"] = 
+    { { "memberStateCertificateGost", "item", 1000, 0
     } },
     ["EF_Identification"] = 
     { { "CardIdentification", "record", 1, {
@@ -817,12 +826,18 @@ if card.connect() then
             ui.question("This is not a tachograph DRIVER card.\nThis script may not work on this card.",{"OK"})
         end
 
-        tacho_read_file_and_store(TACHO,".C100",194,"EF_Card_Certificate","file", true, false)
+        tacho_read_file_and_store(TACHO,".C100",194,"EF_Card_Certificate", "file", true, false)
 
-        tacho_read_file_and_store(TACHO,".C108",194, "EF_CA_Certificate", "file", true, false)
-        
+        tacho_read_file_and_store(TACHO,".C108",194,"EF_CA_Certificate", "file", true, false)
+
+        tacho_read_file_and_store(TACHO,".C200",1000,"EF_Card_Certificate_GOST", "file", true, false)
+
+        tacho_read_file_and_store(TACHO,".C201",16,"EF_Key_Identificators", "file", true, export_signed)
+
+        tacho_read_file_and_store(TACHO,".C208",1000,"EF_CA_Certificate_GOST", "file", true, false)
+
         tacho_read_file_and_store(TACHO,".0520",143,"EF_Identification", "file", true, export_signed)
-    
+
         tacho_read_file_and_store(TACHO,".050E",4,"EF_Card_Download","file", true, false)
 
         tacho_read_file_and_store(TACHO,".0521",53,"EF_Driving_Licence_info","file", true, export_signed)

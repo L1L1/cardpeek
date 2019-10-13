@@ -39,6 +39,7 @@
 #endif
 
 int cardmanager_search_pcsc_readers(cardmanager_t *cm);
+int cardmanager_search_usbserial_readers(cardmanager_t *cm);
 int cardmanager_search_replay_readers(cardmanager_t *cm);
 
 /********************************************************************
@@ -49,7 +50,11 @@ cardmanager_t *cardmanager_new(void)
 {
   cardmanager_t *cm = (cardmanager_t *)malloc(sizeof(cardmanager_t));
   memset(cm,0,sizeof(cardmanager_t));
+  cm->readers_count=0;
   cardmanager_search_pcsc_readers(cm);
+  #if defined(__unix__)
+    cardmanager_search_usbserial_readers(cm);
+  #endif
   cardmanager_search_replay_readers(cm);
   return cm;
 }
@@ -88,6 +93,7 @@ const char **cardmanager_reader_name_list(cardmanager_t* cm)
 #include "ui.h"
 #include "drivers/null_driver.c"
 #include "drivers/pcsc_driver.c"
+#include "drivers/usbserial_driver.c"
 #include "drivers/replay_driver.c"
 
 cardreader_t* cardreader_new(const char *card_reader_name)
@@ -104,6 +110,11 @@ cardreader_t* cardreader_new(const char *card_reader_name)
   {
     reader->name=strdup(card_reader_name);
     if (pcsc_initialize(reader)==0) return NULL;
+  }
+  else if (strncmp(card_reader_name,"usbserial://",12)==0)
+  {
+    reader->name=strdup(card_reader_name);
+    if (usbserial_initialize(reader)==0) return NULL;
   }
   else if (strncmp(card_reader_name,"replay://",9)==0)
   {
@@ -345,6 +356,47 @@ static int cardmanager_check_pcscd_is_running(void)
   return 1;
 }
 
+
+/* this should not be here but in usbserial_driver.c */
+int cardmanager_search_usbserial_readers(cardmanager_t *cm)
+{
+  unsigned r;
+
+  a_string_t *rlist;
+  struct dirent **readers;
+  unsigned int usbserial_readers_count;
+  unsigned int old_readers_count;
+  usbserial_readers_count = scandir("/dev/serial/by-id", &readers, NULL, alphasort);
+  if (!usbserial_readers_count)
+    log_printf(LOG_WARNING, "custom error");
+  old_readers_count=cm->readers_count;
+  cm->readers_count+=usbserial_readers_count-2; // //first two entries from scandir are '.' and '..'
+
+  cm->readers=(char **)realloc(cm->readers,sizeof(char*)*cm->readers_count);
+
+  rlist = a_strnew(NULL);
+  for (r = 2; r < usbserial_readers_count; r++)
+  {
+    a_strcpy(rlist,"usbserial://");
+    a_strcat(rlist,readers[r]->d_name);
+    cm->readers[old_readers_count + r - 2 ]=strdup(a_strval(rlist));
+  }
+
+
+  a_strfree(rlist);
+  for (int i = 0; i < usbserial_readers_count; i++)
+  {
+    free(readers[i]);
+  }
+  free(readers);
+
+  log_printf(LOG_DEBUG,"Found %i usbserial readers", usbserial_readers_count-2);
+  log_printf(LOG_DEBUG,"Found %i readers",cm->readers_count);
+
+  return cm->readers_count;
+
+}
+
 /* this should not be here but in pcsc_driver.c */
 int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 {
@@ -390,7 +442,6 @@ int cardmanager_search_pcsc_readers(cardmanager_t *cm)
   }
 
   p=readers;
-  cm->readers_count=0;
   while (*p)
   {
     cm->readers_count++;

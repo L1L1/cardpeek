@@ -239,7 +239,7 @@ if test "$HOST_TYPE" = "freebsd" -a ! "$ICONV_LIBS"; then
     AC_MSG_WARN([
 ********
 
-On FreeBSD, you may need to specify the environement variable ICONV_LIBS='-l iconv' before running 'configure', as detailed in INSTALL.FreeBSD. Otherwise 'make' may fail.
+On FreeBSD, you may need to specify the environement variable ICONV_LIBS='-l iconv' before running 'configure', as detailed in doc/build-freebsd.md. Otherwise 'make' may fail.
 
 ********])
 fi

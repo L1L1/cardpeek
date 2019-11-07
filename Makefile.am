@@ -76,7 +76,7 @@ OSX_EXTRA=osx/cardpeek-launcher.sh osx/cardpeek.bundle osx/generate_bundle.sh os
 
 CLEANFILES=cardpeek_resources.c dot_cardpeek.tar.gz osx/cardpeek.icns
 
-EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop cardpeek.appdata.xml $(OSX_ICONS) INSTALL.FreeBSD
+EXTRA_DIST=cardpeek_resources.gresource.xml cardpeek_resources.gresource $(DRIVERS) $(ICONS) dot_cardpeek_dir doc/cardpeek_ref.en.pdf doc/cardpeek_ref.en.odt update_dot_cardpeek_dir.sh script_version.h cardpeek.desktop cardpeek.appdata.xml $(OSX_ICONS)
 
 GLIB_COMPILE_RESOURCES=@GLIB_COMPILE_RESOURCES@
 
@@ -97,7 +97,7 @@ dist-hook:
 
 dot_cardpeek.tar.gz:    dot_cardpeek_dir	
 			@echo "  TAR      $<"
-			$(AM_V_at)tar -c -z -f dot_cardpeek.tar.gz --directory $(srcdir)/dot_cardpeek_dir --exclude=.svn --exclude='\._*' .
+			$(AM_V_at)tar --help|grep -q sort= && taropts="--sort=name --clamp-mtime --format=gnu --owner=0 --group=0" ; tar -c $$taropts --directory $(srcdir)/dot_cardpeek_dir --exclude=.svn --exclude='\._*' . | gzip -cn9 > dot_cardpeek.tar.gz
 
 cardpeek_resources.$(OBJEXT):	dot_cardpeek.tar.gz $(ICONS) AUTHORS COPYING cardpeek_resources.gresource.xml
 			@echo "  GLIB_COMPILE_RESOURCES cardpeek_resources.gresource.xml"

@@ -18,16 +18,16 @@
 --
 -- @name Calypso
 -- @description Calypso tranport cards: Navigo, MOBIB, Korrigo, RavKav, ...
--- @targets 0.8 
+-- @targets 0.8
 --
 -------------------------------------------------------------------------
 -- *PLEASE NOTE*
 -- This work is based on:
--- * public information about the calypso card specification, 
--- * partial information found on the web about the ticketing data 
+-- * public information about the calypso card specification,
+-- * partial information found on the web about the ticketing data
 --   format, as described in the French "intercode" documentation.
--- * experimentation and guesses, 
--- This information is incomplete. If you have further data, such 
+-- * experimentation and guesses,
+-- This information is incomplete. If you have further data, such
 -- as details ofd specs, please help send them
 -- to L1L1@gmx.com
 --------------------------------------------------------------------------
@@ -58,7 +58,7 @@ LFI_LIST = {
   { "ID",               "/0003",      "file" },
   { "Ticketing",        "/2000",      "folder" },
   { "Environment",      "/2000/2001", "file" },
-  { "Holder",           "/2000/2002", "file" }, 
+  { "Holder",           "/2000/2002", "file" },
   { "Event logs",       "/2000/2010", "file" },
   { "Contracts",        "/2000/2020", "file" },
   { "Counters",         "/2000/202A", "file" },
@@ -70,9 +70,9 @@ LFI_LIST = {
   { "Counters",         "/2000/2060", "file" },
   { "Counters",         "/2000/2061", "file" },
   { "Counters",         "/2000/2062", "file" },
+  { "Counters",         "/2000/2069", "file" },
   { "Special events",   "/2000/2040", "file" },
   { "Contract list",    "/2000/2050", "file" },
-  { "Counters",         "/2000/2069", "file" },
   { "Holder Extended",  "/3F1C",      "file" }
 }
 --]]
@@ -83,11 +83,11 @@ LFI_LIST = {
   { "ID",               "/0003",      "file" },
   { "Holder Extended",  "/3F1C",      "file" },
   { "Display / Free",   "/2F10",      "file" },
-  
+
   { "Ticketing",        "/2000",    "folder" },
   { "AID",              "/2000/2004", "file" },
   { "Environment",      "/2000/2001", "file" },
-  { "Holder",           "/2000/2002", "file" }, 
+  { "Holder",           "/2000/2002", "file" },
   { "Event logs",       "/2000/2010", "file" },
   { "Contracts",        "/2000/2020", "file" },
   { "Contracts",        "/2000/2030", "file" },
@@ -105,7 +105,7 @@ LFI_LIST = {
   { "Special events",   "/2000/2040", "file" },
   { "Contract list",    "/2000/2050", "file" },
   { "Free",             "/2000/20F0", "file" },
- 
+
   { "MPP",              "/3100",    "folder" },
     { "AID",            "/3100/3104", "file" },
     { "Public Param.",  "/3100/3102", "file" },
@@ -117,7 +117,7 @@ LFI_LIST = {
     { "Counters",       "/3100/3169", "file" },
     { "Miscellaneous",  "/3100/3150", "file" },
     { "Free",           "/3100/31F0", "file" },
-        
+
   { "RT2",              "/2100",    "folder" },
     { "AID",            "/2100/2104", "file" },
     { "Environment",    "/2100/2101", "file" },
@@ -127,12 +127,12 @@ LFI_LIST = {
     { "Counters",       "/2100/2169", "file" },
     { "Special events", "/2100/2140", "file" },
     { "Free",           "/2100/21F0", "file" },
-      
+
   { "EP",               "/1000",    "folder" },
    { "AID",             "/1000/1004", "file" },
    { "Load Log",        "/1000/1014", "file" },
    { "Purchase Log",    "/1000/1015", "file" },
-   
+
   { "eTicket",          "/8000",    "folder" },
    { "AID",             "/8000/8004", "file" },
    { "Preselection",    "/8000/8030", "file" },
@@ -156,7 +156,7 @@ function calypso_select(ctx,desc,path,klass)
 	if sw==0x9000 then
 		for r=0,(#path_parsed/2)-1 do
 			item = bytes.format(bytes.sub(path_parsed,r*2,r*2+1),"%D")
-			
+
 			file_node = parent_node:find_first({id=item})
 			if file_node==nil then
 				file_node = parent_node:append{ classname = klass,
@@ -195,7 +195,7 @@ function calypso_guess_network(cardenv)
 				if country_num==250 or country_num==56 or country_num==131 then
 					return country_num, network_num
 				end
-				
+
 				country_bin = data:sub(3,14)
                 network_bin = data:sub(15,22)
 				country_num = tonumber(country_bin:convert(4):format("%D"))
@@ -205,7 +205,7 @@ function calypso_guess_network(cardenv)
 				end
 
 				log.print(log.WARNING,"Unknown Calypso card.")
-				
+
 			else
 				log.print(log.WARNING,"Could not find enough data in 'Environement/record#1'")
 			end
@@ -230,7 +230,7 @@ function calypso_process(cardenv)
 
 	for lfi_index,lfi_desc in ipairs(LFI_LIST) do
 		lfi_node = calypso_select(cardenv,lfi_desc[1],lfi_desc[2], lfi_desc[3])
-		
+
 		if lfi_node and lfi_desc[3]=="file" then
             local record
 			for record=1,255 do
@@ -238,9 +238,9 @@ function calypso_process(cardenv)
 				if sw ~= 0x9000 then
 					break
 				end
-				rec_node = lfi_node:append{ classname = "record", 
-							    label = "record", 
-							    size = #resp, 
+				rec_node = lfi_node:append{ classname = "record",
+							    label = "record",
+							    size = #resp,
 							    id = record,
 							    val = resp }
 			end
@@ -250,7 +250,7 @@ function calypso_process(cardenv)
 	country, network = calypso_guess_network(cardenv)
 	filename = "calypso/c"..country..".lua"
 	file = io.open(filename);
-	if file then 
+	if file then
 		io.close(file)
 		dofile(filename)
 	else
@@ -259,7 +259,7 @@ function calypso_process(cardenv)
 
 	filename = "calypso/c"..country.."n"..network..".lua"
 	file = io.open(filename);
-	if file then 
+	if file then
 		io.close(file)
 		dofile(filename)
 	else
@@ -267,10 +267,10 @@ function calypso_process(cardenv)
 	end
 end
 
-if card.connect() then 
+if card.connect() then
 
   CARD = card.tree_startup("CALYPSO")
- 
+
   sw = card.select("#2000")
   if sw==0x9000 then
      sel_method = SEL_BY_LFI
@@ -282,7 +282,7 @@ if card.connect() then
         sel_method = SEL_BY_LFI
         ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
      end
-  end 
+  end
 
   if sw~=0x6E00 then
       calypso_process(CARD)

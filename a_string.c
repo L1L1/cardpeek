@@ -29,7 +29,7 @@
 
 a_string_t* a_strnnew(unsigned n, const char* str)
 {
-  a_string_t* cs = (a_string_t *)malloc(sizeof(a_string_t));
+  a_string_t* cs = malloc(sizeof(a_string_t)); //(a_string_t *)
 
   if (n)
   {

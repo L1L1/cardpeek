@@ -540,7 +540,7 @@ int cardpeek_update_check(void)
     }
 
     switch (ui_question("Cardpeek is configured to check for script updates periodically.\n"
-                        "Do you whish to perform this check now?",
+                        "Do you wish to perform this check now?",
                         "Yes","No, ask me again later","No, always use the local copy",NULL))
     {
         case 0:

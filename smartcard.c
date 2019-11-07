@@ -348,7 +348,7 @@ static int cardmanager_check_pcscd_is_running(void)
 /* this should not be here but in pcsc_driver.c */
 int cardmanager_search_pcsc_readers(cardmanager_t *cm)
 {
-  DWORD dwReaders;
+  DWORD dwReaders = 0;
   char *p;
   LONG hcontext = 0;
   long status;

@@ -361,14 +361,17 @@ static int cardmanager_check_pcscd_is_running(void)
 int cardmanager_search_usbserial_readers(cardmanager_t *cm)
 {
   unsigned r;
-
   a_string_t *rlist;
   struct dirent **readers;
-  unsigned int usbserial_readers_count;
+  int usbserial_readers_count;
   unsigned int old_readers_count;
+
   usbserial_readers_count = scandir("/dev/serial/by-id", &readers, NULL, alphasort);
-  if (!usbserial_readers_count)
-    log_printf(LOG_WARNING, "custom error");
+  if (usbserial_readers_count<2) {
+    log_printf(LOG_DEBUG, "No usbserial readers found.");
+    return 0;
+  }
+  
   old_readers_count=cm->readers_count;
   cm->readers_count+=usbserial_readers_count-2; // //first two entries from scandir are '.' and '..'
 
@@ -394,7 +397,6 @@ int cardmanager_search_usbserial_readers(cardmanager_t *cm)
   log_printf(LOG_DEBUG,"Found %i readers",cm->readers_count);
 
   return cm->readers_count;
-
 }
 
 /* this should not be here but in pcsc_driver.c */

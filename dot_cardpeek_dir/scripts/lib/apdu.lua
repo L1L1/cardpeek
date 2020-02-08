@@ -113,7 +113,7 @@ function card.tree_startup(title)
 
 	atrnode = mycard:append({ classname="atr",
 			          label="cold ATR",
-			  	  size=#atr,
+			  	  size=math.tointeger(#atr),
 				  val=atr })
 
 	if candidates then

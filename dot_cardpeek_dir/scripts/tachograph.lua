@@ -281,9 +281,10 @@ end
 
 function Tacho_TEXT_8859(data,node)
     global('iconv')
+    local part = math.tointeger(data[0])
     
-    if iconv and data[0]>0 then
-        local format = "ISO-8859-"..data[0]
+    if iconv and part>0 then
+        local format = "ISO-8859-"..part
         local conversion = iconv.open(format,"UTF-8")
         local converted = conversion:iconv(data:sub(1):format("%C"))
         if converted then
@@ -292,9 +293,9 @@ function Tacho_TEXT_8859(data,node)
         end
     end
     
-    if data[0]==1 then
+    if part==1 then
         node:set_attribute("alt",data:sub(1):format("%P"))
-    elseif data[0]==0 then
+    elseif part==0 then
         node:set_attribute("alt","(empty)")
     end
 end 
@@ -327,7 +328,7 @@ function Tacho_ActivityChangeInfo(data,node)
     local time = bit.AND(data:tonumber(),0x07FF)
     local sub_node = node:append({  classname='record',
                                     label='Change', 
-                                    id=string.format("%02u:%02u",time/60,time%60),
+                                    id=string.format("%02u:%02u",math.floor(time/60),time%60),
                                     val=data,
                                     size=2 })
     local activity = bit.SHR(bit.AND(data[0],0x18),3)
@@ -452,10 +453,10 @@ function Tacho_ACTIVITY_RECORDS(data,node)
             subnode:set_attribute("alt",string.format("%s: %d km\n  %dh%02d break, %dh%02d availability, %dh%02d work, %dh%02d drive",
                     rec_date,
                     subpart(data,ptr+10,ptr+11):tonumber(),
-                    cat_total[1]/60,  cat_total[1]%60,
-                    cat_total[2]/60,  cat_total[2]%60,
-                    cat_total[3]/60,  cat_total[3]%60,
-                    cat_total[4]/60,  cat_total[4]%60))
+                    math.floor(cat_total[1]/60),  cat_total[1]%60,
+                    math.floor(cat_total[2]/60),  cat_total[2]%60,
+                    math.floor(cat_total[3]/60),  cat_total[3]%60,
+                    math.floor(cat_total[4]/60),  cat_total[4]%60))
         else
              subnode:set_attribute("alt","(no activity)")
         end         

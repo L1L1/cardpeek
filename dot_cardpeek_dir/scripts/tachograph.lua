@@ -105,7 +105,7 @@ function Count_NoOfEventsPerType()
 end
 
 function Count_ActivityStructureLength()
-    return activityStructureLength 
+    return math.tointeger(activityStructureLength) 
 end
 
 function Count_NoOfCardVehicleRecords()
@@ -306,7 +306,7 @@ function Tacho_DATEF(data,node)
 end
 
 function Tacho_NUMERIC(data,node)
-    node:set_attribute("alt",data:tonumber())
+    node:set_attribute("alt",math.tointeger(data:tonumber()))
 end
 
 function Tacho_REGION_NUMERIC(data,node)
@@ -413,15 +413,15 @@ function Tacho_ACTIVITY_RECORDS(data,node)
         local cat_cur = 0
         local rec_date = os.date("!%d/%m/%Y", subpart(data,ptr+4,ptr+7):tonumber())
 
-        subnode = node:append({classname='record',label='CardActivityDailyRecord', size=rec_len, id=counter})
+        subnode = node:append({classname='record',label='CardActivityDailyRecord', size=math.tointeger(rec_len), id=counter})
         subnode:append({classname='item',
                         label='activityRecordLength',
                         val=subpart(data,ptr+2,ptr+3),
-                        alt=string.format("%d (address:%s)",rec_len,ptr)})
+                        alt=string.format("%d (address:%s)",rec_len,math.tointeger(ptr))})
         subnode:append({classname='item',
                         label='activityPreviousRecordLength',
                         val=subpart(data,ptr,ptr+1),
-                        alt=subpart(data,ptr,ptr+1):tonumber()})
+                        alt=math.tointeger(subpart(data,ptr,ptr+1):tonumber())})
         subnode:append({classname='item',
                         label='activityRecordDate',
                         val=subpart(data,ptr+4,ptr+7),
@@ -429,14 +429,14 @@ function Tacho_ACTIVITY_RECORDS(data,node)
         subnode:append({classname='item',
                         label='dailyPresenceCounter',
                         val=subpart(data,ptr+8,ptr+9),
-                        alt=subpart(data,ptr+8,ptr+9):tonumber() })
+                        alt=math.tointeger(subpart(data,ptr+8,ptr+9):tonumber()) })
         subnode:append({classname='item',
                         label='activityDayDistance',
                         val=subpart(data,ptr+10,ptr+11),
-                        alt=subpart(data,ptr+10,ptr+11):tonumber() .. " km"})
+                        alt=math.tointeger(subpart(data,ptr+10,ptr+11):tonumber()) .. " km"})
         subsub_node = subnode:append({classname='record',
                         label='activityChangeInfo',
-                        size=#activity,
+                        size=math.tointeger(#activity),
                         val=activity})
 
         if #activity>0 then

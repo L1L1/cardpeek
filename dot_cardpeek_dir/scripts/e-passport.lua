@@ -392,29 +392,31 @@ function ui_parse_block(node,format,data,pos)
 	local i,v
 	local index
 
-	for i,v in ipairs(format) do
-		ITEM = node:append({ classname="item", label=v[1], id=i-1, size=v[2] })
-		block = bytes.sub(data,pos,pos+v[2]-1)
-		if v[3]~=nil then
-			if type(v[3])=="function" then
-			   if v[3](ITEM,block)==false then
-			      return nil
-			   end
-			elseif type(v[3])=="table" then
-			   index = bytes.tonumber(block)
-			   nodes.set_attribute(ITEM,"val",block)
-			   if v[3][index] then
-				nodes.set_attribute(ITEM,"alt",v[3][index])
-			   else
-				nodes.set_attribute(ITEM,"alt",index)
-			   end
+	if type(format)=="table" then
+		for i,v in ipairs(format) do
+			ITEM = node:append({ classname="item", label=v[1], id=i-1, size=v[2] })
+			block = bytes.sub(data,pos,pos+v[2]-1)
+			if v[3]~=nil then
+				if type(v[3])=="function" then
+				if v[3](ITEM,block)==false then
+					return nil
+				end
+				elseif type(v[3])=="table" then
+				index = bytes.tonumber(block)
+				nodes.set_attribute(ITEM,"val",block)
+				if v[3][index] then
+					nodes.set_attribute(ITEM,"alt",v[3][index])
+				else
+					nodes.set_attribute(ITEM,"alt",index)
+				end
+				else
+				return nil
+				end 
 			else
-			   return nil
-			end 
-		else
-			nodes.set_attribute(ITEM,"val",block)
+				nodes.set_attribute(ITEM,"val",block)
+			end
+			pos = pos + v[2]
 		end
-		pos = pos + v[2]
 	end
 	return pos
 end

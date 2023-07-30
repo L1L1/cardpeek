@@ -37,6 +37,7 @@ card.CLA=0x94 -- Class for navigo cards
 
 SEL_BY_PATH = 1
 SEL_BY_LFI  = 2
+SEL_BY_REL  = 3
 sel_method  = SEL_BY_LFI
 
 require('lib.strict')
@@ -149,6 +150,8 @@ function calypso_select(ctx,desc,path,klass)
 
 	if sel_method==SEL_BY_LFI then
 		sw,resp = card.select(bytes.format(lfi,"#%D"))
+	elseif sel_method==SEL_BY_REL then
+		sw,resp = card.select(bytes.format(lfi,".%D"))
 	else
 		sw,resp = card.select(path)
 	end
@@ -267,28 +270,50 @@ function calypso_process(cardenv)
 	end
 end
 
-if card.connect() then
+function calypso_special_french_t9()
+	local previous_cla = card.CLA
+	card.CLA = 0x00
+	
+	sw = card.select("#a0000004040125090101")
+	if sw == 0x9000 then
+		sw = card.select(".0000")
+	end
 
-  CARD = card.tree_startup("CALYPSO")
+	if sw ~= 0x9000 then
+		card.CLA = previous_cla
+	end
 
-  sw = card.select("#2000")
-  if sw==0x9000 then
-     sel_method = SEL_BY_LFI
-  else
-     sw = card.select("/2000/2010")
-     if sw == 0x9000 then
-        sel_method = SEL_BY_PATH
-     else
-        sel_method = SEL_BY_LFI
-        ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
-     end
-  end
+	return sw
+end
 
-  if sw~=0x6E00 then
-      calypso_process(CARD)
-  end
+if card.connect() then 
 
-  card.disconnect()
+	CARD = card.tree_startup("CALYPSO")
+ 
+	sw = card.select("#2000")
+	if sw==0x9000 then
+		sel_method = SEL_BY_LFI
+	else
+		sw = card.select("/2000/2010")
+		if sw == 0x9000 then
+			sel_method = SEL_BY_PATH
+		else
+			sw = calypso_special_french_t9()
+			if sw == 0x9000 then
+				sel_method = SEL_BY_REL
+				CARD:append{classname = "application", label = "Special French Tramway - T9"}
+			else
+				sel_method = SEL_BY_LFI
+				ui.question("This script may not work: this card doesn't seem to react to file selection commands.",{"OK"})
+			end
+		end
+	end 
+
+	if sw~=0x6E00 then
+		calypso_process(CARD)
+	end
+
+	card.disconnect()
 else
-  ui.question("Connection to card failed. Are you sure a card is inserted in the reader or in proximity of a contactless reader?\n\nNote: French 'navigo' cards cannot be accessed through a contactless interface.",{"OK"});
+	ui.question("Connection to card failed. Are you sure a card is inserted in the reader or in proximity of a contactless reader?\n\nNote: French 'navigo' cards cannot be accessed through a contactless interface.",{"OK"});
 end

@@ -1,3 +1,26 @@
+
+Build instructions for Fedora 38
+=========================================
+
+## For local Fedora host
+
+Required libraries:
+
+    sudo dnf install autoconf make glib2-devel gtk3-devel lua-devel libcurl-devel openssl-devel sysconftool automake pcsc-lite-devel readline-devel
+
+Build:
+
+    autoreconf --install
+    ./configure
+    make
+
+Install (use sudo if necessary):
+
+    make install
+
+If during make it complains about something regarding `--clamp-mtime`, just remove that option on the tar make target in the `makefile`.
+
+
 Build instructions for Debian 9 (Stretch)
 =========================================
 

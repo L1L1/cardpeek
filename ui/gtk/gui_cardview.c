@@ -79,7 +79,7 @@ static void menu_run_script_cb(GtkWidget *widget,
     ui_set_title(script->script_name);
     luax_run_script(script->script_file);
     gtk_tree_view_expand_all (GTK_TREE_VIEW(CARDVIEW));
-    ui_update(0);
+    ui_update();
 }
 
 static void menu_cardview_clear_cb(GtkWidget *w, gpointer user_data)

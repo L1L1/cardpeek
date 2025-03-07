@@ -275,7 +275,7 @@ static int subr_nodes_append(lua_State* L)
 
 	lua_push_node_ref(L,&node);
 	
-	ui_update(1);
+	ui_update();
 
 	return 1;
 }
@@ -424,7 +424,7 @@ static int subr_nodes_remove(lua_State* L)
   else
     lua_pushboolean(L,1);
   
-  ui_update(1);
+  ui_update();
   return 1;
 }
 

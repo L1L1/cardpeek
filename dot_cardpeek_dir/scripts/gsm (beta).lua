@@ -56,10 +56,6 @@ BCD_EXTENDED = { "0", "1", "2", "3",
 AC_GSM = { "Always", "CHV1", "CHV2", "RFU", 
 	   "ADM", "ADM", "ADM", "ADM",
 	   "ADM", "ADM", "ADM", "ADM",
-	   "ADM", "ADM", "ADM", "ADM",
-	   "ADM", "ADM", "ADM", "ADM",
-	   "ADM", "ADM", "ADM", "ADM",
-	   "ADM", "ADM", "ADM", "ADM",
 	   "ADM", "ADM", "ADM", "Never" }
 
 MAP1_FILE_STRUCT 	= { [0]="transparent", [1]="linear fixed", [3]="cyclic" }
